@@ -32,3 +32,9 @@ backend/__pycache__/
 backend/*.pyc
 backend/.mypy_cache/
 backend/.pytest_cache/
+
+# Python bytecode & cache
+**/__pycache__/
+*.pyc
+*.py[cod]
+*$py.class
