@@ -1,0 +1,44 @@
+services:
+  db:
+    image: postgres:18
+    container_name: shop-app-platform-db
+    restart: unless-stopped
+
+    environment:
+        POSTGRES_DB: ${POSTGRES_DB}
+        POSTGRES_USER: ${POSTGRES_USER}
+        POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+
+    ports:
+      - "5432:5432"
+
+    volumes:
+      - postgres_data:/var/lib/postgresql
+
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U shop_app_platform -d shop_app_platform"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+
+    container_name: shop-app-platform-backend
+    restart: unless-stopped
+
+    depends_on:
+      db:
+        condition: service_healthy
+
+    environment:
+      DATABASE_URL: postgresql+psycopg://shop_app_platform:${POSTGRES_PASSWORD}@db:5432/shop_app_platform
+
+    ports:
+      - "8000:8000"
+
+volumes:
+  postgres_data:
