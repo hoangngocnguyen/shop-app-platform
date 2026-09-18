@@ -1,0 +1,28 @@
+[project]
+name = "app"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+authors = [
+    { name = "hoangngocnguyen", email = "142553243+hoangngocnguyen@users.noreply.github.com" }
+]
+requires-python = ">=3.13"
+dependencies = [
+    "alembic>=1.20.0",
+    "fastapi>=0.141.1",
+    "psycopg[binary]>=3.3.5",
+    "pydantic-settings>=2.15.0",
+    "python-dotenv>=1.2.3",
+    "sqlalchemy>=2.0.54",
+    "uvicorn>=0.53.0",
+]
+
+[project.scripts]
+backend = "backend:main"
+
+# SỬA TẠI ĐÂY: Dùng đúng namespace của uv_build
+[tool.uv.build-backend]
+module-directory = "."
+
+[tool.ruff.lint]
+ignore = ["B008"]
