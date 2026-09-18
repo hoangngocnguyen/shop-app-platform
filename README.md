@@ -10,5 +10,7 @@
 |   1 | 23T1080015   | Nguyễn Ngọc Huy Hoàng   |
 |   2 | 23T1020634   | Võ Ngọc Minh Châu       |
 |   3 | 23T1020557   | Nguyễn Thu Trang        |
+|   4 | 23T1020436   | Ngô Lê Nam Quyền        |
+
 
 
