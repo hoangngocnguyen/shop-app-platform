@@ -27,6 +27,12 @@ class Settings(BaseSettings):
     DATABASE_URL: str = Field(default="")
     SECRET_KEY: str = Field(default="")
 
+    SUPABASE_URL: str = Field(default="")
+
+    @property
+    def JWKS_URL(self) -> str:
+        return f"{self.SUPABASE_URL}/auth/v1/.well-known/jwks.json"
+
     model_config = SettingsConfigDict(
         env_file=ENV_FILE_PATH,
         env_file_encoding="utf-8",
