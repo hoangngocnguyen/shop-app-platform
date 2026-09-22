@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from src.app.core.exceptions import global_exception_handler
 from src.app.modules.auth.router import router as auth_router
 
 # Import Category trước hoặc song song để SQLAlchemy biết Class này tồn tại
@@ -20,6 +21,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["Authorization", "Content-Type"],
 )
+
+
+app.add_exception_handler(Exception, global_exception_handler)
 
 
 @app.get("/")
