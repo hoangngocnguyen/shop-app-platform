@@ -1,6 +1,8 @@
 "use client";
 
+import api from "@/lib/axios/client";
 import { createClient } from "@/lib/supabase/client";
+import { useEffect } from "react";
 
 export default function AuthTestPage() {
   const testBackendAuth = async () => {
@@ -26,13 +28,30 @@ export default function AuthTestPage() {
     console.log("BE response:", data);
   };
 
+
+  useEffect(() => {
+    const testAuth = async () => {
+      try {
+        const response = await api.get("/auth/me");
+
+        console.log("Current user:", response.data);
+      } catch (error) {
+        console.error("Auth request failed:", error);
+      }
+    };
+
+    testAuth();
+  }, []);
+
+
+
   return (
     <main>
       <h1>Auth Integration Test</h1>
-
-      <button onClick={testBackendAuth}>
+      <div>Testing authentication...</div>;
+      {/* <button onClick={testBackendAuth}>
         Test FE → BE
-      </button>
+      </button> */}
     </main>
   );
 }
