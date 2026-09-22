@@ -1,4 +1,5 @@
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 
 from src.app.modules.auth.router import router as auth_router
 
@@ -11,6 +12,14 @@ app = FastAPI(title="Shop App API")
 
 app.include_router(product_router)
 app.include_router(auth_router)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:3000"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["Authorization", "Content-Type"],
+)
 
 
 @app.get("/")
