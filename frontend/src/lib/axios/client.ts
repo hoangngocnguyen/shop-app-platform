@@ -22,4 +22,18 @@ api.interceptors.request.use(async (config) => {
   return config;
 });
 
+// 401 handling
+api.interceptors.response.use(
+  (response) => response,
+  async (error) => {
+    if (error.response?.status === 401) {
+      const supabase = createClient();
+
+      await supabase.auth.signOut();
+    }
+
+    return Promise.reject(error);
+  },
+);
+
 export default api;
