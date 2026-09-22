@@ -29,6 +29,10 @@ class Settings(BaseSettings):
 
     SUPABASE_URL: str = Field(default="")
 
+    CLOUDINARY_CLOUD_NAME: str = Field(default="")
+    CLOUDINARY_API_KEY: str = Field(default="")
+    CLOUDINARY_API_SECRET: str = Field(default="")
+
     @property
     def JWKS_URL(self) -> str:
         return f"{self.SUPABASE_URL}/auth/v1/.well-known/jwks.json"
