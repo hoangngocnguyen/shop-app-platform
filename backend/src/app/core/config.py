@@ -16,7 +16,10 @@ while BASE_DIR.name != "backend" and BASE_DIR != BASE_DIR.parent:
 if BASE_DIR == BASE_DIR.parent:
     BASE_DIR = Path.cwd()
 
-ENV_FILE_PATH = BASE_DIR / ".env"
+# Uu tien doc file .env.local (chuyen dung cho Local Dev), neu khong co se fallback ve .env
+ENV_LOCAL_PATH = BASE_DIR / ".env.local"
+ENV_DEFAULT_PATH = BASE_DIR / ".env"
+ENV_FILE_PATH = ENV_LOCAL_PATH if ENV_LOCAL_PATH.exists() else ENV_DEFAULT_PATH
 
 
 class Settings(BaseSettings):
