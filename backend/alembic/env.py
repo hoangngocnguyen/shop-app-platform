@@ -13,6 +13,7 @@ from src.app.modules.roles.model import Role  # noqa: F401
 from src.app.modules.users.model import User  # noqa: F401
 from src.app.modules.shipping_addresses.model import ShippingAddress  # noqa: F401
 from src.app.modules.auth.model import PasswordResetToken, RefreshToken  # noqa: F401
+from src.app.modules.carts.model import Cart, CartItem  # noqa: F401
 
 # Cấu hình URL từ Pydantic
 config = context.config
