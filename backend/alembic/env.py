@@ -19,7 +19,7 @@ if config.config_file_name is not None:
 
 # Gán Metadata
 target_metadata = Base.metadata
-print("Danh sách bảng Alembic tìm thấy:", target_metadata.tables.keys())
+print("Alembic found tables:", list(target_metadata.tables.keys()))
 
 
 # Lệnh chạy Offline
