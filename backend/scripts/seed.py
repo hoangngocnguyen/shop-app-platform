@@ -4,6 +4,8 @@ from scripts.seed_roles import seed_roles
 from scripts.seed_shipping_addresses import seed_shipping_addresses
 from scripts.seed_users import seed_users
 from scripts.seed_carts import seed_carts
+from scripts.seed_shippers import seed_shippers
+from scripts.seed_orders import seed_orders
 from src.app.core.database import SessionLocal
 
 
@@ -25,6 +27,10 @@ def main():
 
         # 3. Nhom Gio hang
         seed_carts(db)
+
+        # 4. Nhom Van chuyen & Don hang
+        seed_shippers(db)
+        seed_orders(db)
 
         db.commit()
         print("Database seeded successfully.")

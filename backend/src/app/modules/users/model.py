@@ -9,6 +9,7 @@ from src.app.modules.roles.model import Role  # noqa: F401
 from src.app.modules.shipping_addresses.model import ShippingAddress  # noqa: F401
 from src.app.modules.auth.model import PasswordResetToken, RefreshToken  # noqa: F401
 from src.app.modules.carts.model import Cart  # noqa: F401
+from src.app.modules.orders.model import Order  # noqa: F401
 
 
 class User(Base):
@@ -94,3 +95,4 @@ class User(Base):
     cart = relationship(
         "Cart", back_populates="user", uselist=False, cascade="all, delete-orphan"
     )
+    orders = relationship("Order", back_populates="user")
