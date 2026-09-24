@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { useAuthStore } from '../stores/useAuthStore';
+import { ROUTES } from '@/constants/routes';
 
 export function LoginForm() {
   const [email, setEmail] = useState('');
@@ -34,7 +35,7 @@ export function LoginForm() {
 
     try {
       await sync();
-      router.push('/dashboard');
+      router.push(ROUTES.HOME);
       router.refresh();
     } catch {
       setErrorMsg('Đăng nhập thành công nhưng không thể đồng bộ dữ liệu người dùng.');
@@ -142,7 +143,7 @@ export function LoginForm() {
 
       <p className="text-center text-xs text-slate-400">
         Chưa có tài khoản?{' '}
-        <Link href="/auth/register" className="font-semibold text-indigo-400 hover:underline">
+        <Link href={ROUTES.AUTH.REGISTER} className="font-semibold text-indigo-400 hover:underline">
           Đăng ký ngay
         </Link>
       </p>
