@@ -9,6 +9,13 @@ from src.app.core.config import settings
 from src.app.core.database import Base
 from src.app.modules.categories.model import Category  # noqa: F401
 from src.app.modules.products.model import Product  # noqa: F401
+from src.app.modules.roles.model import Role  # noqa: F401
+from src.app.modules.users.model import User  # noqa: F401
+from src.app.modules.shipping_addresses.model import ShippingAddress  # noqa: F401
+from src.app.modules.auth.model import PasswordResetToken, RefreshToken  # noqa: F401
+from src.app.modules.carts.model import Cart, CartItem  # noqa: F401
+from src.app.modules.orders.model import Order, OrderDetail, OrderLog  # noqa: F401
+from src.app.modules.shipper.model import Shipper  # noqa: F401
 
 # Cấu hình URL từ Pydantic
 config = context.config
@@ -19,7 +26,7 @@ if config.config_file_name is not None:
 
 # Gán Metadata
 target_metadata = Base.metadata
-print("Danh sách bảng Alembic tìm thấy:", target_metadata.tables.keys())
+print("Alembic found tables:", list(target_metadata.tables.keys()))
 
 
 # Lệnh chạy Offline
