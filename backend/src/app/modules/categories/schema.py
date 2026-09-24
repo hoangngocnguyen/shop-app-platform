@@ -1,21 +1,38 @@
-from decimal import Decimal
-
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 
 
-class ProductResponse(BaseModel):
-    product_id: int
-    product_name: str
-    price: Decimal
-    discount_percent: int | None = None
-    sale_price: Decimal | None = None
-    quantity: int
-    rating: Decimal | None = None
-    sold: int
-    brand: str | None = None
-    origin: str | None = None
-    image_src: str | None = None
-    description: str | None = None
-    category_id: int | None = None
+class CategoryResponse(BaseModel):
+    """Schema đại diện cho thông tin danh mục sản phẩm."""
 
-    model_config = ConfigDict(from_attributes=True)
+    category_id: int = Field(
+        ...,
+        description="Mã định danh duy nhất của danh mục (Khóa chính)",
+        examples=[1],
+    )
+    category_name: str = Field(
+        ...,
+        description="Tên hiển thị của danh mục sản phẩm",
+        examples=["Điện thoại"],
+    )
+    parent_id: int | None = Field(
+        default=None,
+        description="Mã danh mục cha (dành cho danh mục phân cấp đa tầng, null nếu là danh mục gốc)",
+        examples=[None],
+    )
+    slug: str = Field(
+        ...,
+        description="Đường dẫn tĩnh thân thiện với SEO",
+        examples=["dien-thoai"],
+    )
+
+    model_config = ConfigDict(
+        from_attributes=True,
+        json_schema_extra={
+            "example": {
+                "category_id": 1,
+                "category_name": "Điện thoại",
+                "parent_id": None,
+                "slug": "dien-thoai",
+            }
+        },
+    )
