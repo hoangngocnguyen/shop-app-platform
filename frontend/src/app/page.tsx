@@ -1,20 +1,19 @@
 'use client';
 
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/features/auth/stores/useAuthStore';
 import { createClient } from '@/lib/supabase/client';
 import { ROUTES } from '@/constants/routes';
 
 export default function HomePage() {
+  // Chỉ lấy state & hàm logout từ store, không cần useEffect sync gì nữa
   const { user, logout, isAuthenticated } = useAuthStore();
-  const router = useRouter();
   const supabase = createClient();
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
     logout();
-    router.refresh();
+    window.location.href = ROUTES.AUTH.LOGIN;
   };
 
   return (
@@ -32,7 +31,7 @@ export default function HomePage() {
             {isAuthenticated() ? (
               <button
                 onClick={handleLogout}
-                className="text-sm px-4 py-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-100 text-slate-700 font-medium transition shadow-xs"
+                className="text-sm px-4 py-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-100 text-slate-700 font-medium transition shadow-xs cursor-pointer"
               >
                 Đăng xuất
               </button>
@@ -58,7 +57,6 @@ export default function HomePage() {
 
       {/* Hero Section */}
       <main className="flex-1 flex items-center justify-center relative overflow-hidden px-6 py-20">
-        {/* Background glow effects */}
         <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-indigo-200/40 rounded-full blur-[120px] pointer-events-none" />
 
         <div className="max-w-3xl text-center space-y-8 relative z-10">
