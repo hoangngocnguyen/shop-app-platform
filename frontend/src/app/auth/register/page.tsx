@@ -1,35 +1,9 @@
-import { register } from "./actions";
+import { RegisterForm } from '@/features/auth';
 
 export default function RegisterPage() {
   return (
-    <main>
-      <h1>Register</h1>
-
-      <form action={register}>
-        <div>
-          <label htmlFor="email">Email</label>
-          <input
-            id="email"
-            name="email"
-            type="email"
-            required
-          />
-        </div>
-
-        <div>
-          <label htmlFor="password">Password</label>
-          <input
-            id="password"
-            name="password"
-            type="password"
-            required
-          />
-        </div>
-
-        <button type="submit">
-          Register
-        </button>
-      </form>
+    <main className="flex min-h-screen items-center justify-center bg-slate-950 p-4">
+      <RegisterForm />
     </main>
   );
 }
