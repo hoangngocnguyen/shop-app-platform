@@ -5,28 +5,35 @@ import { ROUTES } from '@/constants/routes';
 export async function proxy(request: NextRequest) {
   const { supabase, response } = createClient(request);
 
-  // Refresh session & lấy user
+  // Lấy thông tin user an toàn qua getUser()
   const {
     data: { user },
   } = await supabase.auth.getUser();
 
   const pathname = request.nextUrl.pathname;
+  
   const isAuthRoute =
     pathname.startsWith(ROUTES.AUTH.LOGIN) ||
     pathname.startsWith(ROUTES.AUTH.REGISTER);
 
-  // Chưa đăng nhập -> Chuyển về /login khi truy cập trang bảo mật
+  // 1. Chưa đăng nhập mà truy cập trang bảo mật -> Chuyển hướng về /login
   if (!user && !isAuthRoute && pathname !== ROUTES.HOME) {
     const url = request.nextUrl.clone();
     url.pathname = ROUTES.AUTH.LOGIN;
-    return NextResponse.redirect(url);
+
+    const redirectResponse = NextResponse.redirect(url);
+    response.cookies.getAll().forEach((c) => redirectResponse.cookies.set(c.name, c.value));
+    return redirectResponse;
   }
 
-  // Đã đăng nhập -> Chuyển về / khi cố vào /login hoặc /register
+  // 2. Đã đăng nhập mà cố tình vào /login hoặc /register -> Chuyển hướng về trang chủ /
   if (user && isAuthRoute) {
     const url = request.nextUrl.clone();
     url.pathname = ROUTES.HOME;
-    return NextResponse.redirect(url);
+
+    const redirectResponse = NextResponse.redirect(url);
+    response.cookies.getAll().forEach((c) => redirectResponse.cookies.set(c.name, c.value));
+    return redirectResponse;
   }
 
   return response;
