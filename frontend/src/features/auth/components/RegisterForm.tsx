@@ -1,4 +1,3 @@
-// src/features/auth/components/registerForm.tsx
 'use client';
 
 import { useState } from 'react';
@@ -6,6 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { useAuthStore } from '../stores/useAuthStore';
+import { ROUTES } from '@/constants/routes';
 
 export function RegisterForm() {
   const [email, setEmail] = useState('');
@@ -124,7 +124,7 @@ export function RegisterForm() {
 
       <p className="text-center text-xs text-slate-400">
         Đã có tài khoản?{' '}
-        <Link href="/auth/login" className="font-semibold text-indigo-400 hover:underline">
+        <Link href={ROUTES.AUTH.LOGIN} className="font-semibold text-indigo-400 hover:underline">
           Đăng nhập ngay
         </Link>
       </p>
