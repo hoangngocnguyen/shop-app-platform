@@ -1,35 +1,9 @@
-import { login } from "./actions";
+import { LoginForm } from '@/features/auth';
 
 export default function LoginPage() {
   return (
-    <main>
-      <h1>Login</h1>
-
-      <form action={login}>
-        <div>
-          <label htmlFor="email">Email</label>
-          <input
-            id="email"
-            name="email"
-            type="email"
-            required
-          />
-        </div>
-
-        <div>
-          <label htmlFor="password">Password</label>
-          <input
-            id="password"
-            name="password"
-            type="password"
-            required
-          />
-        </div>
-
-        <button type="submit">
-          Login
-        </button>
-      </form>
+    <main className="flex min-h-screen items-center justify-center bg-slate-950 p-4">
+      <LoginForm />
     </main>
   );
 }
