@@ -6,13 +6,16 @@ import { User } from '../types';
 interface AuthState {
   user: User | null;
   isLoading: boolean;
+  isAuthenticated: () => boolean;
   fetchUser: () => Promise<void>;
   sync: () => Promise<void>;
+  logout: () => void;
 }
 
-export const useAuthStore = create<AuthState>((set) => ({
+export const useAuthStore = create<AuthState>((set, get) => ({
   user: null,
   isLoading: true,
+  isAuthenticated: () => get().user !== null,
   fetchUser: async () => {
     try {
       const user = await getCurrentUser();
@@ -29,4 +32,5 @@ export const useAuthStore = create<AuthState>((set) => ({
       console.error('Failed to sync user:', error);
     }
   },
+  logout: () => set({ user: null }),
 }));
