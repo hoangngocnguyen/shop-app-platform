@@ -6,7 +6,6 @@ import { createClient } from '@/lib/supabase/client';
 import { ROUTES } from '@/constants/routes';
 
 export default function HomePage() {
-  // Chỉ lấy state & hàm logout từ store, không cần useEffect sync gì nữa
   const { user, logout, isAuthenticated } = useAuthStore();
   const supabase = createClient();
 
@@ -17,12 +16,12 @@ export default function HomePage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-800 flex flex-col justify-between selection:bg-indigo-500 selection:text-white">
+    <div className="min-h-screen bg-surface-bg text-text-main flex flex-col justify-between selection:bg-primary selection:text-primary-contrast">
       {/* Navigation Bar */}
-      <header className="border-b border-slate-200/80 backdrop-blur-md bg-white/80 sticky top-0 z-50">
+      <header className="border-b border-surface-border/80 backdrop-blur-md bg-surface-card/80 sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2 font-bold text-xl tracking-tight">
-            <span className="bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 bg-clip-text text-transparent">
+            <span className="text-primary font-extrabold">
               Shop App Platform
             </span>
           </Link>
@@ -31,7 +30,7 @@ export default function HomePage() {
             {isAuthenticated() ? (
               <button
                 onClick={handleLogout}
-                className="text-sm px-4 py-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-100 text-slate-700 font-medium transition shadow-xs cursor-pointer"
+                className="text-sm px-4 py-2 rounded-xl border border-surface-border bg-surface-card hover:bg-surface-bg text-text-sub font-medium transition shadow-brand-sm cursor-pointer"
               >
                 Đăng xuất
               </button>
@@ -39,13 +38,13 @@ export default function HomePage() {
               <>
                 <Link
                   href={ROUTES.AUTH.LOGIN}
-                  className="text-sm text-slate-600 hover:text-slate-900 font-medium transition px-3 py-2"
+                  className="text-sm text-text-sub hover:text-text-main font-medium transition px-3 py-2"
                 >
                   Đăng nhập
                 </Link>
                 <Link
                   href={ROUTES.AUTH.REGISTER}
-                  className="text-sm px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-medium transition shadow-md shadow-indigo-600/15"
+                  className="text-sm px-4 py-2 rounded-xl bg-primary hover:bg-primary-hover text-primary-contrast font-medium transition shadow-brand-sm"
                 >
                   Đăng ký
                 </Link>
@@ -57,32 +56,33 @@ export default function HomePage() {
 
       {/* Hero Section */}
       <main className="flex-1 flex items-center justify-center relative overflow-hidden px-6 py-20">
-        <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-indigo-200/40 rounded-full blur-[120px] pointer-events-none" />
+        {/* Glow effect ăn theo tông primary-light */}
+        <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-primary-light rounded-full blur-[120px] pointer-events-none opacity-60" />
 
         <div className="max-w-3xl text-center space-y-8 relative z-10">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-indigo-200 bg-indigo-50/80 text-indigo-700 text-xs font-semibold tracking-wide shadow-xs">
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-surface-border bg-primary-light text-primary text-xs font-semibold tracking-wide shadow-brand-sm">
             ⚡ Nền tảng bán hàng thế hệ mới
           </div>
 
-          <h1 className="text-4xl sm:text-6xl font-extrabold tracking-tight text-slate-900 leading-tight">
+          <h1 className="text-4xl sm:text-6xl font-extrabold tracking-tight text-text-main leading-tight">
             Quản lý và phát triển cửa hàng của bạn một cách{' '}
-            <span className="bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 bg-clip-text text-transparent">
+            <span className="text-primary">
               thông minh
             </span>
           </h1>
 
-          <p className="text-lg text-slate-600 max-w-2xl mx-auto leading-relaxed">
+          <p className="text-lg text-text-sub max-w-2xl mx-auto leading-relaxed">
             Giải pháp toàn diện hỗ trợ quản lý sản phẩm, đơn hàng và khách hàng tối ưu nhất cho doanh nghiệp vừa và nhỏ.
           </p>
 
           {isAuthenticated() ? (
             <div className="pt-2 flex flex-col items-center gap-4">
-              <div className="text-slate-700 text-sm bg-white/90 border border-slate-200 shadow-xs rounded-xl px-5 py-3">
-                Xin chào trở lại, <span className="font-semibold text-indigo-600">{user?.email}</span>!
+              <div className="text-text-sub text-sm bg-surface-card border border-surface-border shadow-brand-sm rounded-xl px-5 py-3">
+                Xin chào trở lại, <span className="font-semibold text-primary">{user?.email}</span>!
               </div>
               <Link
                 href="/dashboard"
-                className="inline-flex items-center justify-center px-6 py-3.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold transition shadow-lg shadow-indigo-600/20 gap-2"
+                className="inline-flex items-center justify-center px-6 py-3.5 rounded-xl bg-primary hover:bg-primary-hover text-primary-contrast font-semibold transition shadow-brand-md gap-2"
               >
                 Vào Trang Quản Lý (Dashboard) &rarr;
               </Link>
@@ -91,13 +91,13 @@ export default function HomePage() {
             <div className="pt-2 flex flex-wrap justify-center gap-4">
               <Link
                 href={ROUTES.AUTH.REGISTER}
-                className="px-6 py-3.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold transition shadow-lg shadow-indigo-600/20"
+                className="px-6 py-3.5 rounded-xl bg-primary hover:bg-primary-hover text-primary-contrast font-semibold transition shadow-brand-md"
               >
                 Bắt đầu ngay miễn phí
               </Link>
               <Link
                 href={ROUTES.AUTH.LOGIN}
-                className="px-6 py-3.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-semibold transition shadow-xs"
+                className="px-6 py-3.5 rounded-xl border border-surface-border bg-surface-card hover:bg-surface-bg text-text-main font-semibold transition shadow-brand-sm"
               >
                 Đăng nhập tài khoản
               </Link>
@@ -107,7 +107,7 @@ export default function HomePage() {
       </main>
 
       {/* Footer */}
-      <footer className="border-t border-slate-200/80 bg-white py-6 text-center text-xs text-slate-500">
+      <footer className="border-t border-surface-border bg-surface-card py-6 text-center text-xs text-text-muted">
         © {new Date().getFullYear()} Shop App Platform. Built with Next.js & Supabase.
       </footer>
     </div>
