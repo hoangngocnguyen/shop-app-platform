@@ -1,0 +1,35 @@
+{
+  "theme": {
+    "primary": "#0F766E",
+    "primaryHover": "#115E59",
+    "primaryLight": "#ECFDF5",
+    "primaryContrast": "#FFFFFF",
+
+    "accent": "#F59E0B",
+    "accentHover": "#D97706",
+    "accentLight": "#FEF3C7",
+
+    "surfaceBg": "#F8FAFC",
+    "surfaceCard": "#FFFFFF",
+    "surfaceBorder": "#E2E8F0",
+    "surfaceHover": "#F1F5F9",
+    "surfaceActive": "#E2E8F0",
+
+    "textMain": "#0F172A",
+    "textSub": "#475569",
+    "textMuted": "#94A3B8",
+    "textDisabled": "#CBD5E1",
+
+    "success": "#10B981",
+    "successBg": "#ECFDF5",
+    "warning": "#F59E0B",
+    "warningBg": "#FFFBEB",
+    "error": "#EF4444",
+    "errorBg": "#FEF2F2",
+    "info": "#3B82F6",
+    "infoBg": "#EFF6FF",
+
+    "ring": "#0F766E",
+    "shadowColor": "rgba(15, 118, 110, 0.15)"
+  }
+}

@@ -1,69 +1,115 @@
-import Image from "next/image";
+'use client';
 
-export default function Home() {
+import Link from 'next/link';
+import { useAuthStore } from '@/features/auth/stores/useAuthStore';
+import { createClient } from '@/lib/supabase/client';
+import { ROUTES } from '@/constants/routes';
+
+export default function HomePage() {
+  const { user, logout, isAuthenticated } = useAuthStore();
+  const supabase = createClient();
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    logout();
+    window.location.href = ROUTES.AUTH.LOGIN;
+  };
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert h-5 w-[100px]"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the{" "}
-            <code className="rounded bg-black/[.06] px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-white/[.08]">
-              page.tsx
-            </code>{" "}
-            file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+    <div className="min-h-screen bg-surface-bg text-text-main flex flex-col justify-between selection:bg-primary selection:text-primary-contrast">
+      {/* Navigation Bar */}
+      <header className="border-b border-surface-border/80 backdrop-blur-md bg-surface-card/80 sticky top-0 z-50">
+        <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
+          <Link href="/" className="flex items-center gap-2 font-bold text-xl tracking-tight">
+            <span className="text-primary font-extrabold">
+              Shop App Platform
+            </span>
+          </Link>
+
+          <nav className="flex items-center gap-3">
+            {isAuthenticated() ? (
+              <button
+                onClick={handleLogout}
+                className="text-sm px-4 py-2 rounded-xl border border-surface-border bg-surface-card hover:bg-surface-bg text-text-sub font-medium transition shadow-brand-sm cursor-pointer"
+              >
+                Đăng xuất
+              </button>
+            ) : (
+              <>
+                <Link
+                  href={ROUTES.AUTH.LOGIN}
+                  className="text-sm text-text-sub hover:text-text-main font-medium transition px-3 py-2"
+                >
+                  Đăng nhập
+                </Link>
+                <Link
+                  href={ROUTES.AUTH.REGISTER}
+                  className="text-sm px-4 py-2 rounded-xl bg-primary hover:bg-primary-hover text-primary-contrast font-medium transition shadow-brand-sm"
+                >
+                  Đăng ký
+                </Link>
+              </>
+            )}
+          </nav>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert h-[14px] w-4"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={14}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+      </header>
+
+      {/* Hero Section */}
+      <main className="flex-1 flex items-center justify-center relative overflow-hidden px-6 py-20">
+        {/* Glow effect ăn theo tông primary-light */}
+        <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-primary-light rounded-full blur-[120px] pointer-events-none opacity-60" />
+
+        <div className="max-w-3xl text-center space-y-8 relative z-10">
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-surface-border bg-primary-light text-primary text-xs font-semibold tracking-wide shadow-brand-sm">
+            ⚡ Nền tảng bán hàng thế hệ mới
+          </div>
+
+          <h1 className="text-4xl sm:text-6xl font-extrabold tracking-tight text-text-main leading-tight">
+            Quản lý và phát triển cửa hàng của bạn một cách{' '}
+            <span className="text-primary">
+              thông minh
+            </span>
+          </h1>
+
+          <p className="text-lg text-text-sub max-w-2xl mx-auto leading-relaxed">
+            Giải pháp toàn diện hỗ trợ quản lý sản phẩm, đơn hàng và khách hàng tối ưu nhất cho doanh nghiệp vừa và nhỏ.
+          </p>
+
+          {isAuthenticated() ? (
+            <div className="pt-2 flex flex-col items-center gap-4">
+              <div className="text-text-sub text-sm bg-surface-card border border-surface-border shadow-brand-sm rounded-xl px-5 py-3">
+                Xin chào trở lại, <span className="font-semibold text-primary">{user?.email}</span>!
+              </div>
+              <Link
+                href="/dashboard"
+                className="inline-flex items-center justify-center px-6 py-3.5 rounded-xl bg-primary hover:bg-primary-hover text-primary-contrast font-semibold transition shadow-brand-md gap-2"
+              >
+                Vào Trang Quản Lý (Dashboard) &rarr;
+              </Link>
+            </div>
+          ) : (
+            <div className="pt-2 flex flex-wrap justify-center gap-4">
+              <Link
+                href={ROUTES.AUTH.REGISTER}
+                className="px-6 py-3.5 rounded-xl bg-primary hover:bg-primary-hover text-primary-contrast font-semibold transition shadow-brand-md"
+              >
+                Bắt đầu ngay miễn phí
+              </Link>
+              <Link
+                href={ROUTES.AUTH.LOGIN}
+                className="px-6 py-3.5 rounded-xl border border-surface-border bg-surface-card hover:bg-surface-bg text-text-main font-semibold transition shadow-brand-sm"
+              >
+                Đăng nhập tài khoản
+              </Link>
+            </div>
+          )}
         </div>
       </main>
+
+      {/* Footer */}
+      <footer className="border-t border-surface-border bg-surface-card py-6 text-center text-xs text-text-muted">
+        © {new Date().getFullYear()} Shop App Platform. Built with Next.js & Supabase.
+      </footer>
     </div>
   );
 }
