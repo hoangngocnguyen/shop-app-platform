@@ -4,6 +4,7 @@ from sqlalchemy import Column, ForeignKey, Integer, Numeric, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from src.app.core.database import Base
+from src.app.modules.categories.model import Category  # noqa: F401
 
 
 class Product(Base):
