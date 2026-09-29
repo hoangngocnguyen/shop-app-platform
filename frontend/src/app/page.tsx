@@ -2,17 +2,13 @@
 
 import Link from 'next/link';
 import { useAuthStore } from '@/features/auth/stores/useAuthStore';
-import { createClient } from '@/lib/supabase/client';
 import { ROUTES } from '@/constants/routes';
 
 export default function HomePage() {
-  const { user, logout, isAuthenticated } = useAuthStore();
-  const supabase = createClient();
+  const { user, logout, isAuthenticated} = useAuthStore();
 
   const handleLogout = async () => {
-    await supabase.auth.signOut();
     logout();
-    window.location.href = ROUTES.AUTH.LOGIN;
   };
 
   return (
@@ -78,7 +74,7 @@ export default function HomePage() {
           {isAuthenticated() ? (
             <div className="pt-2 flex flex-col items-center gap-4">
               <div className="text-text-sub text-sm bg-surface-card border border-surface-border shadow-brand-sm rounded-xl px-5 py-3">
-                Xin chào trở lại, <span className="font-semibold text-primary">{user?.email}</span>!
+                Xin chào trở lại, <span className="font-semibold text-primary">{user?.user_id}</span>!
               </div>
               <Link
                 href="/dashboard"
