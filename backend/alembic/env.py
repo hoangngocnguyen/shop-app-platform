@@ -9,6 +9,13 @@ from src.app.core.config import settings
 from src.app.core.database import Base
 from src.app.modules.carts.model import Cart, CartItem  # noqa: F401
 from src.app.modules.categories.model import Category  # noqa: F401
+from src.app.modules.locations.model import (  # noqa: F401
+    AdministrativeRegion,
+    AdministrativeUnit,
+    Province,
+    VNProvincesMetadata,
+    Ward,
+)
 from src.app.modules.orders.model import Order, OrderDetail, OrderLog  # noqa: F401
 from src.app.modules.products.model import Product  # noqa: F401
 from src.app.modules.roles.model import Role  # noqa: F401
