@@ -64,12 +64,6 @@ class User(Base):
         comment="Số điện thoại duy nhất",
     )
 
-    address: Mapped[str | None] = mapped_column(
-        String(255),
-        nullable=True,
-        comment="Địa chỉ liên hệ chính",
-    )
-
     # Trạng thái tài khoản & Phân quyền
     is_blocked: Mapped[bool] = mapped_column(
         Boolean,
