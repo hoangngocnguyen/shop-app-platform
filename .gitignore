@@ -41,3 +41,5 @@ backend/.pytest_cache/
 *.pyc
 *.py[cod]
 *$py.class
+
+*.log*
