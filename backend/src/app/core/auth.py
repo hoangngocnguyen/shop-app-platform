@@ -23,13 +23,14 @@ async def get_current_user(
 
     try:
         signing_key = jwks_client.get_signing_key_from_jwt(token)
-
         payload = jwt.decode(
             token,
             signing_key.key,
             algorithms=["ES256", "RS256"],
             audience="authenticated",
+            leeway=5,
         )
+        print(payload)
 
         return payload
 
