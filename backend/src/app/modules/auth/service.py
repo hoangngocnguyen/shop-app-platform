@@ -1,7 +1,9 @@
 from uuid import UUID
+
 from sqlalchemy.orm import Session, joinedload
-from backend.src.app.modules.auth.schema import SyncUserResponse
+
 from src.app.core.exceptions import ResourceNotFoundException
+from src.app.modules.auth.schema import SyncUserResponse
 from src.app.modules.roles.model import Role
 from src.app.modules.users.model import User
 
