@@ -56,7 +56,12 @@ class Ward(Base):
     full_name_en = Column(String(255), nullable=True)
     code_name = Column(String(255), nullable=True)
     postal_code = Column(String(20), nullable=True)
-    province_code = Column(String(20), ForeignKey("provinces.code"), nullable=True)
+    province_code = Column(
+        String(20),
+        ForeignKey("provinces.code"),
+        nullable=True,
+        index=True,
+    )
     administrative_unit_id = Column(
         Integer, ForeignKey("administrative_units.id"), nullable=True
     )
