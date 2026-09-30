@@ -3,7 +3,7 @@ from uuid import UUID
 from sqlalchemy.orm import Session, joinedload
 
 from src.app.core.exceptions import ResourceNotFoundException
-from src.app.modules.auth.schema import SyncUserResponse
+from src.app.modules.auth.schema import MeResponse, SyncUserResponse
 from src.app.modules.roles.model import Role
 from src.app.modules.users.model import User
 
@@ -12,7 +12,7 @@ class AuthService:
     """Service xử lý nghiệp vụ xác thực và đồng bộ application user."""
 
     @staticmethod
-    def get_me(db: Session, auth_user_id: UUID) -> User:
+    def get_me(db: Session, auth_user_id: UUID) -> MeResponse:
         """
         Lấy application user hiện tại theo auth_user_id.
 
@@ -28,7 +28,7 @@ class AuthService:
         if not user:
             raise ResourceNotFoundException("Không tìm thấy thông tin người dùng")
 
-        return user
+        return MeResponse.model_validate(user)
 
     @staticmethod
     def sync_user(
