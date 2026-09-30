@@ -78,6 +78,12 @@ class User(Base):
         comment="URL ảnh đại diện trên Cloudinary",
     )
 
+    avatar_public_id: Mapped[str | None] = mapped_column(
+        String(255),
+        nullable=True,
+        comment="Public ID của avatar trên Cloudinary",
+    )
+
     date_of_birth: Mapped[date | None] = mapped_column(
         Date,
         nullable=True,
