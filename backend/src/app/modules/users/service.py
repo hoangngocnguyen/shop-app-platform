@@ -1,12 +1,9 @@
-from uuid import UUID
-
 from fastapi import UploadFile
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from src.app.core.exceptions import (
     CustomException,
-    ResourceNotFoundException,
 )
 from src.app.modules.media.service import MediaService
 from src.app.modules.users.model import User
@@ -21,31 +18,9 @@ class UserProfileService:
     """Business logic liên quan đến profile của người dùng."""
 
     @staticmethod
-    def _get_user(
-        db: Session,
-        auth_user_id: UUID,
-    ) -> User:
-        stmt = select(User).where(User.auth_user_id == auth_user_id)
-
-        user = db.scalar(stmt)
-
-        if not user:
-            raise ResourceNotFoundException(
-                "Người dùng chưa được đồng bộ trong hệ thống"
-            )
-
-        return user
-
-    @staticmethod
     def get_profile(
-        db: Session,
-        auth_user_id: UUID,
+        user: User,
     ) -> UserProfileResponse:
-        user = UserProfileService._get_user(
-            db=db,
-            auth_user_id=auth_user_id,
-        )
-
         return UserProfileResponse(
             user_id=user.user_id,
             name=user.name,
@@ -59,12 +34,10 @@ class UserProfileService:
     @staticmethod
     def update_profile(
         db: Session,
-        auth_user_id: UUID,
+        user: User,
         data: UpdateUserRequest,
     ) -> UserProfileResponse:
-        user = UserProfileService._get_user(db=db, auth_user_id=auth_user_id)
 
-        # Lấy dictionary chỉ chứa các field được client gửi lên thực sự
         update_data = data.model_dump(exclude_unset=True)
 
         # Validate username nếu có trong payload
@@ -91,10 +64,9 @@ class UserProfileService:
     @staticmethod
     async def update_avatar(
         db: Session,
-        auth_user_id: UUID,
+        user: User,
         file: UploadFile,
     ) -> AvatarResponse:
-        user = UserProfileService._get_user(db=db, auth_user_id=auth_user_id)
 
         # 1. Upload ảnh mới lên Cloudinary
         upload_res = await MediaService.upload_image(file=file, folder="avatars")
@@ -116,9 +88,8 @@ class UserProfileService:
     @staticmethod
     async def delete_avatar(
         db: Session,
-        auth_user_id: UUID,
+        user: User,
     ) -> AvatarResponse:
-        user = UserProfileService._get_user(db=db, auth_user_id=auth_user_id)
 
         # 1. Kiểm tra xem người dùng có avatar để xóa hay không
         if not user.avatar_public_id and not user.avatar_url:

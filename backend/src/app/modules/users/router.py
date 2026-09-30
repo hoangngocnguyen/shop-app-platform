@@ -1,10 +1,9 @@
-from uuid import UUID
-
 from fastapi import APIRouter, Depends, File, UploadFile, status
 from sqlalchemy.orm import Session
 
-from src.app.core.auth import get_current_user_id
 from src.app.core.database import get_db
+from src.app.modules.users.dep import get_current_user
+from src.app.modules.users.model import User
 from src.app.modules.users.schema import (
     AvatarResponse,
     UpdateUserRequest,
@@ -25,15 +24,13 @@ router = APIRouter(
     summary="Lấy thông tin profile cá nhân",
 )
 def get_my_profile(
-    auth_user_id: UUID = Depends(get_current_user_id),
-    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
 ):
     """
     Lấy thông tin profile của người dùng đang đăng nhập dựa trên token.
     """
     return UserProfileService.get_profile(
-        db=db,
-        auth_user_id=auth_user_id,
+        user=user,
     )
 
 
@@ -45,7 +42,7 @@ def get_my_profile(
 )
 def update_my_profile(
     data: UpdateUserRequest,
-    auth_user_id: UUID = Depends(get_current_user_id),
+    user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
     """
@@ -54,7 +51,7 @@ def update_my_profile(
     """
     return UserProfileService.update_profile(
         db=db,
-        auth_user_id=auth_user_id,
+        user=user,
         data=data,
     )
 
@@ -67,7 +64,7 @@ def update_my_profile(
 )
 async def update_my_avatar(
     file: UploadFile = File(...),
-    auth_user_id: UUID = Depends(get_current_user_id),
+    user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
     """
@@ -76,7 +73,7 @@ async def update_my_avatar(
     """
     return await UserProfileService.update_avatar(
         db=db,
-        auth_user_id=auth_user_id,
+        user=user,
         file=file,
     )
 
@@ -88,10 +85,10 @@ async def update_my_avatar(
     summary="Xóa ảnh đại diện hiện tại của người dùng",
 )
 async def delete_my_avatar(
-    auth_user_id: UUID = Depends(get_current_user_id),
+    user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
     return await UserProfileService.delete_avatar(
         db=db,
-        auth_user_id=auth_user_id,
+        user=user,
     )
