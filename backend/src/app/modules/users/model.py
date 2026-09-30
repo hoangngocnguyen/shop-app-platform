@@ -1,15 +1,16 @@
 import uuid
 from datetime import date, datetime
+from typing import Optional
 
 from sqlalchemy import Boolean, Date, DateTime, ForeignKey, Integer, String
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from src.app.core.database import Base
-from src.app.modules.carts.model import Cart  # noqa: F401
-from src.app.modules.orders.model import Order  # noqa: F401
+from src.app.modules.carts.model import Cart
+from src.app.modules.orders.model import Order
 from src.app.modules.roles.model import Role  # noqa: F401
-from src.app.modules.shipping_addresses.model import ShippingAddress  # noqa: F401
+from src.app.modules.shipping_addresses.model import ShippingAddress
 
 
 class User(Base):
@@ -130,20 +131,23 @@ class User(Base):
     # Quan hệ ORM
     role = relationship("Role", back_populates="users")
 
-    shipping_addresses = relationship(
+    # Quan hệ 1 - N (Một user có nhiều địa chỉ giao hàng)
+    shipping_addresses: Mapped[list["ShippingAddress"]] = relationship(
         "ShippingAddress",
         back_populates="user",
         cascade="all, delete-orphan",
     )
 
-    cart = relationship(
+    # Quan hệ 1 - 1 (Một user có 1 giỏ hàng)
+    cart: Mapped[Optional["Cart"]] = relationship(
         "Cart",
         back_populates="user",
-        uselist=False,
         cascade="all, delete-orphan",
     )
 
-    orders = relationship(
+    # Quan hệ 1 - N (Một user có nhiều đơn hàng)
+    # Order KHÔNG dùng delete-orphan để tránh mất lịch sử đơn hàng khi xóa user
+    orders: Mapped[list["Order"]] = relationship(
         "Order",
         back_populates="user",
     )

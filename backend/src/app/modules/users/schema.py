@@ -1,7 +1,7 @@
 from datetime import UTC, date, datetime
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, EmailStr, Field, HttpUrl, field_validator
+from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator
 
 from src.app.core.exceptions import CustomException
 
@@ -27,7 +27,7 @@ class UserProfileResponse(BaseModel):
         max_length=255,
     )
     phone: str | None = None
-    avatar_url: HttpUrl | None = None
+    avatar_url: str | None = None
     date_of_birth: date | None = None
 
     @field_validator("phone")
