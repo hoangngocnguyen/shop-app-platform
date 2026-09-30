@@ -1,3 +1,5 @@
+from collections.abc import Sequence
+
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -32,12 +34,12 @@ class LocationService:
             select(Ward).where(Ward.province_code == province_code).order_by(Ward.code)
         )
 
-        wards = db.scalars(stmt).all()
+        wards: Sequence[Ward] = db.scalars(stmt).all()
 
         return [
             WardResponse(
                 code=ward.code,
-                name=ward.full_name,
+                name=ward.full_name or ward.name,
             )
             for ward in wards
         ]
