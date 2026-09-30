@@ -3,7 +3,7 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, status
 from sqlalchemy.orm import Session
 
-from src.app.core.auth import get_current_user, get_current_user_id
+from src.app.core.auth import get_current_auth_id, get_jwt_payload
 from src.app.core.database import get_db
 from src.app.modules.auth.schema import MeResponse, SyncUserResponse
 from src.app.modules.auth.service import AuthService
@@ -26,7 +26,7 @@ router = APIRouter(
     response_description="Thông tin application user hiện tại.",
 )
 def get_me(
-    auth_user_id: UUID = Depends(get_current_user_id),
+    auth_user_id: UUID = Depends(get_current_auth_id),
     db: Session = Depends(get_db),
 ) -> MeResponse:
     return AuthService.get_me(
@@ -47,7 +47,7 @@ def get_me(
     response_description="ID của application user sau khi đồng bộ.",
 )
 def sync_user(
-    payload: dict = Depends(get_current_user),
+    payload: dict = Depends(get_jwt_payload),
     db: Session = Depends(get_db),
 ) -> SyncUserResponse:
     auth_user_id = UUID(payload["sub"])
