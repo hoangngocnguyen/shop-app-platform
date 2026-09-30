@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session
 from src.app.core.exceptions import (
     CustomException,
 )
+from src.app.modules.media.cloudinary_folders import USER_AVATAR
 from src.app.modules.media.service import MediaService
 from src.app.modules.users.model import User
 from src.app.modules.users.schema import (
@@ -68,8 +69,12 @@ class UserProfileService:
         file: UploadFile,
     ) -> AvatarResponse:
 
+        user_avatar_folder = f"{USER_AVATAR}/{user.user_id}"
+
         # 1. Upload ảnh mới lên Cloudinary
-        upload_res = await MediaService.upload_image(file=file, folder="avatars")
+        upload_res = await MediaService.upload_image(
+            file=file, folder=user_avatar_folder
+        )
         new_avatar_url = upload_res.get("url")
         new_public_id = upload_res.get("public_id")
 
