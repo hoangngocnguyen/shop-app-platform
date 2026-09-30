@@ -5,6 +5,7 @@ from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from src.app.core.database import Base
+from src.app.modules.locations.model import Province, Ward
 
 
 class ShippingAddress(Base):
@@ -68,5 +69,13 @@ class ShippingAddress(Base):
 
     # Quan hệ ORM
     user = relationship("User", back_populates="shipping_addresses")
-    province = relationship("Province")
-    ward = relationship("Ward")
+    province: Mapped[Province] = relationship("Province", lazy="select")
+    ward: Mapped[Ward] = relationship("Ward", lazy="select")
+
+    @property
+    def province_name(self) -> str | None:
+        return self.province.name if self.province else None
+
+    @property
+    def ward_name(self) -> str | None:
+        return self.ward.name if self.ward else None
