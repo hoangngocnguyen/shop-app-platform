@@ -16,7 +16,7 @@ JWKS_URL = f"{settings.SUPABASE_URL}/auth/v1/.well-known/jwks.json"
 jwks_client = jwt.PyJWKClient(JWKS_URL)
 
 
-async def get_current_user(
+async def get_jwt_payload(
     credentials: HTTPAuthorizationCredentials = Depends(security),
 ):
     token = credentials.credentials
@@ -41,7 +41,7 @@ async def get_current_user(
         )
 
 
-async def get_current_user_id(
-    payload: dict = Depends(get_current_user),
+async def get_current_auth_id(
+    payload: dict = Depends(get_jwt_payload),
 ) -> UUID:
     return UUID(payload["sub"])

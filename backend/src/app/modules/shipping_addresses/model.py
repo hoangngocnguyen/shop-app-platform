@@ -1,9 +1,11 @@
 import uuid
-from sqlalchemy import ForeignKey, Integer, String
+
+from sqlalchemy import Boolean, ForeignKey, Integer, String
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from src.app.core.database import Base
+from src.app.modules.locations.model import Province, Ward
 
 
 class ShippingAddress(Base):
@@ -12,19 +14,24 @@ class ShippingAddress(Base):
     __tablename__ = "shipping_addresses"
 
     id: Mapped[int] = mapped_column(
-        Integer, primary_key=True, autoincrement=True, comment="Mã định danh địa chỉ"
-    )
-    receiver_name: Mapped[str] = mapped_column(
-        String(255), nullable=False, comment="Họ tên người nhận hàng"
-    )
-    phone: Mapped[str] = mapped_column(
-        String(255), nullable=False, comment="Số điện thoại người nhận hàng"
-    )
-    address: Mapped[str] = mapped_column(
-        String(255), nullable=False, comment="Địa chỉ nhận hàng chi tiết"
+        Integer,
+        primary_key=True,
+        autoincrement=True,
+        comment="Mã định danh địa chỉ",
     )
 
-    # Khóa ngoại FK liên kết với users
+    phone: Mapped[str] = mapped_column(
+        String(20),
+        nullable=False,
+        comment="Số điện thoại người nhận",
+    )
+
+    recipient_name: Mapped[str] = mapped_column(
+        String(255),
+        nullable=False,
+        comment="Tên người nhận",
+    )
+
     user_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
         ForeignKey("users.user_id", ondelete="CASCADE"),
@@ -33,5 +40,42 @@ class ShippingAddress(Base):
         comment="Mã người dùng sở hữu địa chỉ",
     )
 
+    province_code: Mapped[str] = mapped_column(
+        String(20),
+        ForeignKey("provinces.code"),
+        nullable=False,
+        comment="Mã tỉnh/thành phố",
+    )
+
+    ward_code: Mapped[str] = mapped_column(
+        String(20),
+        ForeignKey("wards.code"),
+        nullable=False,
+        comment="Mã phường/xã",
+    )
+
+    address_line: Mapped[str] = mapped_column(
+        String(255),
+        nullable=False,
+        comment="Số nhà, tên đường, căn hộ...",
+    )
+
+    is_default: Mapped[bool] = mapped_column(
+        Boolean,
+        nullable=False,
+        default=False,
+        comment="Địa chỉ được chọn mặc định khi checkout",
+    )
+
     # Quan hệ ORM
     user = relationship("User", back_populates="shipping_addresses")
+    province: Mapped[Province] = relationship("Province", lazy="select")
+    ward: Mapped[Ward] = relationship("Ward", lazy="select")
+
+    @property
+    def province_name(self) -> str | None:
+        return self.province.name if self.province else None
+
+    @property
+    def ward_name(self) -> str | None:
+        return self.ward.name if self.ward else None
