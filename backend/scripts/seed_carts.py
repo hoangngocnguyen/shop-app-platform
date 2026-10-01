@@ -1,4 +1,5 @@
 from sqlalchemy.orm import Session
+
 from scripts.seed_users import CUSTOMER_USER_ID
 from src.app.modules.carts.model import Cart, CartItem
 
