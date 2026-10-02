@@ -36,3 +36,27 @@ class CategoryResponse(BaseModel):
             }
         },
     )
+
+
+class CategoryCreate(BaseModel):
+    """Schema nhận dữ liệu khi Admin tạo mới danh mục."""
+
+    category_name: str = Field(
+        ..., description="Tên danh mục mới", examples=["Điện thoại"]
+    )
+    parent_id: int | None = Field(
+        default=None, description="Mã danh mục cha", examples=[None]
+    )
+    slug: str | None = Field(
+        default=None, description="Đường dẫn tĩnh SEO", examples=["dien-thoai"]
+    )
+
+
+class CategoryUpdate(BaseModel):
+    """Schema nhận dữ liệu khi Admin cập nhật danh mục."""
+
+    category_name: str | None = Field(
+        default=None, description="Tên danh mục mới"
+    )
+    parent_id: int | None = Field(default=None, description="Mã danh mục cha mới")
+    slug: str | None = Field(default=None, description="Đường dẫn tĩnh SEO mới")
