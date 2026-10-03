@@ -1,36 +1,117 @@
 # 📖 QUY CHUẨN PHÁT TRIỂN BACKEND (BACKEND STANDARDS)
 
-> **Áp dụng cho**: Toàn bộ lập trình viên Backend (FastAPI / Python / SQLAlchemy 2.0).  
-> **Mục tiêu**: Đảm bảo mã nguồn nhất quán, chuẩn RESTful API, type-safe, xử lý lỗi đồng bộ và dễ bảo trì mở rộng.
+> **Áp dụng cho**: Toàn bộ lập trình viên Backend (FastAPI / Python / SQLAlchemy 2.0 / Pydantic V2).  
+> **Mục tiêu**: Đảm bảo mã nguồn nhất quán, chuẩn RESTful API, Type-Safe, cấu trúc phân tầng rõ ràng, cơ chế bảo mật (CORS, JWT, RBAC) và chuẩn hóa dữ liệu trả về 100%.
 
 ---
 
-## 1. Văn Hóa Viết Mã & Chú Thích (Code Comments & Type Hints)
+## 1. Cấu Trúc Thư Mục Backend Chuẩn (Layered Architecture)
 
-1. **Chú thích giải thích luồng nghiệp vụ**:
-   - Mọi hàm xử lý nghiệp vụ tại tầng `services/` và `routers/` **bắt buộc phải viết comment chú thích giải thích từng bước** (`# Bước 1: ...`, `# Bước 2: ...`).
-   - Giúp các thành viên trong team và người review code nắm bắt logic nhanh chóng mà không cần suy đoán.
-2. **Type Hints đầy đủ 100%**:
-   - Tất cả các hàm, phương thức (methods), tham số đầu vào và kiểu dữ liệu trả về đều phải khai báo Type Hints rõ ràng:
-   ```python
-   def get_product_by_id(db: Session, product_id: int) -> Product | None:
-       """Tra cuu san pham theo ID."""
-       # Buoc 1: Query tim san pham theo khoa chinh
-       return db.query(Product).filter(Product.product_id == product_id).first()
-   ```
+Toàn bộ Backend tuân thủ mô hình phân tầng chặt chẽ theo sơ đồ cây thư mục sau:
+
+```text
+backend/
+├── app/
+│   ├── core/                          # [HẠ TẦNG DÙNG CHUNG TOÀN HỆ THỐNG]
+│   │   ├── config.py                  # Đọc biến môi trường .env (DB URL, JWT Secret, App Port)
+│   │   ├── database.py                # Khởi tạo SQLAlchemy Engine, SessionLocal, Base
+│   │   ├── security.py                # Mã hóa mật khẩu (Passlib/Bcrypt), sinh và verify JWT token
+│   │   ├── deps.py                    # Dependencies tiêm vào API (get_db, get_current_user, require_role)
+│   │   ├── exceptions.py              # Custom Exception class & Đăng ký Global Exception Handlers
+│   │   ├── pagination.py              # Schema phân trang chuẩn (PaginationParams, PaginatedResponse)
+│   │   ├── response.py                # Standard API Response wrapper (ApiResponse, error format)
+│   │   └── logging.py                 # Cấu hình Structured Logging / Middleware ghi log request
+│   │
+│   ├── models/                        # [TẦNG CƠ SỞ DỮ LIỆU - SQLALCHEMY ORM]
+│   │   ├── base.py                    # Base model có id, created_at, updated_at
+│   │   ├── user.py
+│   │   ├── category.py
+│   │   ├── product.py
+│   │   └── order.py
+│   │
+│   ├── schemas/                       # [TẦNG DTO / VALIDATION - PYDANTIC]
+│   │   ├── common.py
+│   │   ├── user.py                    # UserCreate, UserUpdate, UserResponse
+│   │   ├── category.py                # CategoryCreate, CategoryResponse
+│   │   ├── product.py                 # ProductCreate, ProductFilter, ProductResponse
+│   │   └── dashboard.py               # DashboardOverviewResponse, RevenueStats
+│   │
+│   ├── services/                      # [TẦNG BUSINESS LOGIC - NGHIỆP VỤ]
+│   │   ├── category_service.py
+│   │   ├── product_service.py
+│   │   └── dashboard_service.py
+│   │
+│   └── routers/                       # [TẦNG CONTROLLER / API ENDPOINTS]
+│       ├── api_router.py              # Gom toàn bộ router con lại 1 chỗ
+│       ├── auth.py
+│       ├── categories.py
+│       ├── products.py
+│       └── dashboard.py
+│
+├── .env                               # File chứa secret keys, db credentials
+├── .env.example
+├── pyproject.toml                     # Cấu hình dependencies & uv package manager
+└── main.py                            # Entry point khởi chạy ứng dụng FastAPI
+```
 
 ---
 
-## 2. Phân Trang Chuẩn Hóa (Standard Pagination)
+## 2. Chuẩn Hóa API Response & Phân Trang (Standard API Response & Pagination)
 
-**Tất cả các API trả về danh sách** (`/products`, `/admin/products`, `/admin/categories`, `/orders`, `/shipping-addresses`,...) bắt buộc phải hỗ trợ phân trang.
+### 2.1. Wrapper Trả Về Dữ Liệu Đơn Lẻ (`app/core/response.py`)
+Mọi API trả về thành công đều được bọc trong class Generic `ApiResponse[T]`:
 
-### 2.1. Tham số Query đầu vào
-* `page`: Số trang hiện tại (Default = `1`, ràng buộc `ge=1`).
-* `page_size` (hoặc `limit`): Số lượng mục trên 1 trang (Default = `10` hoặc `20`, ràng buộc `ge=1, le=100`).
+```python
+# app/core/response.py
+from typing import Generic, TypeVar, Optional, Any
+from pydantic import BaseModel
 
-### 2.2. Cấu trúc JSON Response bắt buộc
-Mọi API danh sách phải trả về cấu trúc đồng nhất sau:
+T = TypeVar("T")
+
+class ApiResponse(BaseModel, Generic[T]):
+    """Chuẩn hóa cấu trúc trả về cho toàn bộ API đơn lẻ"""
+    success: bool = True
+    message: str = "Success"
+    data: Optional[T] = None
+```
+
+### 2.2. Schema Phân Trang & Helper (`app/core/pagination.py`)
+**Tất cả các API trả về danh sách** (`/products`, `/admin/products`, `/admin/categories`, `/orders`...) bắt buộc phải hỗ trợ phân trang:
+
+```python
+# app/core/pagination.py
+import math
+from typing import Generic, TypeVar, List
+from pydantic import BaseModel, Field
+
+T = TypeVar("T")
+
+class PaginationParams(BaseModel):
+    """Tham số Query đầu vào chuẩn cho phân trang"""
+    page: int = Field(default=1, ge=1, description="Trang hiện tại (bắt đầu từ 1)")
+    page_size: int = Field(default=10, ge=1, le=100, description="Số lượng mục mỗi trang (1-100)")
+
+class PaginatedResponse(BaseModel, Generic[T]):
+    """Cấu trúc dữ liệu trả về cho danh sách có phân trang"""
+    items: List[T]
+    total: int
+    page: int
+    page_size: int
+    total_pages: int
+
+def paginate_result(items: List[T], total: int, page: int, page_size: int) -> PaginatedResponse[T]:
+    """Hàm tiện ích gom nhóm dữ liệu và tính total_pages"""
+    total_pages = math.ceil(total / page_size) if total > 0 else 1
+    return PaginatedResponse(
+        items=items,
+        total=total,
+        page=page,
+        page_size=page_size,
+        total_pages=total_pages
+    )
+```
+
+#### Cấu trúc JSON Response trả về danh sách phân trang:
 ```json
 {
   "items": [
@@ -49,12 +130,60 @@ Mọi API danh sách phải trả về cấu trúc đồng nhất sau:
 
 ---
 
-## 3. Xử Lý Exception & HTTP Status Code Chuẩn
+## 3. Xử Lý Ngoại Lệ & Bắt Lỗi Toàn Cục (Custom Exceptions & Global Handlers)
 
-* **Tuyệt đối không trả về chuỗi text thuần túy** khi xảy ra lỗi.
-* Mọi lỗi nghiệp vụ (Không tìm thấy, sai mật khẩu, trùng slug, danh mục còn sản phẩm, hết hàng,...) bắt buộc phải raise **Custom Exception** kế thừa từ [`AppException`](file:///d:/Project/shop-app-platform/backend/src/app/core/exceptions.py).
+* **Tuyệt đối không trả về chuỗi text thuần túy khi có lỗi**.
+* Mọi lỗi nghiệp vụ (Không tìm thấy, sai mật khẩu, trùng slug, danh mục còn sản phẩm, hết hàng,...) bắt buộc phải raise **Custom Exception** kế thừa từ `AppException`.
 
-### 3.1. Bảng ánh xạ HTTP Status Code
+### 3.1. Định nghĩa Exception & Global Handler (`app/core/exceptions.py`)
+```python
+# app/core/exceptions.py
+from typing import Any
+from fastapi import FastAPI, Request, status
+from fastapi.responses import JSONResponse
+
+class AppException(Exception):
+    """Exception cha chứa mã lỗi HTTP và thông điệp chuẩn"""
+    def __init__(self, status_code: int, message: str, error_code: str = "BUSINESS_ERROR"):
+        self.status_code = status_code
+        self.message = message
+        self.error_code = error_code
+        super().__init__(message)
+
+class NotFoundException(AppException):
+    """Ngoại lệ khi không tìm thấy tài nguyên (404 Not Found)"""
+    def __init__(self, resource: str, id_or_slug: Any):
+        super().__init__(
+            status_code=status.HTTP_404_NOT_FOUND,
+            message=f"{resource} \x27{id_or_slug}\x27 không tồn tại",
+            error_code="NOT_FOUND"
+        )
+
+class DuplicateException(AppException):
+    """Ngoại lệ khi dữ liệu bị trùng lặp (400 Bad Request / 409 Conflict)"""
+    def __init__(self, field: str, value: str):
+        super().__init__(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            message=f"{field} \x27{value}\x27 đã tồn tại trong hệ thống",
+            error_code="DUPLICATE_ENTRY"
+        )
+
+def register_exception_handlers(app: FastAPI):
+    """Đăng ký bắt lỗi toàn cục vào instance FastAPI"""
+    @app.exception_handler(AppException)
+    async def handle_app_exception(request: Request, exc: AppException):
+        return JSONResponse(
+            status_code=exc.status_code,
+            content={
+                "success": False,
+                "error_code": exc.error_code,
+                "message": exc.message,
+                "data": None
+            }
+        )
+```
+
+### 3.2. Bảng Ánh Xạ HTTP Status Code Chuẩn
 
 | HTTP Status Code | Khi nào sử dụng? |
 | :--- | :--- |
@@ -64,237 +193,29 @@ Mọi API danh sách phải trả về cấu trúc đồng nhất sau:
 | **`401 Unauthorized`** | Chưa đăng nhập hoặc Token JWT không hợp lệ / hết hạn. |
 | **`403 Forbidden`** | Không có quyền truy cập (Người dùng thường cố truy cập route Admin). |
 | **`404 Not Found`** | Không tìm thấy tài nguyên theo ID hoặc Slug. |
-| **`409 Conflict`** | Dữ liệu bị xung đột hoặc trùng lặp (Email/Username đã tồn tại). |
 | **`422 Unprocessable Entity`** | Lỗi Schema Validation tự động từ Pydantic V2. |
 | **`500 Internal Server Error`** | Sự cố hệ thống nội bộ (Tự động log stacktrace qua Global Exception Handler). |
 
-### 3.2. Cấu trúc JSON trả về khi có lỗi
-```json
-{
-  "success": false,
-  "error_code": "DUPLICATE_SLUG",
-  "message": "Tên danh mục hoặc slug đã tồn tại",
-  "details": null,
-  "request_id": "c8a4df57-1234-4567-89ab-cdef01234567",
-  "timestamp": "2026-10-03T10:00:00.000Z"
-}
-```
-
 ---
 
-## 4. Validation & Input Sanitization Bằng Pydantic V2
+## 4. Bảo Mật, Whitelist CORS & Phân Quyền (Security, CORS & RBAC)
 
-Mọi dữ liệu đầu vào (Request Body, Query Params) bắt buộc phải được định nghĩa bằng Pydantic Schemas (`BaseModel`).
+> **So sánh với Spring Boot**: Trong Spring Boot bạn dùng `SecurityConfig.java` với `.requestMatchers("/public/**").permitAll()`. Trong FastAPI bạn dùng **CORS Middleware** kết hợp với **FastAPI Dependencies (`Depends`)**.
 
-### Ràng buộc nghiệp vụ bắt buộc:
-1. **Tiền tệ & Giá cả**: 
-   - `price > 0`, `sale_price <= price`.
-   - **Sử dụng `Decimal`**, tuyệt đối không dùng `float` để tránh sai số dấu phẩy động.
-2. **Tồn kho & Số lượng**: 
-   - `quantity >= 0` hoặc `stock >= 0`.
-3. **Chuỗi văn bản (Tên, Email, Mô tả)**: 
-   - Validate `min_length`, `max_length`.
-   - Luôn sử dụng validator tự động cắt khoảng trắng thừa (`.strip()`).
-4. **Đường dẫn tối ưu SEO (Slug)**: 
-   - Kiểm tra tính duy nhất (Uniqueness) trước khi lưu vào Database.
-
+### 4.1. Cấu hình Whitelist CORS & Exception Handler (`main.py`)
 ```python
-from decimal import Decimal
-from pydantic import BaseModel, Field, field_validator
-
-class ProductCreateRequest(BaseModel):
-    product_name: str = Field(..., min_length=2, max_length=255, description="Ten san pham")
-    price: Decimal = Field(..., gt=0, description="Gia ban goc phai lon hon 0")
-    sale_price: Decimal | None = Field(None, gt=0, description="Gia khuyen mai")
-    quantity: int = Field(default=0, ge=0, description="So luong ton kho khong duoc am")
-    category_id: int = Field(..., gt=0, description="ID danh muc truc thuoc")
-
-    @field_validator("product_name")
-    @classmethod
-    def strip_whitespaces(cls, v: str) -> str:
-        return v.strip()
-
-    @field_validator("sale_price")
-    @classmethod
-    def validate_sale_price(cls, v: Decimal | None, info) -> Decimal | None:
-        if v is not None and "price" in info.data and v > info.data["price"]:
-            raise ValueError("Gia khuyen mai khong duoc lon hon gia goc.")
-        return v
-```
-
----
-
-## 5. Cấu Trúc Thư Mục Backend Chuẩn (Layered / Clean Architecture)
-
-Để dự án mở rộng dễ dàng khi có nhiều thành viên tham gia, Backend được chia thành 2 tầng rõ rệt:
-
-```text
-backend/src/app/
-├── core/                      # Cấu hình chung toàn hệ thống
-│   ├── config.py              # Đọc biến môi trường (.env.local, Pydantic Settings)
-│   ├── database.py            # Engine, SessionLocal, Base, get_db()
-│   ├── logger.py              # Core Logger (Console màu sắc + File xoay vòng)
-│   ├── middleware.py          # Request Logging Middleware (Trace ID, Latency ms)
-│   └── exceptions.py          # Custom Business Exceptions & Global Exception Handlers
-│
-└── modules/                   # Các Module nghiệp vụ độc lập (Feature Domain)
-    ├── auth/                  # Xác thực tài khoản, JWT tokens, Login/Register
-    ├── categories/            # Quản lý danh mục sản phẩm đa cấp
-    ├── products/              # Quản lý sản phẩm, kho hàng, giá bán
-    ├── carts/                 # Giỏ hàng & mục giỏ hàng (Cart, CartItem)
-    ├── orders/                # Đơn hàng, chi tiết đơn hàng, nhật ký đơn
-    ├── shipper/               # Đơn vị vận chuyển
-    ├── users/                 # Quản lý người dùng, phân quyền
-    └── shipping_addresses/    # Sổ địa chỉ nhận hàng
-```
-
-### Cấu trúc bên trong mỗi Module:
-```text
-modules/<module_name>/
-├── __init__.py                # Export public API của module
-├── model.py                   # SQLAlchemy 2.0 ORM Model
-├── schema.py                  # Pydantic Schemas (Request/Response DTOs)
-├── service.py                 # Tầng logic nghiệp vụ (Business Logic)
-├── router.py                  # Tầng Controller (Endpoints & Swagger Annotations)
-└── repository.py              # Tầng truy vấn CSDL (CRUD Helpers nếu cần)
-```
-
----
-
-## 6. Chuẩn Hóa Generic API Response (API Response Standard)
-
-> **Tương đương trong Spring Boot**: `ResponseEntity<ApiResponse<T>>` hoặc `BaseResponse<T>`.
-
-Để Frontend nhận dữ liệu luôn nhất quán, tất cả API trả về thành công đều phải tuân theo cấu trúc Generic DTO:
-
-### 6.1. Định nghĩa Generic Schemas (`src/app/core/responses.py`)
-```python
-from typing import Generic, TypeVar
-from pydantic import BaseModel
-
-T = TypeVar("T")
-
-class BaseResponse(BaseModel):
-    """Response co so cho cac API khong tra ve data (hoac thong bao chung)."""
-    success: bool = True
-    message: str = "Thao tác thành công."
-
-class DataResponse(BaseResponse, Generic[T]):
-    """Response chuan hoa tra ve 1 Object du lieu."""
-    data: T
-
-class PaginatedResponse(BaseModel, Generic[T]):
-    """Response chuan hoa cho danh sach co phan trang."""
-    items: list[T]
-    total: int
-    page: int
-    page_size: int
-    total_pages: int
-```
-
-### 6.2. Ví dụ Sử Dụng Trong Router
-```python
-@router.get("/{product_id}", response_model=DataResponse[ProductResponse])
-def get_product_detail(product_id: int, db: Session = Depends(get_db)):
-    product = productService.get_by_id(db, product_id)
-    return DataResponse(
-        message="Lấy chi tiết sản phẩm thành công.",
-        data=product
-    )
-```
-
----
-
-## 7. Kiến Trúc Bảo Mật & Phân Quyền (Security & RBAC)
-
-> **Tương đương trong Spring Boot**: `SecurityConfig` / `SecurityFilterChain` + `@PreAuthorize("hasRole('ADMIN')")`.
-
-Trong FastAPI, toàn bộ cơ chế bảo mật và phân quyền được hiện thực hóa qua **`src/app/core/security.py`** và **FastAPI Dependency Injection (`Depends`)**.
-
-### 7.1. Băm Mật Khẩu & Tạo Token JWT (`src/app/core/security.py`)
-* **Mật khẩu**: Bắt buộc sử dụng thuật toán băm an toàn **Bcrypt** hoặc **Argon2** (`passlib.context.CryptContext`).
-* **JWT Access Token**: Thời hạn sống ngắn (15 - 60 phút) để giảm thiểu rủi ro khi bị lộ token.
-* **JWT Refresh Token**: Thời hạn sống dài (7 - 30 ngày), lưu mã trong bảng [`refresh_token`](file:///d:/Project/shop-app-platform/backend/src/app/modules/auth/model.py) để hỗ trợ tính năng thu hồi quyền / Force Logout.
-
-```python
-from datetime import datetime, timedelta
-from passlib.context import CryptContext
-import jwt
-
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-
-def hash_password(password: str) -> str:
-    """Ma hoa mat khau bang Bcrypt."""
-    return pwd_context.hash(password)
-
-def verify_password(plain_password: str, hashed_password: str) -> bool:
-    """Kiem tra mat khau goc voi chuoi da bam."""
-    return pwd_context.verify(plain_password, hashed_password)
-
-def create_access_token(data: dict, expires_delta: timedelta | None = None) -> str:
-    """Sinh JWT Access Token."""
-    to_encode = data.copy()
-    expire = datetime.utcnow() + (expires_delta or timedelta(minutes=60))
-    to_encode.update({"exp": expire})
-    return jwt.encode(to_encode, settings.SECRET_KEY, algorithm="HS256")
-```
-
-### 7.2. Phân Quyền Vai Trò Người Dùng (Role-Based Access Control - RBAC)
-Sử dụng Dependencies để bảo vệ các Endpoint theo từng cấp độ quyền:
-
-```python
-from fastapi import Depends, status
-from fastapi.security import OAuth2PasswordBearer
-from src.app.core.exceptions import UnauthorizedException, ForbiddenException
-
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/auth/login")
-
-def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)) -> User:
-    """1. Xac thuc Token va lay thong tin User (Tuong duong AuthenticationPrincipal)."""
-    payload = verify_jwt_token(token)
-    user = userService.get_by_id(db, user_id=payload.get("sub"))
-    if not user:
-        raise UnauthorizedException("Tài khoản không tồn tại.")
-    if user.is_blocked:
-        raise ForbiddenException("Tài khoản của bạn đã bị khóa.")
-    return user
-
-def require_roles(allowed_roles: list[str]):
-    """2. Kiem tra Role (Tuong duong @PreAuthorize(\"hasRole('ADMIN')\"))."""
-    def role_checker(current_user: User = Depends(get_current_user)) -> User:
-        if current_user.role.name not in allowed_roles:
-            raise ForbiddenException(f"Quyền truy cập bị từ chối. Yêu cầu một trong các vai trò: {allowed_roles}")
-        return current_user
-    return role_checker
-```
-
-### 7.3. Áp dụng bảo vệ Router:
-```python
-# API cong khai cho moi nguoi
-@router.get("/products")
-def list_products(): ...
-
-# API chi danh cho nguoi dung da dang nhap
-@router.get("/users/me")
-def get_profile(current_user: User = Depends(get_current_user)): ...
-
-# API chi danh cho Admin (Tuong duong @PreAuthorize(\"hasRole('ROLE_ADMIN')\"))
-@router.post("/admin/categories", dependencies=[Depends(require_roles(["ROLE_ADMIN"]))])
-def create_category(...): ...
-```
-
----
-
-## 8. Cấu Hình CORS & Header An Toàn (CORS & Security Middleware)
-
-Trong [`src/app/main.py`](file:///d:/Project/shop-app-platform/backend/src/app/main.py), luôn cấu hình đầy đủ `CORSMiddleware` để kết nối an toàn với Next.js Frontend:
-
-```python
+# main.py
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from app.core.exceptions import register_exception_handlers
+from app.routers.api_router import api_router
 
+app = FastAPI(title="ShopApp API", version="1.0.0")
+
+# Whitelist các domain Frontend được phép truy cập
 origins = [
-    "http://localhost:3000",   # Next.js Local Dev
-    "https://your-domain.com", # Production Frontend
+    "http://localhost:3000",        # Next.js local dev
+    "https://your-production-app.com"
 ]
 
 app.add_middleware(
@@ -303,6 +224,63 @@ app.add_middleware(
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
-    expose_headers=["X-Request-ID", "X-Process-Time"],
 )
+
+# Đăng ký bắt lỗi tập trung
+register_exception_handlers(app)
+
+# Gắn toàn bộ router
+app.include_router(api_router, prefix="/api")
 ```
+
+### 4.2. Phân Quyền Theo Endpoint Bằng Dependencies (`app/core/deps.py`)
+```python
+# app/core/deps.py
+from fastapi import Depends, HTTPException, status
+from fastapi.security import OAuth2PasswordBearer
+from app.core.security import verify_jwt_token
+from app.models.user import User
+
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/auth/login")
+
+async def get_current_user(token: str = Depends(oauth2_scheme)) -> User:
+    """Dependency trích xuất User từ JWT Header"""
+    user = verify_jwt_token(token)
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Phiên đăng nhập đã hết hạn hoặc không hợp lệ"
+        )
+    return user
+
+def require_role(required_role: str):
+    """Dependency kiểm tra quyền Admin hoặc User"""
+    async def role_checker(current_user: User = Depends(get_current_user)):
+        if current_user.role != required_role:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Bạn không có quyền thực hiện hành động này"
+            )
+        return current_user
+    return role_checker
+```
+
+### 4.3. Quy Tắc Gắn Quyền Vào Router:
+
+| Loại Endpoint | Cơ chế bảo vệ | Ví dụ Router |
+| :--- | :--- | :--- |
+| **Công khai (Public)** | **Không truyền `Depends(get_current_user)`** (Ai cũng xem được). | `@router.get("/products")`, `@router.get("/categories")` |
+| **Đã Đăng Nhập (Authenticated)** | Gắn `current_user: User = Depends(get_current_user)`. | `@router.get("/users/me")`, `@router.post("/orders")` |
+| **Quản Trị Viên (Admin Only)** | Gắn `dependencies=[Depends(require_role("ADMIN"))]`. | `@router.post("/admin/products")`, `@router.get("/admin/statistic")` |
+
+---
+
+## 5. Văn Hóa Viết Mã & Validation Pydantic V2
+
+1. **Chú thích luồng nghiệp vụ**: Mọi hàm xử lý nghiệp vụ tại `services/` và `routers/` bắt buộc comment từng bước (`# Bước 1: ...`, `# Bước 2: ...`).
+2. **Type Hints đầy đủ**: 100% tham số và giá trị trả về có Type Hints.
+3. **Validation Pydantic V2**:
+   - **Tiền tệ**: Dùng `Decimal`, `gt=0` (không dùng float).
+   - **Tồn kho**: `ge=0`.
+   - **Chuỗi văn bản**: Validate `min_length`, `max_length`, tự động `.strip()`.
+   - **Slug**: Kiểm tra duy nhất trước khi lưu DB.
