@@ -158,3 +158,151 @@ modules/<module_name>/
 ├── router.py                  # Tầng Controller (Endpoints & Swagger Annotations)
 └── repository.py              # Tầng truy vấn CSDL (CRUD Helpers nếu cần)
 ```
+
+---
+
+## 6. Chuẩn Hóa Generic API Response (API Response Standard)
+
+> **Tương đương trong Spring Boot**: `ResponseEntity<ApiResponse<T>>` hoặc `BaseResponse<T>`.
+
+Để Frontend nhận dữ liệu luôn nhất quán, tất cả API trả về thành công đều phải tuân theo cấu trúc Generic DTO:
+
+### 6.1. Định nghĩa Generic Schemas (`src/app/core/responses.py`)
+```python
+from typing import Generic, TypeVar
+from pydantic import BaseModel
+
+T = TypeVar("T")
+
+class BaseResponse(BaseModel):
+    """Response co so cho cac API khong tra ve data (hoac thong bao chung)."""
+    success: bool = True
+    message: str = "Thao tác thành công."
+
+class DataResponse(BaseResponse, Generic[T]):
+    """Response chuan hoa tra ve 1 Object du lieu."""
+    data: T
+
+class PaginatedResponse(BaseModel, Generic[T]):
+    """Response chuan hoa cho danh sach co phan trang."""
+    items: list[T]
+    total: int
+    page: int
+    page_size: int
+    total_pages: int
+```
+
+### 6.2. Ví dụ Sử Dụng Trong Router
+```python
+@router.get("/{product_id}", response_model=DataResponse[ProductResponse])
+def get_product_detail(product_id: int, db: Session = Depends(get_db)):
+    product = productService.get_by_id(db, product_id)
+    return DataResponse(
+        message="Lấy chi tiết sản phẩm thành công.",
+        data=product
+    )
+```
+
+---
+
+## 7. Kiến Trúc Bảo Mật & Phân Quyền (Security & RBAC)
+
+> **Tương đương trong Spring Boot**: `SecurityConfig` / `SecurityFilterChain` + `@PreAuthorize("hasRole('ADMIN')")`.
+
+Trong FastAPI, toàn bộ cơ chế bảo mật và phân quyền được hiện thực hóa qua **`src/app/core/security.py`** và **FastAPI Dependency Injection (`Depends`)**.
+
+### 7.1. Băm Mật Khẩu & Tạo Token JWT (`src/app/core/security.py`)
+* **Mật khẩu**: Bắt buộc sử dụng thuật toán băm an toàn **Bcrypt** hoặc **Argon2** (`passlib.context.CryptContext`).
+* **JWT Access Token**: Thời hạn sống ngắn (15 - 60 phút) để giảm thiểu rủi ro khi bị lộ token.
+* **JWT Refresh Token**: Thời hạn sống dài (7 - 30 ngày), lưu mã trong bảng [`refresh_token`](file:///d:/Project/shop-app-platform/backend/src/app/modules/auth/model.py) để hỗ trợ tính năng thu hồi quyền / Force Logout.
+
+```python
+from datetime import datetime, timedelta
+from passlib.context import CryptContext
+import jwt
+
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
+def hash_password(password: str) -> str:
+    """Ma hoa mat khau bang Bcrypt."""
+    return pwd_context.hash(password)
+
+def verify_password(plain_password: str, hashed_password: str) -> bool:
+    """Kiem tra mat khau goc voi chuoi da bam."""
+    return pwd_context.verify(plain_password, hashed_password)
+
+def create_access_token(data: dict, expires_delta: timedelta | None = None) -> str:
+    """Sinh JWT Access Token."""
+    to_encode = data.copy()
+    expire = datetime.utcnow() + (expires_delta or timedelta(minutes=60))
+    to_encode.update({"exp": expire})
+    return jwt.encode(to_encode, settings.SECRET_KEY, algorithm="HS256")
+```
+
+### 7.2. Phân Quyền Vai Trò Người Dùng (Role-Based Access Control - RBAC)
+Sử dụng Dependencies để bảo vệ các Endpoint theo từng cấp độ quyền:
+
+```python
+from fastapi import Depends, status
+from fastapi.security import OAuth2PasswordBearer
+from src.app.core.exceptions import UnauthorizedException, ForbiddenException
+
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/auth/login")
+
+def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)) -> User:
+    """1. Xac thuc Token va lay thong tin User (Tuong duong AuthenticationPrincipal)."""
+    payload = verify_jwt_token(token)
+    user = userService.get_by_id(db, user_id=payload.get("sub"))
+    if not user:
+        raise UnauthorizedException("Tài khoản không tồn tại.")
+    if user.is_blocked:
+        raise ForbiddenException("Tài khoản của bạn đã bị khóa.")
+    return user
+
+def require_roles(allowed_roles: list[str]):
+    """2. Kiem tra Role (Tuong duong @PreAuthorize(\"hasRole('ADMIN')\"))."""
+    def role_checker(current_user: User = Depends(get_current_user)) -> User:
+        if current_user.role.name not in allowed_roles:
+            raise ForbiddenException(f"Quyền truy cập bị từ chối. Yêu cầu một trong các vai trò: {allowed_roles}")
+        return current_user
+    return role_checker
+```
+
+### 7.3. Áp dụng bảo vệ Router:
+```python
+# API cong khai cho moi nguoi
+@router.get("/products")
+def list_products(): ...
+
+# API chi danh cho nguoi dung da dang nhap
+@router.get("/users/me")
+def get_profile(current_user: User = Depends(get_current_user)): ...
+
+# API chi danh cho Admin (Tuong duong @PreAuthorize(\"hasRole('ROLE_ADMIN')\"))
+@router.post("/admin/categories", dependencies=[Depends(require_roles(["ROLE_ADMIN"]))])
+def create_category(...): ...
+```
+
+---
+
+## 8. Cấu Hình CORS & Header An Toàn (CORS & Security Middleware)
+
+Trong [`src/app/main.py`](file:///d:/Project/shop-app-platform/backend/src/app/main.py), luôn cấu hình đầy đủ `CORSMiddleware` để kết nối an toàn với Next.js Frontend:
+
+```python
+from fastapi.middleware.cors import CORSMiddleware
+
+origins = [
+    "http://localhost:3000",   # Next.js Local Dev
+    "https://your-domain.com", # Production Frontend
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+    expose_headers=["X-Request-ID", "X-Process-Time"],
+)
+```
