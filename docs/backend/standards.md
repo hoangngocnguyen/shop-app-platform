@@ -164,8 +164,26 @@ class DuplicateException(AppException):
     def __init__(self, field: str, value: str):
         super().__init__(
             status_code=status.HTTP_400_BAD_REQUEST,
-            message=f"{field} \x27{value}\x27 đã tồn tại trong hệ thống",
+            message=f"{field} '{value}' đã tồn tại trong hệ thống",
             error_code="DUPLICATE_ENTRY"
+        )
+
+class UnauthorizedException(AppException):
+    """Ngoại lệ khi chưa xác thực danh tính (401 Unauthorized)"""
+    def __init__(self, message: str = "Phiên đăng nhập đã hết hạn hoặc không hợp lệ"):
+        super().__init__(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            message=message,
+            error_code="UNAUTHORIZED"
+        )
+
+class ForbiddenException(AppException):
+    """Ngoại lệ khi không đủ quyền truy cập (403 Forbidden)"""
+    def __init__(self, message: str = "Bạn không có quyền thực hiện hành động này"):
+        super().__init__(
+            status_code=status.HTTP_403_FORBIDDEN,
+            message=message,
+            error_code="FORBIDDEN"
         )
 
 def register_exception_handlers(app: FastAPI):
@@ -236,31 +254,32 @@ app.include_router(api_router, prefix="/api")
 ### 4.2. Phân Quyền Theo Endpoint Bằng Dependencies (`app/core/deps.py`)
 ```python
 # app/core/deps.py
-from fastapi import Depends, HTTPException, status
-from fastapi.security import OAuth2PasswordBearer
-from app.core.security import verify_jwt_token
-from app.models.user import User
+from uuid import UUID
+from fastapi import Depends
+from sqlalchemy.orm import Session
+from app.core.database import get_db
+from app.core.auth import get_current_auth_id
+from app.core.exceptions import ForbiddenException, UnauthorizedException
+from app.modules.users.model import User
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/auth/login")
-
-async def get_current_user(token: str = Depends(oauth2_scheme)) -> User:
-    """Dependency trích xuất User từ JWT Header"""
-    user = verify_jwt_token(token)
+async def get_current_user(
+    auth_id: UUID = Depends(get_current_auth_id),
+    db: Session = Depends(get_db)
+) -> User:
+    """Dependency trích xuất User từ Supabase Auth JWT"""
+    user = db.query(User).filter(User.auth_user_id == auth_id).first()
     if not user:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Phiên đăng nhập đã hết hạn hoặc không hợp lệ"
-        )
+        raise UnauthorizedException("Tài khoản chưa được đồng bộ vào hệ thống database")
+    if user.is_blocked:
+        raise ForbiddenException("Tài khoản của bạn đã bị khóa")
     return user
 
 def require_role(required_role: str):
-    """Dependency kiểm tra quyền Admin hoặc User"""
+    """Dependency kiểm tra vai trò (ADMIN, USER, STAFF)"""
     async def role_checker(current_user: User = Depends(get_current_user)):
-        if current_user.role != required_role:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="Bạn không có quyền thực hiện hành động này"
-            )
+        # Kiểm tra mã vai trò code (ADMIN, USER, STAFF)
+        if not current_user.role or current_user.role.code != required_role:
+            raise ForbiddenException("Bạn không có quyền thực hiện hành động này")
         return current_user
     return role_checker
 ```
