@@ -198,7 +198,7 @@ Seed được chạy **sau migration** vì các bảng database phải tồn t�
 Trong thư mục `backend`:
 
 ```bash
-uv run uvicorn app.main:app --reload
+uv run uvicorn src.app.main:app --reload
 ```
 
 Backend mặc định chạy tại:
@@ -338,7 +338,7 @@ uv run python -m scripts.seed
 ### 11.6. Chạy backend
 
 ```bash
-uv run uvicorn app.main:app --reload
+uv run uvicorn src.app.main:app --reload
 ```
 
 Sau đó mở terminal mới để chạy frontend:
