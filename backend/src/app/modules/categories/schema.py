@@ -1,8 +1,13 @@
 from pydantic import BaseModel, ConfigDict, Field
 
 
+# ==============================================================================
+# 1. SCHEMAS CHO PHÂN HỆ CLIENT / PUBLIC CATEGORIES
+# ==============================================================================
 class CategoryResponse(BaseModel):
-    """Schema đại diện cho thông tin danh mục sản phẩm."""
+    """
+    Schema đại diện cho thông tin danh mục sản phẩm chuẩn hóa.
+    """
 
     category_id: int = Field(
         ...,
@@ -16,7 +21,7 @@ class CategoryResponse(BaseModel):
     )
     parent_id: int | None = Field(
         default=None,
-        description="Mã danh mục cha (dành cho danh mục phân cấp đa tầng, null nếu là danh mục gốc)",
+        description="Mã danh mục cha (null nếu là danh mục gốc)",
         examples=[None],
     )
     slug: str = Field(
@@ -35,4 +40,15 @@ class CategoryResponse(BaseModel):
                 "slug": "dien-thoai",
             }
         },
+    )
+
+
+class CategoryTreeResponse(CategoryResponse):
+    """
+    Schema danh mục dạng cây đa cấp (chứa danh sách danh mục con).
+    """
+
+    children: list[CategoryResponse] = Field(
+        default_factory=list,
+        description="Danh sách danh mục con trực thuộc",
     )
