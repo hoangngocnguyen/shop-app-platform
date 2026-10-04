@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import { ProvinceResponse, WardResponse } from "../types";
 import { locationApi } from "../api";
-import { parseError } from "@/lib/axios/parseError";
+import { parseErrorMessage } from "@/lib/axios/parseError";
 
 interface LocationState {
     provinces: ProvinceResponse[];
@@ -53,7 +53,7 @@ export const useLocationStore = create<LocationState>((set, get) => ({
             set({ provinces, isLoadingProvinces: false });
             return provinces;
         } catch (err: unknown) {
-            const errorMessage = parseError(err, "Không thể lấy danh sách Tỉnh/Thành phố");
+            const errorMessage = parseErrorMessage(err, "Không thể lấy danh sách Tỉnh/Thành phố");
             set({ error: errorMessage, isLoadingProvinces: false });
             return null;
         }
@@ -72,7 +72,7 @@ export const useLocationStore = create<LocationState>((set, get) => ({
             set({ wards, isLoadingWards: false });
             return wards;
         } catch (err: unknown) {
-            const errorMessage = parseError(err, "Không thể lấy danh sách Phường/Xã");
+            const errorMessage = parseErrorMessage(err, "Không thể lấy danh sách Phường/Xã");
             set({ error: errorMessage, wards: [], isLoadingWards: false });
             return null;
         }

@@ -7,8 +7,8 @@ import { useShippingAddressStore } from "@/features/shipping-address/stores";
 import { ShippingAddressCreate, ShippingAddressResponse, ShippingAddressUpdate } from "@/features/shipping-address/types";
 import AddressFormModal from "@/features/shipping-address/components/AddressFormModal";
 import { toast } from "@/common/stores/useToastStore";
-import { parseError } from "@/lib/axios/parseError";
 import { confirm } from "@/common/stores/useConfirmStore";
+import { parseErrorMessage } from "@/lib/axios/parseError";
 
 export default function ShippingAddressPage() {
     const {
@@ -85,7 +85,7 @@ export default function ShippingAddressPage() {
             await fetchUserAddresses();
         } catch (err: unknown) {
             console.error("Lỗi khi xóa địa chỉ:", err);
-            const errorMessage = parseError(err, "Không thể xóa địa chỉ này!");
+            const errorMessage = parseErrorMessage(err, "Không thể xóa địa chỉ này!");
             toast.error(errorMessage);
         } finally {
             setDeletingId(null);
