@@ -17,6 +17,9 @@ def main():
     try:
         print("Starting database seeding...")
 
+        # Location don vi hanh chinh
+        seed_locations(db)
+
         # 1. Nhom Vai tro & Nguoi dung
         seed_roles(db)
         seed_users(db)
@@ -32,9 +35,6 @@ def main():
         # 4. Nhom Van chuyen & Don hang
         seed_shippers(db)
         seed_orders(db)
-
-        # 5. Location don vi hanh chinh
-        seed_locations(db)
 
         db.commit()
         print("Database seeded successfully.")
