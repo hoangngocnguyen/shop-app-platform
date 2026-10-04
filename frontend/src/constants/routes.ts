@@ -4,4 +4,8 @@ export const ROUTES = {
     LOGIN: '/login',
     REGISTER: '/register',
   },
+  USER: {
+    PROFILE: '/user/profile',
+    ADDRESS: '/user/shipping-address'
+  }
 } as const;
