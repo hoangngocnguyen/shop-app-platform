@@ -1,3 +1,4 @@
+from src.app.modules.products.admin_router import admin_product_router
 from src.app.modules.products.model import Product
 from src.app.modules.products.router import router as products_router
 from src.app.modules.products.schema import (
@@ -20,4 +21,5 @@ __all__ = [
     "BulkDeleteProductRequest",
     "ProductService",
     "products_router",
+    "admin_product_router",
 ]
