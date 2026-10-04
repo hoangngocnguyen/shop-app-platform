@@ -1,17 +1,48 @@
 import axios from "axios";
+import type { ApiErrorResponse } from "@/types/api";
 
-// 1. Định nghĩa Type cho API Error tương ứng với response từ backend
-export interface ApiError {
+export interface ParsedError {
     message: string;
-    status: number;
-    errors?: Record<string, string> | null;
-    timestamp: number;
+    errorCode: string;
+    errors: Record<string, string>;
 }
 
-// 2. Logic xử lý hiện tại chỉ lấy message, fall back nếu không có message
-export const parseError = (err: unknown, fallback: string): string => {
-    if (axios.isAxiosError<ApiError>(err)) {
-        return err.response?.data?.message || fallback;
+export const parseError = (
+    err: unknown,
+    fallback = "Đã xảy ra lỗi, vui lòng thử lại sau."
+): ParsedError => {
+    if (axios.isAxiosError<ApiErrorResponse>(err) && err.response?.data) {
+        const data = err.response.data;
+        return {
+            message: data.message || fallback,
+            errorCode: data.error_code || "BUSINESS_ERROR",
+            errors: data.errors || {},
+        };
     }
-    return fallback;
+
+    if (axios.isAxiosError(err) && !err.response) {
+        return {
+            message: "Không thể kết nối đến máy chủ. Vui lòng kiểm tra lại mạng.",
+            errorCode: "NETWORK_ERROR",
+            errors: {},
+        };
+    }
+
+    if (err instanceof Error) {
+        return {
+            message: err.message || fallback,
+            errorCode: "CLIENT_ERROR",
+            errors: {},
+        };
+    }
+
+    return {
+        message: fallback,
+        errorCode: "UNKNOWN_ERROR",
+        errors: {},
+    };
+};
+
+export const parseErrorMessage = (err: unknown, fallback = "Đã xảy ra lỗi"): string => {
+    return parseError(err, fallback).message;
 };
