@@ -1,6 +1,7 @@
 from fastapi import APIRouter
 
 from src.app.modules.auth.router import router as auth_router
+from src.app.modules.categories.router import router as categories_router
 from src.app.modules.locations.router import router as locations_router
 from src.app.modules.media import media_router
 from src.app.modules.products.router import router as products_router
@@ -15,6 +16,7 @@ api_v1_router = APIRouter(prefix="/api/v1")
 # Nối các router từ từng module vào
 api_v1_router.include_router(media_router)
 api_v1_router.include_router(products_router)
+api_v1_router.include_router(categories_router)
 api_v1_router.include_router(auth_router)
 api_v1_router.include_router(locations_router)
 api_v1_router.include_router(users_router)
