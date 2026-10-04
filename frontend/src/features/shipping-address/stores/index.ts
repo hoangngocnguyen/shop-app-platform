@@ -5,7 +5,7 @@ import {
     ShippingAddressUpdate,
 } from "../types";
 import { shippingAddressApi } from "../api";
-import { parseError } from "@/lib/axios/parseError";
+import { parseErrorMessage } from "@/lib/axios/parseError";
 
 interface ShippingAddressState {
     addresses: ShippingAddressResponse[];
@@ -54,7 +54,7 @@ export const useShippingAddressStore = create<ShippingAddressState>((set) => ({
             set({ addresses, isLoading: false });
             return addresses;
         } catch (err: unknown) {
-            const errorMessage = parseError
+            const errorMessage = parseErrorMessage
                 (err, "Không thể lấy danh sách địa chỉ giao hàng");
             set({ error: errorMessage, isLoading: false });
             return null;
@@ -69,7 +69,7 @@ export const useShippingAddressStore = create<ShippingAddressState>((set) => ({
             set({ selectedAddress: address, isLoading: false });
             return address;
         } catch (err: unknown) {
-            const errorMessage = parseError(err, "Không thể lấy thông tin chi tiết địa chỉ");
+            const errorMessage = parseErrorMessage(err, "Không thể lấy thông tin chi tiết địa chỉ");
             set({ error: errorMessage, isLoading: false });
             return null;
         }
@@ -86,7 +86,7 @@ export const useShippingAddressStore = create<ShippingAddressState>((set) => ({
             }));
             return newAddress;
         } catch (err: unknown) {
-            const errorMessage = parseError(err, "Không thể tạo địa chỉ giao hàng mới");
+            const errorMessage = parseErrorMessage(err, "Không thể tạo địa chỉ giao hàng mới");
             set({ error: errorMessage, isLoading: false });
             return null;
         }
@@ -109,7 +109,7 @@ export const useShippingAddressStore = create<ShippingAddressState>((set) => ({
             }));
             return updatedAddress;
         } catch (err: unknown) {
-            const errorMessage = parseError(err, "Không thể cập nhật địa chỉ giao hàng");
+            const errorMessage = parseErrorMessage(err, "Không thể cập nhật địa chỉ giao hàng");
             set({ error: errorMessage, isLoading: false });
             return null;
         }
@@ -128,7 +128,7 @@ export const useShippingAddressStore = create<ShippingAddressState>((set) => ({
             }));
             return true;
         } catch (err: unknown) {
-            const errorMessage = parseError(err, "Không thể xóa địa chỉ giao hàng");
+            const errorMessage = parseErrorMessage(err, "Không thể xóa địa chỉ giao hàng");
             set({ error: errorMessage, isLoading: false });
             return false;
         }
