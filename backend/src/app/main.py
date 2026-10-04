@@ -1,20 +1,10 @@
 from contextlib import asynccontextmanager
 
-import cloudinary.exceptions
 from fastapi import FastAPI
-from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
-from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from src.app.api.v1.router import api_v1_router
-from src.app.core.exceptions import (
-    CustomException,
-    cloudinary_exception_handler,
-    custom_exception_handler,
-    global_exception_handler,
-    http_exception_handler,
-    validation_exception_handler,
-)
+from src.app.core.exceptions import register_exception_handlers
 from src.app.modules.media.config import setup_cloudinary
 
 
@@ -47,11 +37,8 @@ app.add_middleware(
     allow_headers=["Authorization", "Content-Type"],
 )
 
-app.add_exception_handler(CustomException, custom_exception_handler)
-app.add_exception_handler(RequestValidationError, validation_exception_handler)
-app.add_exception_handler(StarletteHTTPException, http_exception_handler)
-app.add_exception_handler(cloudinary.exceptions.Error, cloudinary_exception_handler)
-app.add_exception_handler(Exception, global_exception_handler)
+# [REFACTOR: Đăng ký tập trung toàn bộ Exception Handlers thay vì add thủ công từng handler]
+register_exception_handlers(app)
 
 
 @app.get("/")
