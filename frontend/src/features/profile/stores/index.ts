@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import { userApi } from "../api";
 import { UserProfileResponse, UpdateUserRequest } from "../types";
-import { parseError } from "@/lib/axios/parseError";
+import { parseErrorMessage } from "@/lib/axios/parseError";
 
 interface ProfileState {
     profile: UserProfileResponse | null;
@@ -38,7 +38,7 @@ export const useProfileStore = create<ProfileState>((set, get) => ({
             set({ profile, isLoading: false });
             return profile;
         } catch (err: unknown) {
-            const errorMessage = parseError(err, "Không thể lấy thông tin profile");
+            const errorMessage = parseErrorMessage(err, "Không thể lấy thông tin profile");
             set({ error: errorMessage, isLoading: false });
             return null;
         }
@@ -52,7 +52,7 @@ export const useProfileStore = create<ProfileState>((set, get) => ({
             set({ profile: updatedProfile, isLoading: false });
             return updatedProfile;
         } catch (err: unknown) {
-            const errorMessage = parseError(err, "Không thể cập nhật profile");
+            const errorMessage = parseErrorMessage(err, "Không thể cập nhật profile");
             set({ error: errorMessage, isLoading: false });
             return null;
         }
@@ -76,7 +76,7 @@ export const useProfileStore = create<ProfileState>((set, get) => ({
 
             return res.avatar_url ?? null;
         } catch (err: unknown) {
-            const errorMessage = parseError(err, "Không thể tải lên avatar");
+            const errorMessage = parseErrorMessage(err, "Không thể tải lên avatar");
             set({ error: errorMessage, isLoading: false });
             return null;
         }
@@ -98,7 +98,7 @@ export const useProfileStore = create<ProfileState>((set, get) => ({
                 set({ isLoading: false });
             }
         } catch (err: unknown) {
-            const errorMessage = parseError(err, "Không thể xóa avatar");
+            const errorMessage = parseErrorMessage(err, "Không thể xóa avatar");
             set({ error: errorMessage, isLoading: false });
         }
     },
