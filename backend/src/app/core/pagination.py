@@ -1,6 +1,6 @@
 import math
 from typing import Generic, Sequence, TypeVar
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy import Select, func, select
 from sqlalchemy.orm import Session
 
@@ -42,6 +42,8 @@ class PaginatedResponse(BaseModel, Generic[T]):
     page: int = Field(description="Trang hiện tại")
     page_size: int = Field(description="Số lượng bản ghi trên một trang")
     total_pages: int = Field(description="Tổng số trang")
+
+    model_config = ConfigDict(from_attributes=True, arbitrary_types_allowed=True)
 
 
 def paginate_list(
