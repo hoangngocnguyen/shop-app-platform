@@ -1,27 +1,9 @@
-from uuid import UUID
+"""
+[REFACTOR & COMPATIBILITY]: Module dep.py của users.
+Đã chuyển toàn bộ logic xác thực sang `src.app.core.deps` để dùng chung cho toàn bộ dự án.
+File này re-export lại để tương thích ngược 100% với các import cũ.
+"""
 
-from fastapi import Depends, HTTPException, status
-from sqlalchemy.orm import Session
+from src.app.core.deps import get_current_user, get_current_user_id
 
-from src.app.core.auth import get_current_auth_id
-from src.app.core.database import get_db
-from src.app.modules.users.model import User
-
-
-async def get_current_user(
-    auth_id: UUID = Depends(get_current_auth_id),
-    db: Session = Depends(get_db),
-) -> User:
-    user = db.query(User).filter(User.auth_user_id == auth_id).first()
-    if not user:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Tài khoản chưa được đồng bộ vào hệ thống database",
-        )
-    return user
-
-
-async def get_current_user_id(
-    current_user: User = Depends(get_current_user),
-) -> UUID:
-    return current_user.user_id
+__all__ = ["get_current_user", "get_current_user_id"]
