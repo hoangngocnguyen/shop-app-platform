@@ -24,17 +24,35 @@ import { useProfileStore } from "@/features/profile/stores";
 import EditProfileModal from "@/features/profile/components/EditProfileModal";
 import UpdateAvatarModal from "@/features/profile/components/UpdateAvatarModal";
 import { useAuthStore } from "@/features/auth";
+import { confirm } from "@/common/stores/useConfirmStore";
+import { toast } from "@/common/stores/useToastStore";
+import { parseErrorMessage } from "@/lib/axios/parseError";
+import { useRouter } from "next/navigation";
 
 export default function UserProfilePage() {
     const { profile, isLoading, error, fetchProfile, deleteAvatar } = useProfileStore();
 
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [isAvatarModalOpen, setIsAvatarModalOpen] = useState(false);
+    const [isDeletingAvatar, setIsDeletingAvatar] = useState(false);
+    const router = useRouter();
 
     const { logout } = useAuthStore();
 
+    // Xử lý đăng xuất tài khoản sử dụng helper confirm()
     const handleLogout = async () => {
+        const isConfirmed = await confirm({
+            title: "Đăng xuất",
+            message: "Bạn có chắc chắn muốn đăng xuất khỏi tài khoản không?",
+            confirmText: "Đăng xuất",
+            cancelText: "Hủy",
+            variant: "danger",
+        });
+
+        if (!isConfirmed) return;
+
         logout();
+        router.push(ROUTES.HOME);
     };
 
 
@@ -42,9 +60,29 @@ export default function UserProfilePage() {
         fetchProfile();
     }, [fetchProfile]);
 
+    // Xử lý xóa avatar sử dụng helper confirm()
     const handleDeleteAvatar = async () => {
-        if (confirm("Bạn có chắc chắn muốn xóa ảnh đại diện không?")) {
+        const isConfirmed = await confirm({
+            title: "Xóa ảnh đại diện",
+            message: "Bạn có chắc chắn muốn xóa ảnh đại diện không? Hành động này không thể hoàn tác.",
+            confirmText: "Xóa ảnh",
+            cancelText: "Hủy",
+            variant: "danger",
+        });
+
+        if (!isConfirmed) return;
+
+        setIsDeletingAvatar(true);
+        try {
             await deleteAvatar();
+            toast.success("Xóa ảnh đại diện thành công!");
+            await fetchProfile();
+        } catch (err: unknown) {
+            console.error("Lỗi khi xóa ảnh đại diện:", err);
+            const errorMessage = parseErrorMessage(err, "Không thể xóa ảnh đại diện này!");
+            toast.error(errorMessage);
+        } finally {
+            setIsDeletingAvatar(false);
         }
     };
 
@@ -138,6 +176,7 @@ export default function UserProfilePage() {
                             {profile?.avatar_url && (
                                 <button
                                     onClick={handleDeleteAvatar}
+                                    disabled={isDeletingAvatar}
                                     className="w-full py-2.5 px-4 border border-surface-border hover:bg-status-error-bg hover:border-status-error/30 hover:text-status-error text-text-sub rounded-xl text-sm font-medium transition-colors flex items-center justify-center gap-2"
                                 >
                                     <Trash2 className="w-4 h-4" />
