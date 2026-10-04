@@ -1,6 +1,7 @@
 from fastapi import APIRouter
 
 from src.app.modules.auth.router import router as auth_router
+from src.app.modules.categories.admin_router import admin_category_router
 from src.app.modules.categories.router import router as categories_router
 from src.app.modules.locations.router import router as locations_router
 from src.app.modules.media import media_router
@@ -17,6 +18,7 @@ api_v1_router = APIRouter(prefix="/api/v1")
 api_v1_router.include_router(media_router)
 api_v1_router.include_router(products_router)
 api_v1_router.include_router(categories_router)
+api_v1_router.include_router(admin_category_router)
 api_v1_router.include_router(auth_router)
 api_v1_router.include_router(locations_router)
 api_v1_router.include_router(users_router)

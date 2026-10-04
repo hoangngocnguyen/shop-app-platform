@@ -52,3 +52,69 @@ class CategoryTreeResponse(CategoryResponse):
         default_factory=list,
         description="Danh sách danh mục con trực thuộc",
     )
+
+
+# ==============================================================================
+# 2. SCHEMAS CHO PHÂN HỆ ADMIN CATEGORIES
+# ==============================================================================
+class CategoryCreate(BaseModel):
+    """
+    Schema tiếp nhận dữ liệu khi Admin tạo danh mục mới.
+    """
+
+    category_name: str = Field(
+        ...,
+        min_length=1,
+        max_length=255,
+        description="Tên danh mục sản phẩm mới",
+        examples=["Điện thoại thông minh"],
+    )
+    parent_id: int | None = Field(
+        default=None,
+        description="Mã danh mục cha (null nếu là danh mục gốc)",
+        examples=[None],
+    )
+
+
+class CategoryUpdate(BaseModel):
+    """
+    Schema tiếp nhận dữ liệu khi Admin cập nhật danh mục.
+    """
+
+    category_name: str | None = Field(
+        default=None,
+        min_length=1,
+        max_length=255,
+        description="Tên danh mục sản phẩm mới",
+        examples=["Điện thoại & Tablet"],
+    )
+    parent_id: int | None = Field(
+        default=None,
+        description="Mã danh mục cha mới (null nếu chuyển thành danh mục gốc)",
+        examples=[None],
+    )
+
+
+class CategoryStatsDTO(CategoryResponse):
+    """
+    Schema trả về cho trang quản trị danh mục kèm số lượng sản phẩm.
+    """
+
+    product_count: int = Field(
+        default=0,
+        description="Số lượng sản phẩm thuộc danh mục này",
+        examples=[25],
+    )
+
+
+class BulkDeleteCategoryRequest(BaseModel):
+    """
+    Schema yêu cầu xóa hàng loạt danh mục sản phẩm.
+    """
+
+    category_ids: list[int] = Field(
+        ...,
+        min_length=1,
+        description="Danh sách các ID danh mục cần xóa",
+        examples=[[1, 2, 5]],
+    )
