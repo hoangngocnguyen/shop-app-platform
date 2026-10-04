@@ -2,7 +2,7 @@
 
 import React from "react";
 import { CheckCircle2, AlertTriangle, AlertCircle, Info, X } from "lucide-react";
-import { useToastStore, ToastMessage, ToastType } from "../stores";
+import { useToastStore, ToastMessage, ToastType } from "../stores/useToastStore";
 
 const toastConfig: Record<
     ToastType,
