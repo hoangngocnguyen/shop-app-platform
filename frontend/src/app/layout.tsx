@@ -3,7 +3,8 @@ import './globals.css';
 
 import { Be_Vietnam_Pro } from 'next/font/google';
 import { getThemeStyles } from '@/lib/theme-injector';
-import ToastContainer from '@/features/toast/components/ToastContainer';
+import ToastContainer from '@/common/components/ToastContainer';
+import ConfirmModal from '@/common/components/ConfirmContainer';
 
 const beVietnam = Be_Vietnam_Pro({
   subsets: ['latin', 'vietnamese'],
@@ -27,6 +28,7 @@ export default function RootLayout({
         <AuthProvider>
           {children}
           <ToastContainer />
+          <ConfirmModal />
         </AuthProvider>
       </body>
     </html>
