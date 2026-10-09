@@ -6,6 +6,13 @@ export const ROUTES = {
   },
   USER: {
     PROFILE: '/user/profile',
-    ADDRESS: '/user/shipping-address'
-  }
+    ADDRESS: '/user/shipping-address',
+  },
+  ABOUT: {
+    FAQ: '/about/faq',
+    SHIPPING: '/about/shipping',
+    TERM: '/about/term',
+    RETURN_POLICY: '/about/return-policy',
+  },
+  STORES: '/stores',
 } as const;
