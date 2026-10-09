@@ -1,5 +1,6 @@
 from fastapi import APIRouter
 
+from src.app.modules.admin import admin_router
 from src.app.modules.auth.router import router as auth_router
 from src.app.modules.locations.router import router as locations_router
 from src.app.modules.media import media_router
@@ -19,3 +20,6 @@ api_v1_router.include_router(auth_router)
 api_v1_router.include_router(locations_router)
 api_v1_router.include_router(users_router)
 api_v1_router.include_router(shipping_addresses_router)
+
+# Router Admin
+api_v1_router.include_router(admin_router)
