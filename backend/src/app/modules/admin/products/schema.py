@@ -1,26 +1,20 @@
-from datetime import datetime
 from decimal import Decimal
 
-from pydantic import BaseModel, ConfigDict, Field, HttpUrl
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class ProductAddForm(BaseModel):
-    imageSrc: HttpUrl = Field(..., max_length=500)
     productName: str = Field(..., min_length=1, max_length=256)
     quantity: int = Field(..., ge=0)
     categoryId: int = Field(..., gt=0)
     price: Decimal = Field(..., gt=0)
+    salePrice: Decimal | None = Field(default=None, gt=0)
     description: str | None = None
     origin: str | None = None
     brand: str | None = None
 
 
-class ProductUpdateForm(ProductAddForm):
-    salePrice: Decimal = Field(..., gt=0)
-
-
 class ProductPatchForm(BaseModel):
-    imageSrc: HttpUrl | None = Field(default=None, max_length=500)
     productName: str | None = Field(default=None, min_length=1, max_length=256)
     quantity: int | None = Field(default=None, ge=0)
     categoryId: int | None = Field(default=None, gt=0)
@@ -32,17 +26,15 @@ class ProductPatchForm(BaseModel):
 
 
 class ProductDetailResponse(BaseModel):
-    id: int
-    imageSrc: str | None = None
-    productName: str
+    id: int = Field(validation_alias="product_id")
+    imageSrc: str | None = Field(validation_alias="image_src")
+    productName: str = Field(validation_alias="product_name")
     quantity: int
-    categoryId: int
+    categoryId: int = Field(validation_alias="category_id")
     price: Decimal
-    salePrice: Decimal | None = None
+    salePrice: Decimal | None = Field(validation_alias="sale_price")
     description: str | None = None
     origin: str | None = None
     brand: str | None = None
-    createdAt: datetime
-    updatedAt: datetime
 
     model_config = ConfigDict(from_attributes=True)
