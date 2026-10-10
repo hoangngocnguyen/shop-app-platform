@@ -3,7 +3,9 @@
 import { useState, type FormEvent } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { Mascot } from 'page-mascot';
 import { ROUTES } from '@/constants/routes';
+import { toast } from '@/common/stores/useToastStore';
 import { useAuthStore } from '@/features/auth/stores/useAuthStore';
 import { createClient } from '@/lib/supabase/client';
 
@@ -16,7 +18,6 @@ export function LoginForm() {
   const [loading, setLoading] = useState(false);
 
   const router = useRouter();
-  const supabase = createClient();
   const sync = useAuthStore((state) => state.sync);
 
   const handleLogin = async (event: FormEvent<HTMLFormElement>) => {
@@ -26,6 +27,7 @@ export function LoginForm() {
     setLoading(true);
 
     try {
+      const supabase = createClient();
       const { error } = await supabase.auth.signInWithPassword({
         email: email.trim(),
         password,
@@ -45,13 +47,8 @@ export function LoginForm() {
         return;
       }
 
-      setSuccessMsg('Đăng nhập thành công! Đang chuyển hướng...');
-      setLoading(false);
-
-      setTimeout(() => {
-        router.replace(ROUTES.USER.PROFILE);
-        router.refresh();
-      }, 800);
+      toast.success('Đăng nhập thành công.', 'Thành công');
+      router.replace(ROUTES.USER.PROFILE);
     } catch (submitError) {
       setErrorMsg(
         submitError instanceof Error
@@ -63,22 +60,33 @@ export function LoginForm() {
   };
 
   const handleGoogleLogin = async () => {
-    await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: {
-        redirectTo: `${window.location.origin}/auth/callback`,
-      },
-    });
+    try {
+      const supabase = createClient();
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback`,
+        },
+      });
+
+      if (error) setErrorMsg(error.message);
+    } catch (submitError) {
+      setErrorMsg(
+        submitError instanceof Error
+          ? submitError.message
+          : 'Không thể đăng nhập bằng Google. Vui lòng thử lại.',
+      );
+    }
   };
 
   return (
     <div className="group relative w-full overflow-hidden rounded-3xl border border-surface-border bg-surface-card p-6 shadow-xl transition-all duration-300 hover:border-primary/40 hover:shadow-2xl sm:p-8">
-      
+
       {/* ===== HIỆU ỨNG NỔI BỌT / BONG BÓNG TRONG SUỐT (FLOATING BUBBLES) ===== */}
       <div className="pointer-events-none absolute inset-0 overflow-hidden rounded-3xl" aria-hidden="true">
         {/* Bong bóng 1 - Góc trên bên trái */}
         <div className="absolute -left-4 -top-4 h-24 w-24 animate-pulse rounded-full bg-primary/10 blur-xl transition-all duration-1000 group-hover:scale-125" />
-        
+
         {/* Bong bóng 2 - Góc dưới bên phải */}
         <div className="absolute -bottom-8 -right-8 h-32 w-32 animate-pulse rounded-full bg-accent/15 blur-2xl transition-all duration-1000 group-hover:scale-110 [animation-delay:1s]" />
 
@@ -88,31 +96,13 @@ export function LoginForm() {
 
       {/* Header & Logo Đăng Nhập */}
       <div className="relative mb-8 text-center">
-        <div className="relative mx-auto mb-4 flex h-20 w-20 items-center justify-center">
-          {/* Vòng hào quang xoay mượt phía sau */}
-          <div className="absolute inset-0 rounded-2xl bg-gradient-to-tr from-primary via-primary-light to-accent opacity-60 blur-sm animate-spin [animation-duration:8s]" />
-
-          {/* Sóng phát sáng nhịp nhàng */}
-          <div className="absolute inset-1 rounded-2xl bg-primary/15 animate-ping [animation-duration:3s]" />
-
-          {/* Icon chính với hiệu ứng xoay 3D & nổi màu khi Hover */}
-          <div className="relative flex h-16 w-16 items-center justify-center rounded-2xl border border-surface-border bg-surface-card text-primary shadow-md transition-all duration-500 hover:scale-110 hover:-rotate-6 hover:bg-primary hover:text-primary-contrast hover:shadow-xl hover:shadow-primary/25">
-            <svg
-              className="h-8 w-8 transition-transform duration-500"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              strokeWidth="2"
-              aria-hidden="true"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
-              />
-            </svg>
-          </div>
-        </div>
+        <Mascot
+          directions="/mascots/frog-directions.webp"
+          reactions="/mascots/frog-reactions.webp"
+          size={104}
+          className="mx-auto"
+          label="Linh vật ếch"
+        />
 
         <h2 className="text-2xl font-bold tracking-tight text-text-main">
           Chào mừng trở lại!
