@@ -3,7 +3,9 @@
 import { useState, type FormEvent } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { Mascot } from 'page-mascot';
 import { ROUTES } from '@/constants/routes';
+import { toast } from '@/common/stores/useToastStore';
 import { useAuthStore } from '@/features/auth/stores/useAuthStore';
 import { createClient } from '@/lib/supabase/client';
 
@@ -18,7 +20,6 @@ export function RegisterForm() {
   const [loading, setLoading] = useState(false);
 
   const router = useRouter();
-  const supabase = createClient();
   const sync = useAuthStore((state) => state.sync);
 
   const handleRegister = async (event: FormEvent<HTMLFormElement>) => {
@@ -34,6 +35,7 @@ export function RegisterForm() {
     setLoading(true);
 
     try {
+      const supabase = createClient();
       const { data, error } = await supabase.auth.signUp({
         email: email.trim(),
         password,
@@ -45,7 +47,9 @@ export function RegisterForm() {
       }
 
       if (!data.session) {
-        setSuccessMsg('Đăng ký thành công. Vui lòng kiểm tra email để kích hoạt tài khoản.');
+        const message = 'Đăng ký thành công. Vui lòng kiểm tra email để kích hoạt tài khoản.';
+        setSuccessMsg(message);
+        toast.success(message, 'Đăng ký thành công');
         return;
       }
 
@@ -56,6 +60,7 @@ export function RegisterForm() {
         return;
       }
 
+      toast.success('Tài khoản đã được tạo thành công.', 'Đăng ký thành công');
       router.replace(ROUTES.USER.PROFILE);
       router.refresh();
     } catch (submitError) {
@@ -74,15 +79,17 @@ export function RegisterForm() {
       
       {/* Header & Logo Đăng Ký Chuyển Động Sang Trọng */}
       <div className="mb-8 text-center">
-        <div className="relative mx-auto mb-4 flex h-20 w-20 items-center justify-center">
-          {/* Vòng hào quang xoay mượt mà đệm phía sau */}
-          <div className="absolute inset-0 rounded-2xl bg-gradient-to-tr from-primary via-primary-light to-accent opacity-70 blur-sm animate-spin [animation-duration:6s]" />
-
-          {/* Sóng phát sáng nhịp nhàng */}
-          <div className="absolute inset-1 rounded-2xl bg-primary/20 animate-ping [animation-duration:3s]" />
+        <>
+          <Mascot
+            directions="/mascots/frog-directions.webp"
+            reactions="/mascots/frog-reactions.webp"
+            size={104}
+            className="mx-auto"
+            label="Linh vật ếch"
+          />
 
           {/* Icon chính với hiệu ứng xoay 3D nổi bật khi rê chuột */}
-          <div className="relative flex h-16 w-16 items-center justify-center rounded-2xl bg-surface-card text-primary shadow-md transition-all duration-500 hover:scale-110 hover:-rotate-6 hover:bg-primary hover:text-primary-contrast hover:shadow-xl hover:shadow-primary/30">
+          <div className="hidden">
             <svg
               className="h-8 w-8 transition-transform duration-500"
               fill="none"
@@ -98,7 +105,7 @@ export function RegisterForm() {
               />
             </svg>
           </div>
-        </div>
+        </>
 
         <h2 className="text-2xl font-bold tracking-tight text-text-main">
           Tạo tài khoản
