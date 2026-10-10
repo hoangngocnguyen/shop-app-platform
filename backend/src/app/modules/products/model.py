@@ -30,6 +30,7 @@ class Product(Base):
     brand: Mapped[str | None] = mapped_column(String(255), nullable=True)
     origin: Mapped[str | None] = mapped_column(String(255), nullable=True)
     image_src: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    image_public_id: Mapped[str | None] = mapped_column(String(255), nullable=True)
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
 
     # FK (Foreign Key)

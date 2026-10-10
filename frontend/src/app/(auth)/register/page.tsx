@@ -1,9 +1,10 @@
-import { RegisterForm } from '@/features/auth';
+import { AuthBackground } from '../../../features/auth/components/AuthBackground';
+import { RegisterForm } from '../../../features/auth/components/RegisterForm';
 
 export default function RegisterPage() {
   return (
-    <main className="flex min-h-screen items-center justify-center bg-slate-950 p-4">
+    <AuthBackground>
       <RegisterForm />
-    </main>
+    </AuthBackground>
   );
 }
