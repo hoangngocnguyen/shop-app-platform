@@ -1,4 +1,5 @@
 from collections.abc import Callable
+from typing import Any
 from uuid import UUID
 
 from fastapi import Depends
@@ -11,13 +12,14 @@ from src.app.core.exceptions import (
     ForbiddenException,
     UnauthorizedException,
 )
-from src.app.modules.users.model import User
+
+# ❌ Đã xóa: from src.app.modules.users.model import User (gây circular import)
 
 
 async def get_current_user(
     auth_id: UUID = Depends(get_current_auth_id),
     db: Session = Depends(get_db),
-) -> User:
+) -> Any:
     """
     [CHUẨN HÓA TOÀN DỰ ÁN]: Dependency trích xuất User hiện tại từ Supabase Auth JWT.
     # Bước 1: Query tìm User trong database theo auth_user_id (eager-load quan hệ role)
@@ -25,6 +27,9 @@ async def get_current_user(
     # Bước 3: Kiểm tra trạng thái khóa tài khoản (is_blocked), nếu bị khóa ném ForbiddenException
     # Bước 4: Trả về đối tượng User
     """
+    # Import Lazy ở đây để tránh lặp import lúc khởi động app
+    from src.app.modules.users.model import User
+
     query = (
         select(User)
         .options(joinedload(User.role))
@@ -48,7 +53,7 @@ async def get_current_user(
 
 
 async def get_current_user_id(
-    current_user: User = Depends(get_current_user),
+    current_user: Any = Depends(get_current_user),
 ) -> UUID:
     """
     Dependency tiện ích lấy trực tiếp user_id (UUID) từ current_user đã xác thực.
@@ -65,7 +70,7 @@ def require_role(required_role: str) -> Callable:
     # Bước 2: Kiểm tra role.code có khớp với required_role không
     # Bước 3: Nếu không khớp, ném ForbiddenException (403 Forbidden)
     """
-    async def role_checker(current_user: User = Depends(get_current_user)) -> User:
+    async def role_checker(current_user: Any = Depends(get_current_user)) -> Any:
         if not current_user.role or current_user.role.code.upper() != required_role.upper():
             raise ForbiddenException(
                 message=f"Hành động này yêu cầu quyền '{required_role}'. Bạn không có quyền truy cập.",
@@ -81,7 +86,7 @@ def require_any_role(required_roles: list[str]) -> Callable:
     Dependency kiểm tra quyền hạn cho phép một trong các vai trò được chỉ định.
     - required_roles: Danh sách mã vai trò (VD: ['ADMIN', 'STAFF'])
     """
-    async def multi_role_checker(current_user: User = Depends(get_current_user)) -> User:
+    async def multi_role_checker(current_user: Any = Depends(get_current_user)) -> Any:
         user_role_code = current_user.role.code.upper() if current_user.role else ""
         allowed_roles = [r.upper() for r in required_roles]
         
