@@ -1,4 +1,3 @@
-
 from decimal import Decimal
 from uuid import UUID
 
@@ -20,15 +19,12 @@ from src.app.modules.products.model import Product
 
 
 class CartService:
-
     @classmethod
     def _get_or_create_cart(cls, db: Session, user_id: UUID) -> Cart:
         stmt = (
             select(Cart)
             .where(Cart.user_id == user_id)
-            .options(
-                selectinload(Cart.cart_items).selectinload(CartItem.product)
-            )
+            .options(selectinload(Cart.cart_items).selectinload(CartItem.product))
         )
         cart = db.scalar(stmt)
 
@@ -66,31 +62,34 @@ class CartService:
         return product
 
     @classmethod
+    def _build_cart_item_response(cls, item: CartItem) -> CartItemResponse:
+        product = item.product
+        unit_price = Decimal(str(product.price))
+        subtotal = unit_price * item.quantity
+
+        return CartItemResponse(
+            cart_item_id=item.cart_item_id,
+            product_id=item.product_id,
+            product_name=product.product_name,
+            product_image=product.image_src,
+            unit_price=unit_price,
+            quantity=item.quantity,
+            subtotal=subtotal,
+            stock_quantity=product.quantity,
+        )
+
+    @classmethod
     def _build_cart_response(cls, cart: Cart) -> CartResponse:
         items = []
         total_quantity = 0
         total_price = Decimal("0.00")
 
         for item in cart.cart_items:
-            product = item.product
-            unit_price = Decimal(str(product.price))
-            subtotal = unit_price * item.quantity
-
-            items.append(
-                CartItemResponse(
-                    cart_item_id=item.cart_item_id,
-                    product_id=item.product_id,
-                    product_name=product.product_name,
-                    product_image=product.image_src,
-                    unit_price=unit_price,
-                    quantity=item.quantity,
-                    subtotal=subtotal,
-                    stock_quantity=product.quantity,
-                )
-            )
+            cart_item_response = cls._build_cart_item_response(item)
+            items.append(cart_item_response)
 
             total_quantity += item.quantity
-            total_price += subtotal
+            total_price += cart_item_response.subtotal
 
         return CartResponse(
             cart_id=cart.cart_id,
@@ -112,11 +111,13 @@ class CartService:
         stmt = (
             select(Cart)
             .where(Cart.cart_id == cart.cart_id)
-            .options(
-                selectinload(Cart.cart_items).selectinload(CartItem.product)
-            )
+            .options(selectinload(Cart.cart_items).selectinload(CartItem.product))
         )
         cart = db.scalar(stmt)
+        if cart is None:
+            cart = Cart(user_id=user_id)
+            db.add(cart)
+            db.flush()
 
         return cls._build_cart_response(cart)
 
@@ -138,9 +139,7 @@ class CartService:
 
             new_quantity = (item.quantity if item else 0) + payload.quantity
 
-            cls._validate_and_get_product(
-                db, payload.product_id, new_quantity
-            )
+            cls._validate_and_get_product(db, payload.product_id, new_quantity)
 
             if item:
                 item.quantity = new_quantity
@@ -178,9 +177,7 @@ class CartService:
                     status_code=status.HTTP_404_NOT_FOUND,
                 )
 
-            cls._validate_and_get_product(
-                db, item.product_id, payload.quantity
-            )
+            cls._validate_and_get_product(db, item.product_id, payload.quantity)
 
             item.quantity = payload.quantity
             db.commit()
@@ -267,7 +264,6 @@ class CartService:
                     quantities.get(item.product_id, 0) + item.quantity
                 )
 
-            # Kiểm tra tất cả sản phẩm trước khi thay đổi giỏ hàng.
             existing_items = {}
             for product_id, quantity in quantities.items():
                 stmt = select(CartItem).where(
