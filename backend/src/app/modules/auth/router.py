@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session
 
 from src.app.core.auth import get_current_auth_id, get_jwt_payload
 from src.app.core.database import get_db
+from src.app.core.response import ApiResponse, success_response
 from src.app.modules.auth.schema import MeResponse, SyncUserResponse
 from src.app.modules.auth.service import AuthService
 
@@ -16,7 +17,7 @@ router = APIRouter(
 
 @router.get(
     "/me",
-    response_model=MeResponse,
+    response_model=ApiResponse[MeResponse],
     status_code=status.HTTP_200_OK,
     summary="Lấy thông tin tài khoản hiện tại",
     description=(
@@ -28,16 +29,17 @@ router = APIRouter(
 def get_me(
     auth_user_id: UUID = Depends(get_current_auth_id),
     db: Session = Depends(get_db),
-) -> MeResponse:
-    return AuthService.get_me(
+):
+    me = AuthService.get_me(
         db=db,
         auth_user_id=auth_user_id,
     )
+    return success_response(data=me, message="Lấy thông tin tài khoản thành công")
 
 
 @router.post(
     "/sync",
-    response_model=SyncUserResponse,
+    response_model=ApiResponse[SyncUserResponse],
     status_code=status.HTTP_200_OK,
     summary="Đồng bộ người dùng từ Supabase Auth",
     description=(
@@ -49,14 +51,15 @@ def get_me(
 def sync_user(
     payload: dict = Depends(get_jwt_payload),
     db: Session = Depends(get_db),
-) -> SyncUserResponse:
+):
     auth_user_id = UUID(payload["sub"])
     email = payload.get("email")
     provider = payload.get("app_metadata", {}).get("provider", "EMAIL")
 
-    return AuthService.sync_user(
+    synced_user = AuthService.sync_user(
         db=db,
         auth_user_id=auth_user_id,
         email=email,
         provider=provider,
     )
+    return success_response(data=synced_user, message="Đồng bộ người dùng thành công")
