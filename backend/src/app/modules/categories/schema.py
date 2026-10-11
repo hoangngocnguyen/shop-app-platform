@@ -74,6 +74,11 @@ class CategoryCreate(BaseModel):
         description="Mã danh mục cha (null nếu là danh mục gốc)",
         examples=[None],
     )
+    slug: str | None = Field(
+        default=None,
+        description="Đường dẫn tĩnh SEO tùy chọn (nếu không truyền sẽ tự động sinh từ tên)",
+        examples=["dien-thoai-thong-minh"],
+    )
 
 
 class CategoryUpdate(BaseModel):
@@ -92,6 +97,11 @@ class CategoryUpdate(BaseModel):
         default=None,
         description="Mã danh mục cha mới (null nếu chuyển thành danh mục gốc)",
         examples=[None],
+    )
+    slug: str | None = Field(
+        default=None,
+        description="Đường dẫn tĩnh SEO mới (nếu không truyền sẽ tự động cập nhật theo tên mới)",
+        examples=["dien-thoai-va-tablet"],
     )
 
 
