@@ -1,8 +1,13 @@
 from pydantic import BaseModel, ConfigDict, Field
 
 
+# ==============================================================================
+# 1. SCHEMAS CHO PHÂN HỆ CLIENT / PUBLIC CATEGORIES
+# ==============================================================================
 class CategoryResponse(BaseModel):
-    """Schema đại diện cho thông tin danh mục sản phẩm."""
+    """
+    Schema đại diện cho thông tin danh mục sản phẩm chuẩn hóa.
+    """
 
     category_id: int = Field(
         ...,
@@ -16,7 +21,7 @@ class CategoryResponse(BaseModel):
     )
     parent_id: int | None = Field(
         default=None,
-        description="Mã danh mục cha (dành cho danh mục phân cấp đa tầng, null nếu là danh mục gốc)",
+        description="Mã danh mục cha (null nếu là danh mục gốc)",
         examples=[None],
     )
     slug: str = Field(
@@ -38,25 +43,88 @@ class CategoryResponse(BaseModel):
     )
 
 
+class CategoryTreeResponse(CategoryResponse):
+    """
+    Schema danh mục dạng cây đa cấp (chứa danh sách danh mục con).
+    """
+
+    children: list[CategoryResponse] = Field(
+        default_factory=list,
+        description="Danh sách danh mục con trực thuộc",
+    )
+
+
+# ==============================================================================
+# 2. SCHEMAS CHO PHÂN HỆ ADMIN CATEGORIES
+# ==============================================================================
 class CategoryCreate(BaseModel):
-    """Schema nhận dữ liệu khi Admin tạo mới danh mục."""
+    """
+    Schema tiếp nhận dữ liệu khi Admin tạo danh mục mới.
+    """
 
     category_name: str = Field(
-        ..., description="Tên danh mục mới", examples=["Điện thoại"]
+        ...,
+        min_length=1,
+        max_length=255,
+        description="Tên danh mục sản phẩm mới",
+        examples=["Điện thoại thông minh"],
     )
     parent_id: int | None = Field(
-        default=None, description="Mã danh mục cha", examples=[None]
+        default=None,
+        description="Mã danh mục cha (null nếu là danh mục gốc)",
+        examples=[None],
     )
     slug: str | None = Field(
-        default=None, description="Đường dẫn tĩnh SEO", examples=["dien-thoai"]
+        default=None,
+        description="Đường dẫn tĩnh SEO tùy chọn (nếu không truyền sẽ tự động sinh từ tên)",
+        examples=["dien-thoai-thong-minh"],
     )
 
 
 class CategoryUpdate(BaseModel):
-    """Schema nhận dữ liệu khi Admin cập nhật danh mục."""
+    """
+    Schema tiếp nhận dữ liệu khi Admin cập nhật danh mục.
+    """
 
     category_name: str | None = Field(
-        default=None, description="Tên danh mục mới"
+        default=None,
+        min_length=1,
+        max_length=255,
+        description="Tên danh mục sản phẩm mới",
+        examples=["Điện thoại & Tablet"],
     )
-    parent_id: int | None = Field(default=None, description="Mã danh mục cha mới")
-    slug: str | None = Field(default=None, description="Đường dẫn tĩnh SEO mới")
+    parent_id: int | None = Field(
+        default=None,
+        description="Mã danh mục cha mới (null nếu chuyển thành danh mục gốc)",
+        examples=[None],
+    )
+    slug: str | None = Field(
+        default=None,
+        description="Đường dẫn tĩnh SEO mới (nếu không truyền sẽ tự động cập nhật theo tên mới)",
+        examples=["dien-thoai-va-tablet"],
+    )
+
+
+class CategoryStatsDTO(CategoryResponse):
+    """
+    Schema trả về cho trang quản trị danh mục kèm số lượng sản phẩm.
+    """
+
+    product_count: int = Field(
+        default=0,
+        description="Số lượng sản phẩm thuộc danh mục này",
+        examples=[25],
+    )
+
+
+class BulkDeleteCategoryRequest(BaseModel):
+    """
+    Schema yêu cầu xóa hàng loạt danh mục sản phẩm.
+    """
+
+    category_ids: list[int] = Field(
+        ...,
+        min_length=1,
+        description="Danh sách các ID danh mục cần xóa",
+        examples=[[1, 2, 5]],
+    )
