@@ -1,4 +1,3 @@
-
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, status
@@ -16,7 +15,6 @@ from src.app.modules.carts.schema import (
 from src.app.modules.carts.service import CartService
 from src.app.modules.users.dep import get_current_user_id
 
-
 router = APIRouter(prefix="/cart", tags=["Cart"])
 
 
@@ -24,7 +22,7 @@ router = APIRouter(prefix="/cart", tags=["Cart"])
     "",
     response_model=ApiResponse[CartResponse],
     status_code=status.HTTP_200_OK,
-    summary="Lấy chi tiết giỏ hàng",
+    summary="Lấy giỏ hàng",
 )
 def get_user_cart(
     db: Session = Depends(get_db),
