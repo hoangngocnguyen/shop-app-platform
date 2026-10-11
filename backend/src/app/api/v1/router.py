@@ -21,6 +21,6 @@ api_v1_router.include_router(auth_router)
 api_v1_router.include_router(locations_router)
 api_v1_router.include_router(users_router)
 api_v1_router.include_router(shipping_addresses_router)
-
+api_v1_router.include_router(carts_router)
 # Router Admin
 api_v1_router.include_router(admin_router)
