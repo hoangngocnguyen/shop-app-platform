@@ -33,6 +33,7 @@ from src.app.core.pagination import (
     paginate_query,
 )
 from src.app.core.response import ApiResponse, success_response
+from src.app.core.utils import slugify_vietnamese
 
 __all__ = [
     "ApiResponse",
@@ -56,4 +57,5 @@ __all__ = [
     "get_current_user_id",
     "require_role",
     "require_any_role",
+    "slugify_vietnamese",
 ]
