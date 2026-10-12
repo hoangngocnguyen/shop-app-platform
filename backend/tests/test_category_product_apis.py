@@ -7,6 +7,7 @@ import os
 import sys
 import uuid
 from decimal import Decimal
+from unittest.mock import AsyncMock, patch
 
 # Đảm bảo PYTHONPATH nhận diện thư mục backend
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
@@ -394,49 +395,77 @@ def test_12_admin_get_products_with_stock_status(client):
 
 
 def test_13_admin_create_product(client):
-    """API 13: POST /api/v1/admin/products - Thêm sản phẩm + tính % giảm giá + image_public_id"""
-    # Success case: price 20tr, sale_price 15tr -> discount 25% kèm Cloudinary public_id
-    payload = {
+    """API 13: POST /api/v1/admin/products - Thêm sản phẩm + tính % giảm giá + upload ảnh Cloudinary"""
+    # Success case: form-data kèm file ảnh trực tiếp -> mock Cloudinary
+    form_data = {
         "product_name": "Samsung Galaxy S24 Ultra",
-        "category_id": 1,
-        "price": 20000000,
-        "sale_price": 15000000,
-        "quantity": 20,
+        "category_id": "1",
+        "price": "20000000",
+        "sale_price": "15000000",
+        "quantity": "20",
         "brand": "Samsung",
-        "image_src": "https://res.cloudinary.com/test/image/upload/v1/s24.png",
-        "image_public_id": "shop-app-platform/products/s24_test_id",
     }
-    response = client.post("/api/v1/admin/products", json=payload)
+    files = {"file": ("s24.png", b"fake_s24_binary_image_data", "image/png")}
+
+    with patch(
+        "src.app.modules.products.service.MediaService.upload_image",
+        new_callable=AsyncMock,
+    ) as mock_upload:
+        mock_upload.return_value = {
+            "public_id": "shop-app-platform/products/s24_test_id",
+            "url": "https://res.cloudinary.com/test/image/upload/v1/s24.png",
+            "format": "png",
+        }
+        response = client.post("/api/v1/admin/products", data=form_data, files=files)
+
     assert response.status_code == 201
     data = response.json()["data"]
     assert data["discount_percent"] == 25
     assert data["image_public_id"] == "shop-app-platform/products/s24_test_id"
+    assert data["image_src"] == "https://res.cloudinary.com/test/image/upload/v1/s24.png"
 
     # Invalid Price Case: sale_price > price -> 400 INVALID_PRICE_RANGE
     payload_err = {
         "product_name": "Lỗi Giá",
-        "category_id": 1,
-        "price": 10000000,
-        "sale_price": 15000000,
+        "category_id": "1",
+        "price": "10000000",
+        "sale_price": "15000000",
     }
-    res_err = client.post("/api/v1/admin/products", json=payload_err)
+    res_err = client.post("/api/v1/admin/products", data=payload_err)
     assert res_err.status_code == 400
     assert res_err.json()["error_code"] == "INVALID_PRICE_RANGE"
 
 
 def test_14_admin_update_product(client):
-    """API 14: PUT /api/v1/admin/products/{id} - Cập nhật sản phẩm & image_public_id"""
-    # Cập nhật giá gốc, giá sale và đổi ảnh đại diện
-    payload = {
-        "price": 20000000,
-        "sale_price": 10000000,  # 50% discount
-        "image_public_id": "shop-app-platform/products/s24_updated_id",
+    """API 14: PUT /api/v1/admin/products/{id} - Cập nhật sản phẩm & thay ảnh Cloudinary"""
+    # Cập nhật giá gốc, giá sale và đổi file ảnh đại diện
+    form_data = {
+        "price": "20000000",
+        "sale_price": "10000000",  # 50% discount
     }
-    response = client.put("/api/v1/admin/products/2", json=payload)
+    files = {"file": ("s24_new.png", b"fake_new_binary_image_data", "image/png")}
+
+    with patch(
+        "src.app.modules.products.service.MediaService.upload_image",
+        new_callable=AsyncMock,
+    ) as mock_upload, patch(
+        "src.app.modules.products.service.MediaService.delete_image",
+        new_callable=AsyncMock,
+    ) as mock_delete:
+        mock_upload.return_value = {
+            "public_id": "shop-app-platform/products/s24_updated_id",
+            "url": "https://res.cloudinary.com/test/image/upload/v1/s24_updated.png",
+            "format": "png",
+        }
+        mock_delete.return_value = {"message": "Xóa thành công", "public_id": "old_id"}
+
+        response = client.put("/api/v1/admin/products/2", data=form_data, files=files)
+
     assert response.status_code == 200
     data = response.json()["data"]
     assert data["discount_percent"] == 50
     assert data["image_public_id"] == "shop-app-platform/products/s24_updated_id"
+    assert data["image_src"] == "https://res.cloudinary.com/test/image/upload/v1/s24_updated.png"
 
 
 def test_15_admin_delete_product_validation(client):
@@ -463,6 +492,51 @@ def test_16_admin_bulk_delete_products(client):
     assert res_fail.json()["error_code"] == "PRODUCT_IN_ORDERS"
 
 
+def test_18_admin_update_product_image(client):
+    """API 18: PATCH /api/v1/admin/products/{id}/image - Cập nhật riêng ảnh sản phẩm (Avatar pattern)"""
+    files = {"file": ("single_image.png", b"single_image_binary_data", "image/png")}
+
+    with patch(
+        "src.app.modules.products.service.MediaService.upload_image",
+        new_callable=AsyncMock,
+    ) as mock_upload, patch(
+        "src.app.modules.products.service.MediaService.delete_image",
+        new_callable=AsyncMock,
+    ) as mock_delete:
+        mock_upload.return_value = {
+            "public_id": "shop-app-platform/products/single_img_id",
+            "url": "https://res.cloudinary.com/test/image/upload/v1/single_img.png",
+            "format": "png",
+        }
+        mock_delete.return_value = {"message": "Xóa thành công", "public_id": "old_id"}
+        response = client.patch("/api/v1/admin/products/2/image", files=files)
+
+    assert response.status_code == 200
+    data = response.json()["data"]
+    assert data["image_public_id"] == "shop-app-platform/products/single_img_id"
+    assert data["image_src"] == "https://res.cloudinary.com/test/image/upload/v1/single_img.png"
+
+
+def test_19_admin_delete_product_image(client):
+    """API 19: DELETE /api/v1/admin/products/{id}/image - Xóa riêng ảnh sản phẩm trên Cloudinary"""
+    with patch(
+        "src.app.modules.products.service.MediaService.delete_image",
+        new_callable=AsyncMock,
+    ) as mock_delete:
+        mock_delete.return_value = {"message": "Xóa thành công"}
+        response = client.delete("/api/v1/admin/products/2/image")
+
+    assert response.status_code == 200
+    data = response.json()["data"]
+    assert data["image_public_id"] is None
+    assert data["image_src"] is None
+
+    # Thử xóa lần nữa khi không còn ảnh -> 400 PRODUCT_NO_IMAGE
+    res_again = client.delete("/api/v1/admin/products/2/image")
+    assert res_again.status_code == 400
+    assert res_again.json()["error_code"] == "PRODUCT_NO_IMAGE"
+
+
 # ==============================================================================
 # 4. TEST SECURITY & RBAC
 # ==============================================================================
@@ -478,7 +552,7 @@ def test_17_admin_rbac_protection():
 
 
 if __name__ == "__main__":
-    print("🚀 Bắt đầu thực thi toàn bộ 17 Test Cases cho 16 APIs Product & Category...")
+    print("🚀 Bắt đầu thực thi toàn bộ 19 Test Cases cho các APIs Product & Category...")
     # Khởi tạo db session
     gen_db = db_session()
     session = next(gen_db)
@@ -500,10 +574,12 @@ if __name__ == "__main__":
         ("API 10: GET /products/{id} (Public Detail)", test_10_public_get_product_detail),
         ("API 11: GET /products/{id}/related (Public Related Products)", test_11_public_get_related_products),
         ("API 12: GET /admin/products (Admin Stock Filters)", test_12_admin_get_products_with_stock_status),
-        ("API 13: POST /admin/products (Admin Create & Auto Discount)", test_13_admin_create_product),
-        ("API 14: PUT /admin/products/{id} (Admin Update & Recalculate)", test_14_admin_update_product),
+        ("API 13: POST /admin/products (Admin Create & Upload Image)", test_13_admin_create_product),
+        ("API 14: PUT /admin/products/{id} (Admin Update & Replace Image)", test_14_admin_update_product),
         ("API 15: DELETE /admin/products/{id} (Admin Delete & Order Check)", test_15_admin_delete_product_validation),
         ("API 16: POST /admin/products/delete-multiple (Admin Bulk Delete)", test_16_admin_bulk_delete_products),
+        ("API 18: PATCH /admin/products/{id}/image (Admin Update Image Avatar Pattern)", test_18_admin_update_product_image),
+        ("API 19: DELETE /admin/products/{id}/image (Admin Delete Image Avatar Pattern)", test_19_admin_delete_product_image),
         ("TEST 17: Admin Security & RBAC Protection", test_17_admin_rbac_protection),
     ]
 

@@ -3,12 +3,14 @@ from decimal import Decimal
 from sqlalchemy import delete, func, select
 from sqlalchemy.orm import Session, joinedload
 
+from fastapi import UploadFile
 from src.app.core.exceptions import (
     BadRequestException,
     NotFoundException,
 )
 from src.app.core.pagination import PaginatedResponse, PaginationParams, paginate_query
 from src.app.modules.categories.model import Category
+from src.app.modules.media.cloudinary_folders import PRODUCT
 from src.app.modules.media.service import MediaService
 from src.app.modules.orders.model import OrderDetail
 from src.app.modules.products.model import Product
@@ -205,9 +207,14 @@ class ProductService:
         return paginate_query(db=db, query=query, pagination=pagination)
 
     @staticmethod
-    def create_product(db: Session, payload: ProductCreate) -> Product:
+    async def create_product(
+        db: Session,
+        payload: ProductCreate,
+        file: UploadFile | None = None,
+    ) -> Product:
         """
-        Thêm mới sản phẩm (Admin). Kiểm tra danh mục và tính % giảm giá tự động.
+        Thêm mới sản phẩm (Admin). Kiểm tra danh mục, tính % giảm giá tự động,
+        và tải file ảnh trực tiếp lên Cloudinary (thay vì bắt buộc nhận URL từ FE).
         """
         # Bước 1: Kiểm tra category_id có tồn tại không
         category = db.scalar(
@@ -221,7 +228,9 @@ class ProductService:
             )
 
         # Bước 2: Kiểm tra ràng buộc giá khuyến mãi và tính % giảm giá
-        sale_price = payload.sale_price if payload.sale_price is not None else payload.price
+        sale_price = (
+            payload.sale_price if payload.sale_price is not None else payload.price
+        )
         if sale_price > payload.price:
             raise BadRequestException(
                 message="Giá khuyến mãi (sale_price) không thể lớn hơn giá gốc (price)",
@@ -230,12 +239,24 @@ class ProductService:
 
         discount_percent = 0
         if payload.price > 0 and sale_price < payload.price:
-            discount_percent = int(round((1 - float(sale_price) / float(payload.price)) * 100))
+            discount_percent = int(
+                round((1 - float(sale_price) / float(payload.price)) * 100)
+            )
 
-        # Bước 3: Tạo thực thể Product và lưu DB
+        # Bước 3: Tải ảnh trực tiếp lên Cloudinary nếu có file đính kèm
+        image_src = payload.image_src
+        image_public_id = payload.image_public_id
+        if file is not None and file.filename:
+            upload_res = await MediaService.upload_image(file=file, folder=PRODUCT)
+            image_src = upload_res.get("url")
+            image_public_id = upload_res.get("public_id")
+
+        # Bước 4: Tạo thực thể Product và lưu DB
         product_data = payload.model_dump()
         product_data["sale_price"] = sale_price
         product_data["discount_percent"] = discount_percent
+        product_data["image_src"] = image_src
+        product_data["image_public_id"] = image_public_id
 
         new_product = Product(**product_data)
         db.add(new_product)
@@ -246,11 +267,14 @@ class ProductService:
 
     @staticmethod
     async def update_product(
-        db: Session, product_id: int, payload: ProductUpdate
+        db: Session,
+        product_id: int,
+        payload: ProductUpdate,
+        file: UploadFile | None = None,
     ) -> Product:
         """
         Cập nhật thông tin sản phẩm (Admin). Tự động cập nhật lại % giảm giá
-        và dọn dẹp ảnh cũ trên Cloudinary nếu có cập nhật ảnh mới.
+        và dọn dẹp / tải ảnh mới lên Cloudinary (nếu có file đính kèm).
         """
         # Bước 1: Tìm sản phẩm cần cập nhật
         product = ProductService.get_product_detail(db=db, product_id=product_id)
@@ -288,8 +312,25 @@ class ProductService:
             else:
                 product.discount_percent = 0
 
-        # Bước 4: Kiểm tra và dọn dẹp ảnh cũ trên Cloudinary nếu cập nhật ảnh mới
-        if (
+        # Bước 4: Tải ảnh mới lên Cloudinary nếu có file đính kèm và xóa ảnh cũ
+        if file is not None and file.filename:
+            upload_res = await MediaService.upload_image(file=file, folder=PRODUCT)
+            new_image_src = upload_res.get("url")
+            new_image_public_id = upload_res.get("public_id")
+
+            if old_public_id:
+                try:
+                    await MediaService.delete_image(old_public_id)
+                except Exception as exc:
+                    logger.warning(
+                        "Không thể xóa ảnh cũ trên Cloudinary (public_id: %s): %s",
+                        old_public_id,
+                        exc,
+                    )
+
+            product.image_src = new_image_src
+            product.image_public_id = new_image_public_id
+        elif (
             payload.image_public_id is not None
             and old_public_id
             and payload.image_public_id != old_public_id
@@ -304,12 +345,90 @@ class ProductService:
                 )
 
         # Bước 5: Cập nhật các trường dữ liệu khác vào thực thể Product
-        update_data = payload.model_dump(exclude_unset=True, exclude={"category_id"})
+        exclude_fields = {"category_id"}
+        if file and file.filename:
+            exclude_fields.update({"image_src", "image_public_id"})
+
+        update_data = payload.model_dump(exclude_unset=True, exclude=exclude_fields)
         for key, value in update_data.items():
             setattr(product, key, value)
 
         db.commit()
         db.refresh(product)
+        return product
+
+    @staticmethod
+    async def update_product_image(
+        db: Session,
+        product_id: int,
+        file: UploadFile,
+    ) -> Product:
+        """
+        Cập nhật riêng ảnh sản phẩm (Admin). Tải ảnh mới lên Cloudinary và xóa ảnh cũ tương tự module User Avatar.
+        """
+        # Bước 1: Tra cứu sản phẩm
+        product = ProductService.get_product_detail(db=db, product_id=product_id)
+        old_public_id = product.image_public_id
+
+        # Bước 2: Tải ảnh mới lên Cloudinary
+        upload_res = await MediaService.upload_image(file=file, folder=PRODUCT)
+        new_url = upload_res.get("url")
+        new_public_id = upload_res.get("public_id")
+
+        # Bước 3: Xóa ảnh cũ trên Cloudinary nếu có
+        if old_public_id:
+            try:
+                await MediaService.delete_image(old_public_id)
+            except Exception as exc:
+                logger.warning(
+                    "Không thể xóa ảnh cũ trên Cloudinary khi cập nhật ảnh sản phẩm %s: %s",
+                    product_id,
+                    exc,
+                )
+
+        # Bước 4: Cập nhật thông tin vào DB
+        product.image_src = new_url
+        product.image_public_id = new_public_id
+        db.commit()
+        db.refresh(product)
+
+        return product
+
+    @staticmethod
+    async def delete_product_image(
+        db: Session,
+        product_id: int,
+    ) -> Product:
+        """
+        Xóa riêng ảnh sản phẩm trên Cloudinary và gán null trong DB tương tự delete_avatar.
+        """
+        # Bước 1: Tra cứu sản phẩm
+        product = ProductService.get_product_detail(db=db, product_id=product_id)
+
+        # Bước 2: Kiểm tra xem sản phẩm có ảnh để xóa hay không
+        if not product.image_public_id and not product.image_src:
+            raise BadRequestException(
+                message="Sản phẩm chưa có ảnh để xóa",
+                error_code="PRODUCT_NO_IMAGE",
+            )
+
+        # Bước 3: Xóa ảnh trên Cloudinary nếu có public_id
+        if product.image_public_id:
+            try:
+                await MediaService.delete_image(product.image_public_id)
+            except Exception as exc:
+                logger.warning(
+                    "Không thể xóa ảnh trên Cloudinary khi xóa ảnh sản phẩm %s: %s",
+                    product_id,
+                    exc,
+                )
+
+        # Bước 4: Gán về None trong DB và commit
+        product.image_src = None
+        product.image_public_id = None
+        db.commit()
+        db.refresh(product)
+
         return product
 
     @staticmethod

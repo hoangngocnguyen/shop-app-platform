@@ -1,4 +1,16 @@
-from fastapi import APIRouter, Depends, Path, Query, status
+from decimal import Decimal
+from typing import Annotated
+
+from fastapi import (
+    APIRouter,
+    Depends,
+    File,
+    Form,
+    Path,
+    Query,
+    UploadFile,
+    status,
+)
 from sqlalchemy.orm import Session
 
 from src.app.core.database import get_db
@@ -12,6 +24,160 @@ from src.app.modules.products.schema import (
     ProductUpdate,
 )
 from src.app.modules.products.service import ProductService
+
+
+def _product_create_form(
+    product_name: Annotated[
+        str,
+        Form(
+            min_length=1,
+            max_length=255,
+            description="Tên sản phẩm mới",
+            examples=["iPhone 15 Pro Max 256GB"],
+        ),
+    ],
+    category_id: Annotated[
+        int,
+        Form(
+            gt=0,
+            description="Mã danh mục sản phẩm trực thuộc",
+            examples=[1],
+        ),
+    ],
+    price: Annotated[
+        Decimal,
+        Form(
+            gt=Decimal("0"),
+            description="Giá bán gốc",
+            examples=[Decimal("29990000.00")],
+        ),
+    ],
+    sale_price: Annotated[
+        Decimal | None,
+        Form(
+            gt=Decimal("0"),
+            description="Giá bán khuyến mãi",
+            examples=[Decimal("28490000.00")],
+        ),
+    ] = None,
+    quantity: Annotated[
+        int,
+        Form(
+            ge=0,
+            description="Số lượng kho ban đầu",
+            examples=[50],
+        ),
+    ] = 0,
+    brand: Annotated[
+        str | None,
+        Form(
+            max_length=255,
+            description="Thương hiệu sản phẩm",
+            examples=["Apple"],
+        ),
+    ] = None,
+    origin: Annotated[
+        str | None,
+        Form(
+            max_length=255,
+            description="Xuất xứ sản phẩm",
+            examples=["Chính hãng VN/A"],
+        ),
+    ] = None,
+    description: Annotated[
+        str | None,
+        Form(
+            description="Mô tả chi tiết sản phẩm",
+            examples=["<p>Mô tả chi tiết...</p>"],
+        ),
+    ] = None,
+) -> ProductCreate:
+    return ProductCreate(
+        product_name=product_name,
+        category_id=category_id,
+        price=price,
+        sale_price=sale_price,
+        quantity=quantity,
+        brand=brand,
+        origin=origin,
+        description=description,
+    )
+
+
+def _product_update_form(
+    product_name: Annotated[
+        str | None,
+        Form(
+            min_length=1,
+            max_length=255,
+            description="Tên sản phẩm mới",
+        ),
+    ] = None,
+    category_id: Annotated[
+        int | None,
+        Form(
+            gt=0,
+            description="Mã danh mục mới",
+        ),
+    ] = None,
+    price: Annotated[
+        Decimal | None,
+        Form(
+            gt=Decimal("0"),
+            description="Giá bán gốc mới",
+        ),
+    ] = None,
+    sale_price: Annotated[
+        Decimal | None,
+        Form(
+            gt=Decimal("0"),
+            description="Giá bán khuyến mãi mới",
+        ),
+    ] = None,
+    quantity: Annotated[
+        int | None,
+        Form(
+            ge=0,
+            description="Số lượng kho mới",
+        ),
+    ] = None,
+    brand: Annotated[
+        str | None,
+        Form(
+            max_length=255,
+            description="Thương hiệu mới",
+        ),
+    ] = None,
+    origin: Annotated[
+        str | None,
+        Form(
+            max_length=255,
+            description="Xuất xứ mới",
+        ),
+    ] = None,
+    description: Annotated[
+        str | None,
+        Form(
+            description="Mô tả chi tiết mới",
+        ),
+    ] = None,
+) -> ProductUpdate:
+    values = {
+        field: value
+        for field, value in {
+            "product_name": product_name,
+            "category_id": category_id,
+            "price": price,
+            "sale_price": sale_price,
+            "quantity": quantity,
+            "brand": brand,
+            "origin": origin,
+            "description": description,
+        }.items()
+        if value is not None
+    }
+    return ProductUpdate(**values)
+
 
 # Khởi tạo Router cho phân hệ Admin Products - Toàn bộ yêu cầu quyền ADMIN
 admin_product_router = APIRouter(
@@ -71,17 +237,20 @@ def admin_get_products(
     "",
     response_model=ApiResponse[ProductResponse],
     status_code=status.HTTP_201_CREATED,
-    summary="Thêm mới sản phẩm (Admin)",
-    description="Tạo sản phẩm mới trong hệ thống. Tự động tính toán % giảm giá và kiểm tra danh mục tồn tại.",
+    summary="Thêm mới sản phẩm kèm ảnh Cloudinary (Admin)",
+    description="Tạo sản phẩm mới trong hệ thống. Nhận file ảnh trực tiếp qua multipart/form-data và tự động tải lên Cloudinary.",
 )
-def admin_create_product(
-    payload: ProductCreate,
+async def admin_create_product(
+    data: Annotated[ProductCreate, Depends(_product_create_form)],
+    file: UploadFile | None = File(
+        default=None, description="File ảnh sản phẩm tải lên Cloudinary"
+    ),
     db: Session = Depends(get_db),
 ) -> ApiResponse[ProductResponse]:
     """
     Endpoint tạo mới sản phẩm:
     """
-    product = ProductService.create_product(db=db, payload=payload)
+    product = await ProductService.create_product(db=db, payload=data, file=file)
     return success_response(
         data=product,
         message="Thêm mới sản phẩm thành công",
@@ -92,21 +261,72 @@ def admin_create_product(
     "/{id}",
     response_model=ApiResponse[ProductResponse],
     status_code=status.HTTP_200_OK,
-    summary="Cập nhật thông tin sản phẩm (Admin)",
-    description="Cập nhật thông tin sản phẩm theo ID. Tự động tính toán lại % giảm giá nếu có thay đổi giá gốc/giá sale và dọn dẹp ảnh cũ trên Cloudinary.",
+    summary="Cập nhật thông tin sản phẩm kèm ảnh Cloudinary (Admin)",
+    description="Cập nhật thông tin sản phẩm theo ID. Tự động tải ảnh mới lên Cloudinary và xóa ảnh cũ nếu có file đính kèm.",
 )
 async def admin_update_product(
     id: int = Path(..., description="Mã ID sản phẩm cần cập nhật"),
-    payload: ProductUpdate = ...,
+    data: Annotated[ProductUpdate, Depends(_product_update_form)] = None,
+    file: UploadFile | None = File(
+        default=None,
+        description="File ảnh mới tải lên Cloudinary (nếu muốn thay đổi ảnh)",
+    ),
     db: Session = Depends(get_db),
 ) -> ApiResponse[ProductResponse]:
     """
     Endpoint cập nhật sản phẩm:
     """
-    product = await ProductService.update_product(db=db, product_id=id, payload=payload)
+    product = await ProductService.update_product(
+        db=db, product_id=id, payload=data, file=file
+    )
     return success_response(
         data=product,
         message="Cập nhật thông tin sản phẩm thành công",
+    )
+
+
+@admin_product_router.patch(
+    "/{id}/image",
+    response_model=ApiResponse[ProductResponse],
+    status_code=status.HTTP_200_OK,
+    summary="Cập nhật riêng ảnh sản phẩm (Admin - Tương tự User Avatar)",
+    description="Tải file ảnh mới lên Cloudinary cho sản phẩm và tự động xóa ảnh cũ. Request dạng multipart/form-data.",
+)
+async def admin_update_product_image(
+    id: int = Path(..., description="Mã ID sản phẩm cần cập nhật ảnh"),
+    file: UploadFile = File(..., description="File ảnh mới tải lên"),
+    db: Session = Depends(get_db),
+) -> ApiResponse[ProductResponse]:
+    """
+    Endpoint cập nhật riêng ảnh sản phẩm:
+    """
+    product = await ProductService.update_product_image(
+        db=db, product_id=id, file=file
+    )
+    return success_response(
+        data=product,
+        message="Cập nhật ảnh sản phẩm thành công",
+    )
+
+
+@admin_product_router.delete(
+    "/{id}/image",
+    response_model=ApiResponse[ProductResponse],
+    status_code=status.HTTP_200_OK,
+    summary="Xóa riêng ảnh sản phẩm trên Cloudinary (Admin - Tương tự Delete Avatar)",
+    description="Xóa ảnh sản phẩm trên Cloudinary và đặt image_src, image_public_id về null.",
+)
+async def admin_delete_product_image(
+    id: int = Path(..., description="Mã ID sản phẩm cần xóa ảnh"),
+    db: Session = Depends(get_db),
+) -> ApiResponse[ProductResponse]:
+    """
+    Endpoint xóa riêng ảnh sản phẩm:
+    """
+    product = await ProductService.delete_product_image(db=db, product_id=id)
+    return success_response(
+        data=product,
+        message="Xóa ảnh sản phẩm thành công",
     )
 
 
