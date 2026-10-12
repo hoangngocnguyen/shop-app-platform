@@ -394,8 +394,8 @@ def test_12_admin_get_products_with_stock_status(client):
 
 
 def test_13_admin_create_product(client):
-    """API 13: POST /api/v1/admin/products - Thêm sản phẩm + tính % giảm giá"""
-    # Success case: price 20tr, sale_price 15tr -> discount 25%
+    """API 13: POST /api/v1/admin/products - Thêm sản phẩm + tính % giảm giá + image_public_id"""
+    # Success case: price 20tr, sale_price 15tr -> discount 25% kèm Cloudinary public_id
     payload = {
         "product_name": "Samsung Galaxy S24 Ultra",
         "category_id": 1,
@@ -403,11 +403,14 @@ def test_13_admin_create_product(client):
         "sale_price": 15000000,
         "quantity": 20,
         "brand": "Samsung",
+        "image_src": "https://res.cloudinary.com/test/image/upload/v1/s24.png",
+        "image_public_id": "shop-app-platform/products/s24_test_id",
     }
     response = client.post("/api/v1/admin/products", json=payload)
     assert response.status_code == 201
     data = response.json()["data"]
     assert data["discount_percent"] == 25
+    assert data["image_public_id"] == "shop-app-platform/products/s24_test_id"
 
     # Invalid Price Case: sale_price > price -> 400 INVALID_PRICE_RANGE
     payload_err = {
@@ -422,16 +425,18 @@ def test_13_admin_create_product(client):
 
 
 def test_14_admin_update_product(client):
-    """API 14: PUT /api/v1/admin/products/{id} - Cập nhật sản phẩm"""
-    # Cập nhật giá gốc và giá sale của Product 2
+    """API 14: PUT /api/v1/admin/products/{id} - Cập nhật sản phẩm & image_public_id"""
+    # Cập nhật giá gốc, giá sale và đổi ảnh đại diện
     payload = {
         "price": 20000000,
         "sale_price": 10000000,  # 50% discount
+        "image_public_id": "shop-app-platform/products/s24_updated_id",
     }
     response = client.put("/api/v1/admin/products/2", json=payload)
     assert response.status_code == 200
     data = response.json()["data"]
     assert data["discount_percent"] == 50
+    assert data["image_public_id"] == "shop-app-platform/products/s24_updated_id"
 
 
 def test_15_admin_delete_product_validation(client):

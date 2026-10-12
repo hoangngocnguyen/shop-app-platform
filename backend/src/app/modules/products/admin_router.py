@@ -93,9 +93,9 @@ def admin_create_product(
     response_model=ApiResponse[ProductResponse],
     status_code=status.HTTP_200_OK,
     summary="Cập nhật thông tin sản phẩm (Admin)",
-    description="Cập nhật thông tin sản phẩm theo ID. Tự động tính toán lại % giảm giá nếu có thay đổi giá gốc/giá sale.",
+    description="Cập nhật thông tin sản phẩm theo ID. Tự động tính toán lại % giảm giá nếu có thay đổi giá gốc/giá sale và dọn dẹp ảnh cũ trên Cloudinary.",
 )
-def admin_update_product(
+async def admin_update_product(
     id: int = Path(..., description="Mã ID sản phẩm cần cập nhật"),
     payload: ProductUpdate = ...,
     db: Session = Depends(get_db),
@@ -103,7 +103,7 @@ def admin_update_product(
     """
     Endpoint cập nhật sản phẩm:
     """
-    product = ProductService.update_product(db=db, product_id=id, payload=payload)
+    product = await ProductService.update_product(db=db, product_id=id, payload=payload)
     return success_response(
         data=product,
         message="Cập nhật thông tin sản phẩm thành công",
@@ -115,16 +115,16 @@ def admin_update_product(
     response_model=ApiResponse[dict],
     status_code=status.HTTP_200_OK,
     summary="Xóa đơn lẻ sản phẩm (Admin)",
-    description="Xóa sản phẩm theo ID. Nghiệp vụ: Chặn xóa nếu sản phẩm đã từng phát sinh giao dịch trong đơn hàng.",
+    description="Xóa sản phẩm theo ID. Nghiệp vụ: Chặn xóa nếu sản phẩm đã từng phát sinh giao dịch trong đơn hàng và dọn dẹp ảnh trên Cloudinary.",
 )
-def admin_delete_product(
+async def admin_delete_product(
     id: int = Path(..., description="Mã ID sản phẩm cần xóa"),
     db: Session = Depends(get_db),
 ) -> ApiResponse[dict]:
     """
     Endpoint xóa sản phẩm:
     """
-    ProductService.delete_product(db=db, product_id=id)
+    await ProductService.delete_product(db=db, product_id=id)
     return success_response(
         data={"deleted_id": id},
         message=f"Đã xóa thành công sản phẩm có ID {id}",
@@ -136,16 +136,16 @@ def admin_delete_product(
     response_model=ApiResponse[dict],
     status_code=status.HTTP_200_OK,
     summary="Xóa hàng loạt sản phẩm (Admin)",
-    description="Xóa danh sách ID sản phẩm trong 1 Database Transaction duy nhất. Tự động rollback nếu có sản phẩm đã nằm trong đơn hàng.",
+    description="Xóa danh sách ID sản phẩm trong 1 Database Transaction duy nhất. Tự động rollback nếu có sản phẩm đã nằm trong đơn hàng và dọn dẹp toàn bộ ảnh trên Cloudinary.",
 )
-def admin_bulk_delete_products(
+async def admin_bulk_delete_products(
     payload: BulkDeleteProductRequest,
     db: Session = Depends(get_db),
 ) -> ApiResponse[dict]:
     """
     Endpoint xóa hàng loạt sản phẩm:
     """
-    deleted_count = ProductService.bulk_delete_products(
+    deleted_count = await ProductService.bulk_delete_products(
         db=db, product_ids=payload.product_ids
     )
     return success_response(
