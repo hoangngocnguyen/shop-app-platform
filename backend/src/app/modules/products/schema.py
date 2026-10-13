@@ -65,6 +65,11 @@ class ProductResponse(BaseModel):
         description="Đường dẫn URL hình ảnh sản phẩm trên Cloudinary",
         examples=["https://res.cloudinary.com/.../macbook.png"],
     )
+    image_public_id: str | None = Field(
+        default=None,
+        description="Public ID của hình ảnh trên Cloudinary",
+        examples=["shop-app-platform/products/macbook_xyz"],
+    )
     description: str | None = Field(
         default=None,
         description="Mô tả chi tiết của sản phẩm",
@@ -153,6 +158,12 @@ class ProductCreate(BaseModel):
         description="URL hình ảnh sản phẩm",
         examples=["https://res.cloudinary.com/.../iphone15.png"],
     )
+    image_public_id: str | None = Field(
+        default=None,
+        max_length=255,
+        description="Public ID của ảnh trên Cloudinary (nếu đã upload qua /media/upload)",
+        examples=["shop-app-platform/products/iphone15_xyz"],
+    )
     description: str | None = Field(
         default=None,
         description="Mô tả chi tiết dạng HTML hoặc Markdown",
@@ -191,6 +202,12 @@ class ProductUpdate(BaseModel):
     brand: str | None = Field(default=None, max_length=255)
     origin: str | None = Field(default=None, max_length=255)
     image_src: str | None = Field(default=None, max_length=255)
+    image_public_id: str | None = Field(
+        default=None,
+        max_length=255,
+        description="Public ID mới của ảnh trên Cloudinary",
+        examples=["shop-app-platform/products/iphone15_new"],
+    )
     description: str | None = Field(default=None)
 
 
