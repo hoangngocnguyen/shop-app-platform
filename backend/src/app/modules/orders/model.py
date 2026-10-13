@@ -1,6 +1,7 @@
 import uuid
 from datetime import UTC, datetime
 from decimal import Decimal
+from typing import TYPE_CHECKING
 
 from sqlalchemy import (
     DateTime,
@@ -13,6 +14,12 @@ from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from src.app.core.database import Base
+
+if TYPE_CHECKING:
+    from src.app.modules.orders.model import OrderDetail, OrderLog
+    from src.app.modules.products.model import Product
+    from src.app.modules.shipping_addresses.model import ShippingAddress
+    from src.app.modules.users.model import User
 
 
 class Order(Base):
@@ -163,23 +170,23 @@ class Order(Base):
     )
 
     # Quan hệ ORM
-    user = relationship(
+    user: Mapped["User"] = relationship(
         "User",
         back_populates="orders",
     )
 
-    shipping_address_rel = relationship(
+    shipping_address_rel: Mapped["ShippingAddress | None"] = relationship(
         "ShippingAddress",
         lazy="select",
     )
 
-    order_details = relationship(
+    order_details: Mapped[list["OrderDetail"]] = relationship(
         "OrderDetail",
         back_populates="order",
         cascade="all, delete-orphan",
     )
 
-    order_logs = relationship(
+    order_logs: Mapped[list["OrderLog"]] = relationship(
         "OrderLog",
         back_populates="order",
         cascade="all, delete-orphan",
@@ -228,8 +235,8 @@ class OrderDetail(Base):
     )
 
     # Quan hệ ORM
-    order = relationship("Order", back_populates="order_details")
-    product = relationship("Product")
+    order: Mapped["Order"] = relationship("Order", back_populates="order_details")
+    product: Mapped["Product"] = relationship("Product")
 
 
 class OrderLog(Base):
@@ -287,5 +294,5 @@ class OrderLog(Base):
     )
 
     # Quan hệ ORM
-    order = relationship("Order", back_populates="order_logs")
-    user = relationship("User")
+    order: Mapped["Order"] = relationship("Order", back_populates="order_logs")
+    user: Mapped["User | None"] = relationship("User")
