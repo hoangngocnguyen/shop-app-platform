@@ -97,7 +97,7 @@ export default function UserProfilePage() {
 
   return (
     <div className="min-h-screen w-full bg-primary-light py-10 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
-      {/* Background hiệu ứng ánh sáng gradient sang trọng */}
+      {/* Background hiệu ứng ánh sáng mờ xanh mint */}
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[900px] h-[500px] bg-gradient-to-br from-primary/15 via-accent/5 to-transparent rounded-full blur-3xl pointer-events-none -z-10" />
 
       <div className="max-w-5xl mx-auto space-y-6">
@@ -109,7 +109,7 @@ export default function UserProfilePage() {
           </div>
 
           <div className="relative flex items-center gap-4">
-            <div className="w-14 h-14 rounded-2xl bg-primary-light flex items-center justify-center text-primary shadow-inner transition-transform duration-300 group-hover:scale-105 group-hover:rotate-3">
+            <div className="w-14 h-14 rounded-2xl bg-primary-light flex items-center justify-center text-primary shadow-inner transition-all duration-300 group-hover:scale-110 group-hover:-translate-y-1">
               <Sparkles className="w-7 h-7" />
             </div>
             <div>
@@ -119,7 +119,7 @@ export default function UserProfilePage() {
           </div>
           <Link
             href={ROUTES.HOME}
-            className="relative w-12 h-12 rounded-2xl border border-surface-border bg-surface-bg flex items-center justify-center text-text-sub hover:bg-primary hover:text-primary-contrast hover:border-primary transition-all duration-300 shadow-sm hover:shadow-brand-sm hover:-translate-y-0.5 active:translate-y-0 group/home"
+            className="relative w-12 h-12 rounded-2xl border border-surface-border bg-surface-bg flex items-center justify-center text-text-sub hover:bg-primary hover:text-primary-contrast hover:border-primary transition-all duration-300 shadow-sm hover:shadow-brand-sm hover:-translate-y-1 active:translate-y-0 group/home"
             title="Trang chủ"
           >
             <Home className="w-5 h-5 transition-transform duration-200 group-hover/home:scale-110" />
@@ -137,7 +137,7 @@ export default function UserProfilePage() {
         {/* Content Layout */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
-          {/* Card Trái: Avatar & Trạng thái */}
+          {/* Card Trái: Avatar */}
           <div className="group relative lg:col-span-1 bg-surface-card rounded-3xl border border-surface-border shadow-brand-md p-6 sm:p-8 flex flex-col items-center text-center overflow-hidden transition-all duration-300 hover:shadow-brand-md hover:border-primary/40">
             <div className="pointer-events-none absolute inset-0 overflow-hidden rounded-3xl" aria-hidden="true">
               <div className="absolute -left-6 -top-6 h-32 w-32 animate-pulse rounded-full bg-primary/10 blur-2xl transition-all duration-1000 group-hover:scale-125" />
@@ -146,7 +146,7 @@ export default function UserProfilePage() {
             <div className="absolute top-0 left-0 right-0 h-28 bg-gradient-to-b from-primary-light/70 to-transparent pointer-events-none" />
 
             <div className="relative mb-5 mt-2">
-              <div className="w-36 h-36 rounded-full overflow-hidden border-4 border-surface-card bg-primary-light flex items-center justify-center shadow-brand-md transition-transform duration-500 group-hover:scale-105">
+              <div className="w-36 h-36 rounded-full overflow-hidden border-4 border-surface-card bg-primary-light flex items-center justify-center shadow-brand-md transition-all duration-500 group-hover:scale-105 group-hover:-translate-y-1">
                 {profile?.avatar_url ? (
                   <img
                     src={profile.avatar_url}
@@ -180,7 +180,7 @@ export default function UserProfilePage() {
                 onClick={() => setIsAvatarModalOpen(true)}
                 className="w-full py-3 px-4 bg-primary hover:bg-primary-hover text-primary-contrast rounded-2xl text-sm font-semibold transition-all duration-300 flex items-center justify-center gap-2 shadow-brand-sm hover:shadow-brand-md hover:-translate-y-0.5 active:translate-y-0"
               >
-                <Camera className="w-4 h-4" />
+                <Camera className="w-4 h-4 transition-transform duration-300 group-hover:scale-110" />
                 Thay đổi ảnh đại diện
               </button>
 
@@ -197,7 +197,7 @@ export default function UserProfilePage() {
             </div>
           </div>
 
-          {/* Card Phải: Thông tin chi tiết */}
+          {/* Card Phải: Chi tiết thông tin */}
           <div className="group relative lg:col-span-2 bg-surface-card rounded-3xl border border-surface-border shadow-brand-md p-6 sm:p-8 flex flex-col justify-between transition-all duration-300 hover:shadow-brand-md hover:border-primary/40">
             <div className="pointer-events-none absolute inset-0 overflow-hidden rounded-3xl" aria-hidden="true">
               <div className="absolute right-0 top-0 h-40 w-40 animate-pulse rounded-full bg-primary/10 blur-2xl transition-all duration-1000 group-hover:scale-125" />
@@ -218,10 +218,10 @@ export default function UserProfilePage() {
                 </button>
               </div>
 
-              {/* Grid thông tin */}
+              {/* Grid thông tin - Icon nổi và giữ nguyên khi hover */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="group/item flex items-start gap-4 p-4 rounded-2xl bg-surface-bg border border-surface-border/80 transition-all duration-300 hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-brand-sm">
-                  <div className="w-10 h-10 rounded-xl bg-primary-light flex items-center justify-center text-primary shrink-0 transition-transform duration-300 group-hover/item:scale-110">
+                <div className="group/item flex items-start gap-4 p-4 rounded-2xl bg-surface-bg border border-surface-border/80 transition-all duration-300 hover:-translate-y-1 hover:border-primary/40 hover:shadow-brand-sm">
+                  <div className="w-10 h-10 rounded-xl bg-primary-light flex items-center justify-center text-primary shrink-0 transition-all duration-300 group-hover/item:scale-110 group-hover/item:-translate-y-0.5 shadow-sm">
                     <User className="w-5 h-5" />
                   </div>
                   <div>
@@ -232,8 +232,8 @@ export default function UserProfilePage() {
                   </div>
                 </div>
 
-                <div className="group/item flex items-start gap-4 p-4 rounded-2xl bg-surface-bg border border-surface-border/80 transition-all duration-300 hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-brand-sm">
-                  <div className="w-10 h-10 rounded-xl bg-primary-light flex items-center justify-center text-primary shrink-0 transition-transform duration-300 group-hover/item:scale-110">
+                <div className="group/item flex items-start gap-4 p-4 rounded-2xl bg-surface-bg border border-surface-border/80 transition-all duration-300 hover:-translate-y-1 hover:border-primary/40 hover:shadow-brand-sm">
+                  <div className="w-10 h-10 rounded-xl bg-primary-light flex items-center justify-center text-primary shrink-0 transition-all duration-300 group-hover/item:scale-110 group-hover/item:-translate-y-0.5 shadow-sm">
                     <Hash className="w-5 h-5" />
                   </div>
                   <div>
@@ -244,8 +244,8 @@ export default function UserProfilePage() {
                   </div>
                 </div>
 
-                <div className="group/item flex items-start gap-4 p-4 rounded-2xl bg-surface-bg border border-surface-border/80 transition-all duration-300 hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-brand-sm">
-                  <div className="w-10 h-10 rounded-xl bg-primary-light flex items-center justify-center text-primary shrink-0 transition-transform duration-300 group-hover/item:scale-110">
+                <div className="group/item flex items-start gap-4 p-4 rounded-2xl bg-surface-bg border border-surface-border/80 transition-all duration-300 hover:-translate-y-1 hover:border-primary/40 hover:shadow-brand-sm">
+                  <div className="w-10 h-10 rounded-xl bg-primary-light flex items-center justify-center text-primary shrink-0 transition-all duration-300 group-hover/item:scale-110 group-hover/item:-translate-y-0.5 shadow-sm">
                     <Mail className="w-5 h-5" />
                   </div>
                   <div>
@@ -256,8 +256,8 @@ export default function UserProfilePage() {
                   </div>
                 </div>
 
-                <div className="group/item flex items-start gap-4 p-4 rounded-2xl bg-surface-bg border border-surface-border/80 transition-all duration-300 hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-brand-sm">
-                  <div className="w-10 h-10 rounded-xl bg-primary-light flex items-center justify-center text-primary shrink-0 transition-transform duration-300 group-hover/item:scale-110">
+                <div className="group/item flex items-start gap-4 p-4 rounded-2xl bg-surface-bg border border-surface-border/80 transition-all duration-300 hover:-translate-y-1 hover:border-primary/40 hover:shadow-brand-sm">
+                  <div className="w-10 h-10 rounded-xl bg-primary-light flex items-center justify-center text-primary shrink-0 transition-all duration-300 group-hover/item:scale-110 group-hover/item:-translate-y-0.5 shadow-sm">
                     <Phone className="w-5 h-5" />
                   </div>
                   <div>
@@ -268,8 +268,8 @@ export default function UserProfilePage() {
                   </div>
                 </div>
 
-                <div className="group/item flex items-start gap-4 p-4 rounded-2xl bg-surface-bg border border-surface-border/80 transition-all duration-300 hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-brand-sm sm:col-span-2">
-                  <div className="w-10 h-10 rounded-xl bg-primary-light flex items-center justify-center text-primary shrink-0 transition-transform duration-300 group-hover/item:scale-110">
+                <div className="group/item flex items-start gap-4 p-4 rounded-2xl bg-surface-bg border border-surface-border/80 transition-all duration-300 hover:-translate-y-1 hover:border-primary/40 hover:shadow-brand-sm sm:col-span-2">
+                  <div className="w-10 h-10 rounded-xl bg-primary-light flex items-center justify-center text-primary shrink-0 transition-all duration-300 group-hover/item:scale-110 group-hover/item:-translate-y-0.5 shadow-sm">
                     <Calendar className="w-5 h-5" />
                   </div>
                   <div>
@@ -282,10 +282,10 @@ export default function UserProfilePage() {
 
                 <Link
                   href={ROUTES.USER.ADDRESS}
-                  className="flex items-center justify-between gap-4 p-4 rounded-2xl bg-surface-bg border border-surface-border/80 hover:border-primary hover:bg-primary-light/20 transition-all duration-300 group/link cursor-pointer sm:col-span-2 shadow-sm hover:shadow-brand-sm hover:-translate-y-0.5"
+                  className="flex items-center justify-between gap-4 p-4 rounded-2xl bg-surface-bg border border-surface-border/80 hover:border-primary hover:bg-primary-light/20 transition-all duration-300 group/link cursor-pointer sm:col-span-2 shadow-sm hover:shadow-brand-sm hover:-translate-y-1"
                 >
                   <div className="flex items-center gap-4 min-w-0">
-                    <div className="w-10 h-10 rounded-xl bg-primary-light flex items-center justify-center text-primary shrink-0 group-hover/link:scale-110 transition-transform">
+                    <div className="w-10 h-10 rounded-xl bg-primary-light flex items-center justify-center text-primary shrink-0 transition-all duration-300 group-hover/link:scale-110 group-hover/link:-translate-y-0.5 shadow-sm">
                       <MapPin className="w-5 h-5" />
                     </div>
                     <div className="min-w-0">
@@ -307,7 +307,7 @@ export default function UserProfilePage() {
                 className="inline-flex items-center gap-2 px-5 py-2.5 rounded-2xl text-status-error hover:bg-status-error-bg border border-transparent hover:border-status-error/30 text-sm font-bold transition-all duration-300 hover:-translate-y-0.5 active:translate-y-0 shadow-sm"
               >
                 <LogOut className="w-4 h-4" />
-                Đăng xuất tài khoản
+                Đăng xuất
               </button>
             </div>
           </div>
