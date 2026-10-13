@@ -1,6 +1,7 @@
 import uuid
 from datetime import UTC, datetime
 from decimal import Decimal
+from enum import Enum
 from typing import TYPE_CHECKING
 
 from sqlalchemy import (
@@ -20,6 +21,21 @@ if TYPE_CHECKING:
     from src.app.modules.products.model import Product
     from src.app.modules.shipping_addresses.model import ShippingAddress
     from src.app.modules.users.model import User
+
+
+class CancelledByType(str, Enum):
+    """
+    Loại chủ thể thực hiện hủy đơn hàng:
+    - CUSTOMER: Khách hàng chủ động hủy
+    - STAFF: Nhân viên cửa hàng hủy
+    - SYSTEM: Hệ thống tự động hủy (timeout, quy tắc hệ thống)
+    - ADMIN: Quản trị viên hệ thống / Chăm sóc khách hàng hủy
+    """
+
+    CUSTOMER = "CUSTOMER"
+    STAFF = "STAFF"
+    SYSTEM = "SYSTEM"
+    ADMIN = "ADMIN"
 
 
 class Order(Base):
@@ -159,6 +175,34 @@ class Order(Base):
         String(500),
         nullable=True,
         comment="Ghi chú của khách hàng cho đơn hàng",
+    )
+
+    # ==========================================================================
+    # CÁC TRƯỜNG DỮ LIỆU HỦY ĐƠN HÀNG (CANCELLATION AUDIT FIELDS)
+    # ==========================================================================
+    cancel_reason: Mapped[str | None] = mapped_column(
+        String(500),
+        nullable=True,
+        comment="Lý do hủy đơn hàng (chuỗi mô tả hoặc mã lý do kèm ghi chú)",
+    )
+
+    cancelled_by_type: Mapped[str | None] = mapped_column(
+        String(50),
+        nullable=True,
+        index=True,
+        comment="Loại người hủy: CUSTOMER, SHOP_OWNER, SYSTEM, ADMIN",
+    )
+
+    cancelled_by_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True),
+        nullable=True,
+        comment="ID của tài khoản/người thực hiện hủy (NULL nếu do hệ thống SYSTEM)",
+    )
+
+    cancelled_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True),
+        nullable=True,
+        comment="Thời điểm thực hiện hủy đơn (chuẩn UTC)",
     )
 
     updated_at: Mapped[datetime] = mapped_column(
