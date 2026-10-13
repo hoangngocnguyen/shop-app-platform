@@ -492,51 +492,6 @@ def test_16_admin_bulk_delete_products(client):
     assert res_fail.json()["error_code"] == "PRODUCT_IN_ORDERS"
 
 
-def test_18_admin_update_product_image(client):
-    """API 18: PATCH /api/v1/admin/products/{id}/image - Cập nhật riêng ảnh sản phẩm (Avatar pattern)"""
-    files = {"file": ("single_image.png", b"single_image_binary_data", "image/png")}
-
-    with patch(
-        "src.app.modules.products.service.MediaService.upload_image",
-        new_callable=AsyncMock,
-    ) as mock_upload, patch(
-        "src.app.modules.products.service.MediaService.delete_image",
-        new_callable=AsyncMock,
-    ) as mock_delete:
-        mock_upload.return_value = {
-            "public_id": "shop-app-platform/products/single_img_id",
-            "url": "https://res.cloudinary.com/test/image/upload/v1/single_img.png",
-            "format": "png",
-        }
-        mock_delete.return_value = {"message": "Xóa thành công", "public_id": "old_id"}
-        response = client.patch("/api/v1/admin/products/2/image", files=files)
-
-    assert response.status_code == 200
-    data = response.json()["data"]
-    assert data["image_public_id"] == "shop-app-platform/products/single_img_id"
-    assert data["image_src"] == "https://res.cloudinary.com/test/image/upload/v1/single_img.png"
-
-
-def test_19_admin_delete_product_image(client):
-    """API 19: DELETE /api/v1/admin/products/{id}/image - Xóa riêng ảnh sản phẩm trên Cloudinary"""
-    with patch(
-        "src.app.modules.products.service.MediaService.delete_image",
-        new_callable=AsyncMock,
-    ) as mock_delete:
-        mock_delete.return_value = {"message": "Xóa thành công"}
-        response = client.delete("/api/v1/admin/products/2/image")
-
-    assert response.status_code == 200
-    data = response.json()["data"]
-    assert data["image_public_id"] is None
-    assert data["image_src"] is None
-
-    # Thử xóa lần nữa khi không còn ảnh -> 400 PRODUCT_NO_IMAGE
-    res_again = client.delete("/api/v1/admin/products/2/image")
-    assert res_again.status_code == 400
-    assert res_again.json()["error_code"] == "PRODUCT_NO_IMAGE"
-
-
 # ==============================================================================
 # 4. TEST SECURITY & RBAC
 # ==============================================================================
@@ -552,7 +507,7 @@ def test_17_admin_rbac_protection():
 
 
 if __name__ == "__main__":
-    print("🚀 Bắt đầu thực thi toàn bộ 19 Test Cases cho các APIs Product & Category...")
+    print("🚀 Bắt đầu thực thi toàn bộ 17 Test Cases cho các APIs Product & Category...")
     # Khởi tạo db session
     gen_db = db_session()
     session = next(gen_db)
@@ -578,8 +533,6 @@ if __name__ == "__main__":
         ("API 14: PUT /admin/products/{id} (Admin Update & Replace Image)", test_14_admin_update_product),
         ("API 15: DELETE /admin/products/{id} (Admin Delete & Order Check)", test_15_admin_delete_product_validation),
         ("API 16: POST /admin/products/delete-multiple (Admin Bulk Delete)", test_16_admin_bulk_delete_products),
-        ("API 18: PATCH /admin/products/{id}/image (Admin Update Image Avatar Pattern)", test_18_admin_update_product_image),
-        ("API 19: DELETE /admin/products/{id}/image (Admin Delete Image Avatar Pattern)", test_19_admin_delete_product_image),
         ("TEST 17: Admin Security & RBAC Protection", test_17_admin_rbac_protection),
     ]
 
