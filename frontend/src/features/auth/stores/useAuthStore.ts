@@ -14,6 +14,8 @@ interface AuthState {
   logout: () => Promise<void>;
 }
 
+let syncPromise: Promise<User | null> | null = null;
+
 export const useAuthStore = create<AuthState>((set, get) => ({
   user: null,
   isLoading: true,
@@ -34,17 +36,25 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     }
   },
 
-  sync: async () => {
-    try {
-      await syncUser();
-      const user = await getCurrentUser();
-      set({ user, isLoading: false });
-      return user;
-    } catch (error) {
-      console.error("Failed to sync/fetch user:", error);
-      set({ user: null, isLoading: false });
-      return null;
+  sync: () => {
+    if (!syncPromise) {
+      syncPromise = (async () => {
+        try {
+          await syncUser();
+          const user = await getCurrentUser();
+          set({ user, isLoading: false });
+          return user;
+        } catch (error) {
+          console.error("Failed to sync/fetch user:", error);
+          set({ user: null, isLoading: false });
+          return null;
+        } finally {
+          syncPromise = null;
+        }
+      })();
     }
+
+    return syncPromise;
   },
 
   logout: async () => {
