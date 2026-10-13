@@ -285,51 +285,6 @@ async def admin_update_product(
     )
 
 
-@admin_product_router.patch(
-    "/{id}/image",
-    response_model=ApiResponse[ProductResponse],
-    status_code=status.HTTP_200_OK,
-    summary="Cập nhật riêng ảnh sản phẩm (Admin - Tương tự User Avatar)",
-    description="Tải file ảnh mới lên Cloudinary cho sản phẩm và tự động xóa ảnh cũ. Request dạng multipart/form-data.",
-)
-async def admin_update_product_image(
-    id: int = Path(..., description="Mã ID sản phẩm cần cập nhật ảnh"),
-    file: UploadFile = File(..., description="File ảnh mới tải lên"),
-    db: Session = Depends(get_db),
-) -> ApiResponse[ProductResponse]:
-    """
-    Endpoint cập nhật riêng ảnh sản phẩm:
-    """
-    product = await ProductService.update_product_image(
-        db=db, product_id=id, file=file
-    )
-    return success_response(
-        data=product,
-        message="Cập nhật ảnh sản phẩm thành công",
-    )
-
-
-@admin_product_router.delete(
-    "/{id}/image",
-    response_model=ApiResponse[ProductResponse],
-    status_code=status.HTTP_200_OK,
-    summary="Xóa riêng ảnh sản phẩm trên Cloudinary (Admin - Tương tự Delete Avatar)",
-    description="Xóa ảnh sản phẩm trên Cloudinary và đặt image_src, image_public_id về null.",
-)
-async def admin_delete_product_image(
-    id: int = Path(..., description="Mã ID sản phẩm cần xóa ảnh"),
-    db: Session = Depends(get_db),
-) -> ApiResponse[ProductResponse]:
-    """
-    Endpoint xóa riêng ảnh sản phẩm:
-    """
-    product = await ProductService.delete_product_image(db=db, product_id=id)
-    return success_response(
-        data=product,
-        message="Xóa ảnh sản phẩm thành công",
-    )
-
-
 @admin_product_router.delete(
     "/{id}",
     response_model=ApiResponse[dict],
