@@ -103,18 +103,11 @@ export default function ShippingAddressPage() {
     };
 
     return (
-        <div className="min-h-screen w-full bg-primary-light py-10 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
-            {/* Background hiệu ứng quầng sáng xanh mint mờ */}
-            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[900px] h-[500px] bg-gradient-to-br from-primary/15 via-accent/5 to-transparent rounded-full blur-3xl pointer-events-none -z-10" />
-
+        <div className="min-h-screen w-full bg-white py-10 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
             <div className="max-w-5xl mx-auto space-y-6">
 
                 {/* HEADER BAR */}
                 <div className="group relative flex items-center justify-between bg-surface-card p-6 sm:p-7 rounded-3xl border border-surface-border shadow-brand-md transition-all duration-300 hover:shadow-brand-md hover:border-primary/40">
-                    <div className="pointer-events-none absolute inset-0 overflow-hidden rounded-3xl" aria-hidden="true">
-                        <div className="absolute -left-6 -top-6 h-28 w-28 animate-pulse rounded-full bg-primary/10 blur-2xl transition-all duration-1000 group-hover:scale-125" />
-                    </div>
-
                     <div className="relative flex items-center gap-4">
                         <div className="w-14 h-14 rounded-2xl bg-primary-light flex items-center justify-center text-primary shadow-inner transition-all duration-300 group-hover:scale-110 group-hover:-translate-y-1">
                             <MapPin className="w-7 h-7 text-primary" />
@@ -140,10 +133,6 @@ export default function ShippingAddressPage() {
 
                 {/* DANH SÁCH ĐỊA CHỈ */}
                 <div className="group relative bg-surface-card rounded-3xl border border-surface-border shadow-brand-md p-6 sm:p-8 space-y-6 transition-all duration-300 hover:shadow-brand-md hover:border-primary/40">
-                    <div className="pointer-events-none absolute inset-0 overflow-hidden rounded-3xl" aria-hidden="true">
-                        <div className="absolute right-0 top-0 h-40 w-40 animate-pulse rounded-full bg-primary/10 blur-2xl transition-all duration-1000 group-hover:scale-125" />
-                    </div>
-
                     <div className="relative flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 border-b border-surface-border">
                         <div>
                             <h2 className="text-lg font-bold text-text-main">
