@@ -26,10 +26,12 @@ export interface CartItemResponse {
     cart_item_id: number;
     product_id: number;
     product_name: string;
-    product_image?: string | null; 
-    unit_price: number;            
+    product_image?: string | null;
+    price: number;
+    discount_percent?: number | null;
+    unit_price: number;
     quantity: number;
-    subtotal: number;             
+    subtotal: number;
     stock_quantity: number;
 }
 
