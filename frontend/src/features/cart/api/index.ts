@@ -1,11 +1,21 @@
 import api from "@/lib/axios/client";
 import {
     CartResponse,
+    CartItemResponse,
     AddToCartRequest,
     UpdateCartItemRequest,
     DeleteMultipleCartItemsRequest,
     SyncCartRequest,
 } from "../types";
+
+export type {
+    CartResponse,
+    CartItemResponse,
+    AddToCartRequest,
+    UpdateCartItemRequest,
+    DeleteMultipleCartItemsRequest,
+    SyncCartRequest,
+};
 
 export const cartApi = {
     /**
