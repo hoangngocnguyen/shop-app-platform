@@ -13,8 +13,8 @@ export const cartApi = {
      * GET /cart
      */
     getUserCart: async (): Promise<CartResponse> => {
-        const response = await api.get<{ data: CartResponse }>("/cart");
-        return response.data.data;
+        const response = await api.get<CartResponse>("/cart");
+        return response.data;
     },
 
     /**
@@ -22,8 +22,8 @@ export const cartApi = {
      * POST /cart/items
      */
     addToCart: async (payload: AddToCartRequest): Promise<CartResponse> => {
-        const response = await api.post<{ data: CartResponse }>("/cart/items", payload);
-        return response.data.data;
+        const response = await api.post<CartResponse>("/cart/items", payload);
+        return response.data;
     },
 
     /**
@@ -31,8 +31,8 @@ export const cartApi = {
      * PATCH /cart/items/{cart_item_id}
      */
     updateCartItem: async (cartItemId: number, payload: UpdateCartItemRequest): Promise<CartResponse> => {
-        const response = await api.patch<{ data: CartResponse }>(`/cart/items/${cartItemId}`, payload);
-        return response.data.data;
+        const response = await api.patch<CartResponse>(`/cart/items/${cartItemId}`, payload);
+        return response.data;
     },
 
     /**
@@ -40,8 +40,8 @@ export const cartApi = {
      * DELETE /cart/items/{cart_item_id}
      */
     deleteCartItem: async (cartItemId: number): Promise<CartResponse> => {
-        const response = await api.delete<{ data: CartResponse }>(`/cart/items/${cartItemId}`);
-        return response.data.data;
+        const response = await api.delete<CartResponse>(`/cart/items/${cartItemId}`);
+        return response.data;
     },
 
     /**
@@ -49,10 +49,10 @@ export const cartApi = {
      * DELETE /cart/items
      */
     deleteMultipleCartItems: async (payload: DeleteMultipleCartItemsRequest): Promise<CartResponse> => {
-        const response = await api.delete<{ data: CartResponse }>("/cart/items", {
+        const response = await api.delete<CartResponse>("/cart/items", {
             data: payload,
         });
-        return response.data.data;
+        return response.data;
     },
 
     /**
@@ -60,7 +60,7 @@ export const cartApi = {
      * POST /cart/sync
      */
     syncCart: async (payload: SyncCartRequest): Promise<CartResponse> => {
-        const response = await api.post<{ data: CartResponse }>("/cart/sync", payload);
-        return response.data.data;
+        const response = await api.post<CartResponse>("/cart/sync", payload);
+        return response.data;
     },
 };
