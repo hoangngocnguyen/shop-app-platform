@@ -21,6 +21,13 @@ import { confirm } from "@/common/stores/useConfirmStore";
 import { toast } from "@/common/stores/useToastStore";
 import { parseErrorMessage } from "@/lib/axios/parseError";
 
+const formatPrice = (price: number) =>
+    new Intl.NumberFormat("vi-VN", {
+        style: "currency",
+        currency: "VND",
+        maximumFractionDigits: 0,
+    }).format(price);
+
 export default function CartPage() {
     const {
         cart,
@@ -244,8 +251,11 @@ export default function CartPage() {
                                                 </h3>
 
                                                 <div className="flex items-baseline gap-2">
-                                                    <span className="text-base font-bold text-status-error">
-                                                        {item.unit_price.toLocaleString("vi-VN")}đ
+                                                    <span className="text-xs text-text-muted">
+                                                        Đơn giá:
+                                                    </span>
+                                                    <span className="text-sm font-semibold text-text-sub">
+                                                        {formatPrice(item.unit_price)}
                                                     </span>
                                                 </div>
 
@@ -294,6 +304,9 @@ export default function CartPage() {
                                                         <Edit3 className="w-4 h-4" />
                                                     </button>
                                                 </div>
+                                                <p className="text-sm font-semibold text-status-error">
+                                                    Thành tiền: {formatPrice(item.subtotal)}
+                                                </p>
                                             </div>
                                         </div>
 
@@ -321,7 +334,7 @@ export default function CartPage() {
                         <div className="flex items-baseline gap-2">
                             <span className="text-sm font-semibold text-text-sub">Tổng cộng:</span>
                             <span className="text-xl font-bold text-status-error">
-                                {selectedTotalPrice.toLocaleString("vi-VN")} đ
+                                {formatPrice(selectedTotalPrice)}
                             </span>
                         </div>
                         <p className="text-[11px] text-text-muted mt-0.5">
