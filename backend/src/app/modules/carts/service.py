@@ -64,7 +64,11 @@ class CartService:
     @classmethod
     def _build_cart_item_response(cls, item: CartItem) -> CartItemResponse:
         product = item.product
-        unit_price = Decimal(str(product.price))
+        price = Decimal(str(product.price))
+        effective_price = (
+            product.sale_price if product.sale_price is not None else product.price
+        )
+        unit_price = Decimal(str(effective_price))
         subtotal = unit_price * item.quantity
 
         return CartItemResponse(
@@ -72,6 +76,8 @@ class CartService:
             product_id=item.product_id,
             product_name=product.product_name,
             product_image=product.image_src,
+            price=price,
+            discount_percent=product.discount_percent,
             unit_price=unit_price,
             quantity=item.quantity,
             subtotal=subtotal,
