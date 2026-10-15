@@ -5,7 +5,7 @@ import { useAuthStore } from '@/features/auth/stores/useAuthStore';
 import { ROUTES } from '@/constants/routes';
 
 export default function HomePage() {
-  const { user, logout, isAuthenticated} = useAuthStore();
+  const { user, logout, isAuthenticated } = useAuthStore();
 
   const handleLogout = async () => {
     logout();
@@ -99,6 +99,41 @@ export default function HomePage() {
               </Link>
             </div>
           )}
+
+          <div className="pt-6">
+            <p className="mb-4 text-sm font-medium uppercase tracking-[0.2em] text-text-muted">
+              Truy cập nhanh
+            </p>
+            <div className="flex flex-wrap justify-center gap-3">
+              <Link href={ROUTES.HOME} className="rounded-xl border border-surface-border bg-surface-card px-4 py-2 text-sm font-medium text-text-main transition hover:bg-surface-bg">
+                Trang chủ
+              </Link>
+              <Link href={ROUTES.PAYMENT} className="rounded-xl border border-surface-border bg-surface-card px-4 py-2 text-sm font-medium text-text-main transition hover:bg-surface-bg">
+                PAYMENT
+              </Link>
+              <Link href={ROUTES.PAYMENT_RESULT} className="rounded-xl border border-surface-border bg-surface-card px-4 py-2 text-sm font-medium text-text-main transition hover:bg-surface-bg">
+                Kết quả thanh toán
+              </Link>
+              <Link href={ROUTES.USER.PROFILE} className="rounded-xl border border-surface-border bg-surface-card px-4 py-2 text-sm font-medium text-text-main transition hover:bg-surface-bg">
+                Hồ sơ
+              </Link>
+              <Link href={ROUTES.USER.ADDRESS} className="rounded-xl border border-surface-border bg-surface-card px-4 py-2 text-sm font-medium text-text-main transition hover:bg-surface-bg">
+                Địa chỉ
+              </Link>
+              <Link href={ROUTES.ABOUT.FAQ} className="rounded-xl border border-surface-border bg-surface-card px-4 py-2 text-sm font-medium text-text-main transition hover:bg-surface-bg">
+                FAQ
+              </Link>
+              <Link href={ROUTES.ABOUT.SHIPPING} className="rounded-xl border border-surface-border bg-surface-card px-4 py-2 text-sm font-medium text-text-main transition hover:bg-surface-bg">
+                Vận chuyển
+              </Link>
+              <Link href={ROUTES.ABOUT.RETURN_POLICY} className="rounded-xl border border-surface-border bg-surface-card px-4 py-2 text-sm font-medium text-text-main transition hover:bg-surface-bg">
+                Chính sách đổi trả
+              </Link>
+              <Link href={ROUTES.STORES} className="rounded-xl border border-surface-border bg-surface-card px-4 py-2 text-sm font-medium text-text-main transition hover:bg-surface-bg">
+                Cửa hàng
+              </Link>
+            </div>
+          </div>
         </div>
       </main>
 
