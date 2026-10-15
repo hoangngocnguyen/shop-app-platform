@@ -3,10 +3,10 @@ import { createClient } from '@/lib/supabase/middleware';
 import { ROUTES } from '@/constants/routes';
 
 /**
- * Middleware chuẩn của Next.js App Router.
- * Chạy ở tầng Edge Runtime để kiểm tra quyền truy cập trước khi request chạm vào Server/Page.
+ * File proxy.ts chuẩn chính thức từ Next.js 16+ (Thay thế cho middleware.ts cũ).
+ * Chạy ở tầng Edge/Network Boundary để kiểm tra quyền truy cập trước khi request chạm vào Server/Page.
  */
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const { supabase, response } = createClient(request);
 
   // Lấy thông tin user an toàn qua getUser() từ Supabase Auth
@@ -20,6 +20,7 @@ export async function middleware(request: NextRequest) {
     pathname.startsWith(ROUTES.AUTH.LOGIN) ||
     pathname.startsWith(ROUTES.AUTH.REGISTER);
 
+  // Các route yêu cầu đăng nhập (bắt đầu bằng /user)
   const isProtectedRoute = pathname.startsWith('/user');
 
   // 1. Chưa đăng nhập mà cố tình truy cập trang bảo vệ (/user/...) -> Chuyển hướng về /login
