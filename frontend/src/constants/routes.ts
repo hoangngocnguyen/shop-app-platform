@@ -14,5 +14,7 @@ export const ROUTES = {
     TERM: '/about/term',
     RETURN_POLICY: '/about/return-policy',
   },
+  PAYMENT: '/payment',
+  PAYMENT_RESULT: '/payment/result',
   STORES: '/stores',
 } as const;
