@@ -14,6 +14,7 @@ from src.app.modules.shipping_addresses.router import (
     router as shipping_addresses_router,
 )
 from src.app.modules.users.router import router as users_router
+from src.app.modules.vnpay.router import router as vnpay_router
 
 # Tạo router tổng cho v1
 api_v1_router = APIRouter(prefix="/api/v1")
@@ -31,3 +32,4 @@ api_v1_router.include_router(shipping_addresses_router)
 api_v1_router.include_router(checkout_router)
 api_v1_router.include_router(order_router)
 api_v1_router.include_router(admin_order_router)
+api_v1_router.include_router(vnpay_router)
