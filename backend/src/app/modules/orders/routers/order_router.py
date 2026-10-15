@@ -17,7 +17,8 @@ from sqlalchemy.orm import Session
 from src.app.core.database import get_db
 from src.app.core.deps import get_current_user_id
 from src.app.core.response import ApiResponse, success_response
-from src.app.modules.orders.enums.order_enums import OrderStatus
+from src.app.modules.orders.catalogs import build_cancellation_reason_catalog
+from src.app.modules.orders.enums.order_enums import CustomerCancelReason, OrderStatus
 from src.app.modules.orders.repositories.repository import OrderRepository
 from src.app.modules.orders.schemas.checkout_schema import CheckoutPreviewResponse
 from src.app.modules.orders.schemas.order_requests import (
@@ -25,6 +26,7 @@ from src.app.modules.orders.schemas.order_requests import (
     CreateOrderRequest,
 )
 from src.app.modules.orders.schemas.order_responses import (
+    CancellationReasonCatalogResponse,
     OrderActionResponse,
     OrderCreateResponse,
     OrderDetailResponse,
@@ -46,6 +48,19 @@ def get_checkout_service(db: Session = Depends(get_db)) -> CheckoutService:
     """Dependency injection khởi tạo CheckoutService."""
     repository = OrderRepository(db)
     return CheckoutService(repository)
+
+
+@router.get(
+    "/cancellation-reasons",
+    response_model=ApiResponse[CancellationReasonCatalogResponse],
+    status_code=status.HTTP_200_OK,
+    summary="Lấy danh sách lý do khách hàng có thể hủy đơn",
+)
+def get_customer_cancellation_reasons() -> ApiResponse[CancellationReasonCatalogResponse]:
+    return success_response(
+        data=build_cancellation_reason_catalog(list(CustomerCancelReason)),
+        message="Lấy danh sách lý do hủy đơn thành công",
+    )
 
 
 # ==============================================================================

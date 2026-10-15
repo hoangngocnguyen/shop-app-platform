@@ -10,12 +10,12 @@ from uuid import UUID
 from pydantic import HttpUrl
 
 from src.app.core.exceptions import AppException, BadRequestException, NotFoundException
+from src.app.modules.orders.enums.order_enums import CheckoutType
 from src.app.modules.orders.repositories.repository import OrderRepository
 from src.app.modules.orders.schemas.checkout_schema import (
     CheckoutItemResponse,
     CheckoutPreviewRequest,
     CheckoutPreviewResponse,
-    CheckoutType,
 )
 from src.app.modules.products.model import Product
 

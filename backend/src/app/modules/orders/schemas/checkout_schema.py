@@ -1,5 +1,4 @@
 from decimal import Decimal
-from enum import Enum
 
 from pydantic import (
     BaseModel,
@@ -9,20 +8,10 @@ from pydantic import (
     model_validator,
 )
 
-# ==============================================================================
-# 1. ENUMS
-# ==============================================================================
-
-
-class CheckoutType(str, Enum):
-    """Nguồn checkout: BUY_NOW hoặc CART."""
-
-    BUY_NOW = "BUY_NOW"
-    CART = "CART"
-
+from src.app.modules.orders.enums.order_enums import CheckoutType
 
 # ==============================================================================
-# 2. CHECKOUT SCHEMAS
+# CHECKOUT SCHEMAS
 # ==============================================================================
 
 

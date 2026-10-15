@@ -13,6 +13,23 @@ from src.app.modules.orders.enums.order_enums import (
 from src.app.modules.orders.schemas.checkout_schema import CheckoutItemResponse
 
 
+class CancellationReasonOption(BaseModel):
+    """Một lý do hủy có thể chọn trong giao diện."""
+
+    value: str = Field(..., description="Mã lý do gửi lại trong reason_code")
+    label: str = Field(..., description="Nhãn tiếng Việt hiển thị trên giao diện")
+    requires_custom_reason: bool = Field(
+        default=False,
+        description="Có bắt buộc nhập custom_reason khi chọn lý do này hay không",
+    )
+
+
+class CancellationReasonCatalogResponse(BaseModel):
+    """Danh sách lý do hủy theo đúng nhóm người dùng của endpoint."""
+
+    items: list[CancellationReasonOption]
+
+
 class OrderCreateResponse(BaseModel):
     """Response — 201 Created cho POST /api/v1/orders."""
 
