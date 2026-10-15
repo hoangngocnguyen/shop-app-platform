@@ -3,22 +3,17 @@ from pathlib import Path
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-# Cách lấy chính xác thư mục 'backend' (tìm thư mục chứa file .env hoặc folder src)
-# Giả sử file này nằm đâu đó bên trong thư mục backend/
-FILE_PATH = Path(__file__).resolve()
 
-# Lặp lùi ngược cây thư mục cho tới khi tìm thấy folder 'backend' hoặc chứa file .env
-BASE_DIR = FILE_PATH.parent
-while BASE_DIR.name != "backend" and BASE_DIR != BASE_DIR.parent:
-    BASE_DIR = BASE_DIR.parent
+def _find_backend_dir() -> Path:
+    base_dir = Path(__file__).resolve().parent
+    while base_dir.name != "backend" and base_dir != base_dir.parent:
+        base_dir = base_dir.parent
+    return base_dir if base_dir.name == "backend" else Path.cwd()
 
-# Nếu không tìm thấy thư mục tên 'backend', lấy thư mục gốc hiện tại
-if BASE_DIR == BASE_DIR.parent:
-    BASE_DIR = Path.cwd()
 
-# Uu tien doc file .env.local (chuyen dung cho Local Dev), neu khong co se fallback ve .env
-ENV_LOCAL_PATH = BASE_DIR / ".env.local"
-ENV_DEFAULT_PATH = BASE_DIR / ".env"
+BACKEND_DIR = _find_backend_dir()
+ENV_LOCAL_PATH = BACKEND_DIR / ".env.local"
+ENV_DEFAULT_PATH = BACKEND_DIR / ".env"
 ENV_FILE_PATH = ENV_LOCAL_PATH if ENV_LOCAL_PATH.exists() else ENV_DEFAULT_PATH
 
 
@@ -29,12 +24,17 @@ class Settings(BaseSettings):
 
     DATABASE_URL: str = Field(default="")
     SECRET_KEY: str = Field(default="")
-
     SUPABASE_URL: str = Field(default="")
 
     CLOUDINARY_CLOUD_NAME: str = Field(default="")
     CLOUDINARY_API_KEY: str = Field(default="")
     CLOUDINARY_API_SECRET: str = Field(default="")
+
+    VNP_TMN_CODE: str = Field(default="")
+    VNP_HASH_SECRET: str = Field(default="")
+    VNP_URL: str = Field(default="")
+    VNP_RETURN_URL: str = Field(default="")
+    VNP_IPN_URL: str = Field(default="")
 
     @property
     def JWKS_URL(self) -> str:
@@ -48,7 +48,3 @@ class Settings(BaseSettings):
 
 
 settings = Settings()
-
-# Thêm 2 dòng print này để debug kiểm tra ngay khi khởi chạy app:
-print(f"--> Dang doc file env tai: {ENV_FILE_PATH}")
-print(f"-->DATABASE_URL nhan duoc: {settings.DATABASE_URL}")
