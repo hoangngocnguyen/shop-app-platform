@@ -6,9 +6,14 @@ from sqlalchemy.orm import Session
 from src.app.core.database import get_db
 from src.app.core.deps import get_current_user_id, require_any_role
 from src.app.core.response import ApiResponse, success_response
+from src.app.modules.orders.catalogs import build_cancellation_reason_catalog
+from src.app.modules.orders.enums.order_enums import AdminCancelReason
 from src.app.modules.orders.repositories.repository import OrderRepository
 from src.app.modules.orders.schemas.order_requests import AdminCancelOrderRequest
-from src.app.modules.orders.schemas.order_responses import OrderActionResponse
+from src.app.modules.orders.schemas.order_responses import (
+    CancellationReasonCatalogResponse,
+    OrderActionResponse,
+)
 from src.app.modules.orders.services.admin_order_service import AdminOrderService
 
 admin_order_router = APIRouter(
@@ -22,6 +27,19 @@ def get_admin_order_service(db: Session = Depends(get_db)) -> AdminOrderService:
     """Dependency injection khởi tạo AdminOrderService."""
     repository = OrderRepository(db)
     return AdminOrderService(repository)
+
+
+@admin_order_router.get(
+    "/cancellation-reasons",
+    response_model=ApiResponse[CancellationReasonCatalogResponse],
+    status_code=status.HTTP_200_OK,
+    summary="Lấy danh sách lý do admin có thể hủy đơn",
+)
+def get_admin_cancellation_reasons() -> ApiResponse[CancellationReasonCatalogResponse]:
+    return success_response(
+        data=build_cancellation_reason_catalog(list(AdminCancelReason)),
+        message="Lấy danh sách lý do hủy đơn dành cho quản trị thành công",
+    )
 
 
 @admin_order_router.patch(

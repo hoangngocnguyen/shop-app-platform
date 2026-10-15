@@ -1,6 +1,13 @@
 from enum import Enum
 
 
+class CheckoutType(str, Enum):
+    """Nguồn checkout: BUY_NOW hoặc CART."""
+
+    BUY_NOW = "BUY_NOW"
+    CART = "CART"
+
+
 class OrderStatus(str, Enum):
     """Trạng thái đơn hàng."""
 
