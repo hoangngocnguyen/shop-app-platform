@@ -67,7 +67,6 @@ export default function ShippingAddressPage() {
         }
     };
 
-    // Xử lý xóa địa chỉ sử dụng helper confirm()
     const handleDeleteAddress = async (id: number) => {
         const isConfirmed = await confirm({
             title: "Xóa địa chỉ giao hàng",
@@ -94,152 +93,164 @@ export default function ShippingAddressPage() {
     };
 
     return (
-        <div className="max-w-5xl mx-auto p-3.5 sm:p-6 space-y-4 sm:space-y-6">
-            {/* HEADER */}
-            <div className="flex items-center justify-between p-3.5 sm:p-5 rounded-2xl bg-surface-card border border-surface-border/80 shadow-brand-sm">
-                <div className="flex items-center gap-3">
-                    <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-primary-light flex items-center justify-center text-primary shrink-0">
-                        <MapPin className="w-4 h-4 sm:w-5 sm:h-5" />
-                    </div>
-                    <div>
-                        <h1 className="text-base sm:text-xl font-bold text-text-main leading-tight">
-                            Địa chỉ giao hàng
-                        </h1>
-                        <p className="text-xs sm:text-sm text-text-muted mt-0.5">
-                            Quản lý danh sách địa chỉ nhận hàng của bạn
-                        </p>
-                    </div>
-                </div>
+        <div className="min-h-screen w-full bg-white py-10 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
+            <div className="max-w-5xl mx-auto space-y-6">
 
-                <Link
-                    href="/user/profile"
-                    className="p-2 sm:p-2.5 rounded-xl border border-surface-border text-text-sub hover:bg-surface-hover transition-colors shrink-0"
-                    title="Về trang hồ sơ"
-                >
-                    <Home className="w-4 h-4 sm:w-5 sm:h-5" />
-                </Link>
-            </div>
+                {/* HEADER BAR */}
+                <div className="group relative flex items-center justify-between bg-surface-card p-6 sm:p-7 rounded-3xl border border-surface-border shadow-brand-md transition-all duration-300 hover:shadow-brand-md hover:border-primary/40">
+                    <div className="relative flex items-center gap-4">
+                        <div className="w-14 h-14 rounded-2xl bg-primary-light flex items-center justify-center text-primary shadow-inner transition-all duration-300 group-hover:scale-110 group-hover:-translate-y-1">
+                            <MapPin className="w-7 h-7 text-primary" />
+                        </div>
+                        <div>
+                            <h1 className="text-xl sm:text-2xl font-black text-text-main tracking-tight">
+                                Địa chỉ giao hàng
+                            </h1>
+                            <p className="text-xs text-text-muted mt-0.5">
+                                Quản lý danh sách địa chỉ nhận hàng cho các đơn sắm của bạn
+                            </p>
+                        </div>
+                    </div>
 
-            {/* DANH SÁCH ĐỊA CHỈ */}
-            <div className="p-3.5 sm:p-6 rounded-2xl bg-surface-card border border-surface-border/80 shadow-brand-sm space-y-4 sm:space-y-5">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3.5 sm:pb-4 border-b border-surface-border/60">
-                    <h2 className="text-sm sm:text-base font-semibold text-text-main">
-                        Danh sách địa chỉ ({addresses.length})
-                    </h2>
-                    <button
-                        onClick={handleOpenCreateModal}
-                        className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2.5 sm:py-2 rounded-xl bg-primary hover:bg-primary-hover text-primary-contrast text-xs sm:text-sm font-medium transition-all shadow-brand-sm cursor-pointer"
+                    <Link
+                        href="/user/profile"
+                        className="relative w-12 h-12 rounded-2xl border border-surface-border bg-surface-bg flex items-center justify-center text-text-sub hover:bg-primary hover:text-primary-contrast hover:border-primary transition-all duration-300 shadow-sm hover:shadow-brand-sm hover:-translate-y-1 active:translate-y-0 group/home"
+                        title="Về trang hồ sơ"
                     >
-                        <Plus className="w-4 h-4" />
-                        Thêm địa chỉ mới
-                    </button>
+                        <Home className="w-5 h-5 transition-transform duration-200 group-hover/home:scale-110" />
+                    </Link>
                 </div>
 
-                {error && (
-                    <div className="flex items-center justify-between gap-3 p-3.5 sm:p-4 rounded-xl bg-status-error-bg text-status-error text-xs sm:text-sm">
-                        <div className="flex items-center gap-2">
-                            <AlertCircle className="w-4 h-4 sm:w-5 sm:h-5 shrink-0" />
-                            <span>{error}</span>
+                {/* DANH SÁCH ĐỊA CHỈ CARD */}
+                <div className="group relative bg-surface-card rounded-3xl border border-surface-border shadow-brand-md p-6 sm:p-8 space-y-6 transition-all duration-300 hover:shadow-brand-md hover:border-primary/40">
+                    <div className="relative flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 border-b border-surface-border">
+                        <div>
+                            <h2 className="text-lg font-bold text-text-main">
+                                Danh sách địa chỉ ({addresses.length})
+                            </h2>
+                            <p className="text-xs text-text-muted mt-0.5">Thêm hoặc chỉnh sửa thông tin giao nhận hàng</p>
                         </div>
                         <button
-                            onClick={() => fetchUserAddresses()}
-                            className="px-3 py-1.5 rounded-lg bg-status-error text-white font-medium hover:opacity-90 transition-opacity shrink-0 cursor-pointer text-xs"
+                            onClick={handleOpenCreateModal}
+                            className="w-full sm:w-auto flex items-center justify-center gap-2 px-5 py-2.5 rounded-2xl bg-primary hover:bg-primary-hover text-primary-contrast text-sm font-semibold transition-all duration-300 shadow-brand-sm hover:shadow-brand-md hover:-translate-y-0.5 active:translate-y-0 cursor-pointer"
                         >
-                            Thử lại
+                            <Plus className="w-4 h-4 transition-transform duration-300 hover:scale-110" />
+                            Thêm địa chỉ mới
                         </button>
                     </div>
-                )}
 
-                {isLoading && addresses.length === 0 ? (
-                    <div className="grid grid-cols-1 gap-3 sm:gap-4">
-                        {[1, 2, 3].map((item) => (
-                            <div
-                                key={item}
-                                className="p-3.5 sm:p-4 rounded-xl border border-surface-border/60 bg-surface-bg space-y-2.5"
-                            >
-                                <div className="flex items-center gap-3">
-                                    <Skeleton className="h-5 w-32" />
-                                    <Skeleton className="h-4 w-24" />
-                                </div>
-                                <Skeleton className="h-4 w-3/4" />
-                                <Skeleton className="h-3 w-1/2" />
+                    {/* Trạng thái Lỗi kèm nút Thử lại */}
+                    {error && (
+                        <div className="flex items-center justify-between gap-3 p-4 rounded-2xl bg-status-error-bg border border-status-error/30 text-status-error text-sm shadow-sm">
+                            <div className="flex items-center gap-2">
+                                <AlertCircle className="w-5 h-5 shrink-0" />
+                                <span>{error}</span>
                             </div>
-                        ))}
-                    </div>
-                ) : addresses.length === 0 ? (
-                    <EmptyState
-                        icon={MapPin}
-                        title="Chưa có địa chỉ giao hàng nào"
-                        description="Thêm địa chỉ để quá trình đặt hàng nhanh chóng và thuận tiện hơn."
-                        action={{
-                            label: "Thêm địa chỉ ngay",
-                            onClick: handleOpenCreateModal,
-                        }}
-                    />
-                ) : (
-                    <div className="grid grid-cols-1 gap-3 sm:gap-4">
-                        {addresses.map((item) => (
-                            <div
-                                key={item.id}
-                                className={`p-3.5 sm:p-4 rounded-xl border transition-all flex flex-col sm:flex-row justify-between gap-3 sm:gap-4 ${item.is_default
-                                    ? "bg-primary-light/30 border-primary/40 shadow-brand-sm"
-                                    : "bg-surface-bg border-surface-border/60 hover:border-surface-border"
-                                    }`}
+                            <button
+                                onClick={() => fetchUserAddresses()}
+                                className="px-3.5 py-1.5 rounded-xl bg-status-error text-white font-medium hover:opacity-90 transition-opacity shrink-0 cursor-pointer text-xs"
                             >
-                                <div className="space-y-1.5 min-w-0 flex-1">
-                                    <div className="flex items-center gap-2 flex-wrap">
-                                        <span className="font-bold text-text-main text-sm sm:text-base truncate max-w-[180px] sm:max-w-none">
-                                            {item.recipient_name}
-                                        </span>
-                                        <span className="text-xs text-text-muted hidden sm:inline">|</span>
-                                        <span className="text-xs sm:text-sm text-text-sub font-medium">
-                                            {item.phone}
-                                        </span>
-                                        {item.is_default && (
-                                            <span className="inline-flex items-center gap-1 px-2 sm:px-2.5 py-0.5 rounded-full text-[10px] sm:text-xs font-semibold bg-primary text-primary-contrast shrink-0">
-                                                <Check className="w-3 h-3" /> Mặc định
+                                Thử lại
+                            </button>
+                        </div>
+                    )}
+
+                    {/* Trạng thái Loading với Skeleton */}
+                    {isLoading && addresses.length === 0 ? (
+                        <div className="grid grid-cols-1 gap-4">
+                            {[1, 2, 3].map((item) => (
+                                <div
+                                    key={item}
+                                    className="p-4 sm:p-5 rounded-2xl border border-surface-border/80 bg-surface-bg space-y-3"
+                                >
+                                    <div className="flex items-center gap-3">
+                                        <Skeleton className="h-5 w-36" />
+                                        <Skeleton className="h-4 w-28" />
+                                    </div>
+                                    <Skeleton className="h-4 w-3/4" />
+                                    <Skeleton className="h-3 w-1/2" />
+                                </div>
+                            ))}
+                        </div>
+                    ) : addresses.length === 0 ? (
+                        /* Trạng thái Rỗng với EmptyState */
+                        <EmptyState
+                            icon={MapPin}
+                            title="Chưa có địa chỉ giao hàng nào"
+                            description="Hãy thêm địa chỉ giao hàng để quá trình mua sắm và thanh toán diễn ra nhanh chóng hơn."
+                            action={{
+                                label: "Thêm địa chỉ ngay",
+                                onClick: handleOpenCreateModal,
+                            }}
+                        />
+                    ) : (
+                        /* Danh sách địa chỉ thành công */
+                        <div className="grid grid-cols-1 gap-4">
+                            {addresses.map((item) => (
+                                <div
+                                    key={item.id}
+                                    className={`group/item p-4 sm:p-5 rounded-2xl border transition-all duration-300 flex flex-col sm:flex-row justify-between gap-4 hover:-translate-y-0.5 hover:shadow-brand-sm ${
+                                        item.is_default
+                                            ? "bg-primary-light/40 border-primary/40 shadow-sm"
+                                            : "bg-surface-bg border-surface-border/80 hover:border-primary/40"
+                                    }`}
+                                >
+                                    <div className="space-y-1.5 min-w-0 flex-1">
+                                        <div className="flex items-center gap-2.5 flex-wrap">
+                                            <span className="font-extrabold text-text-main text-base truncate max-w-[200px] sm:max-w-none">
+                                                {item.recipient_name}
                                             </span>
+                                            <span className="text-xs text-text-muted">|</span>
+                                            <span className="text-sm text-text-sub font-semibold">
+                                                {item.phone}
+                                            </span>
+                                            {item.is_default && (
+                                                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-primary text-primary-contrast shadow-xs shrink-0">
+                                                    <Check className="w-3.5 h-3.5" /> Mặc định
+                                                </span>
+                                            )}
+                                        </div>
+                                        <p className="text-sm text-text-sub break-words leading-relaxed font-medium">
+                                            {item.address_line}
+                                        </p>
+                                        {(item.ward_name || item.province_name) && (
+                                            <p className="text-xs text-text-muted">
+                                                {[item.ward_name, item.province_name].filter(Boolean).join(", ")}
+                                            </p>
                                         )}
                                     </div>
-                                    <p className="text-xs sm:text-sm text-text-sub break-words leading-relaxed">
-                                        {item.address_line}
-                                    </p>
-                                    {(item.ward_name || item.province_name) && (
-                                        <p className="text-[11px] sm:text-xs text-text-muted">
-                                            {[item.ward_name, item.province_name].filter(Boolean).join(", ")}
-                                        </p>
-                                    )}
-                                </div>
 
-                                <div className="flex items-center justify-end gap-1.5 sm:gap-2 pt-2.5 sm:pt-0 border-t sm:border-t-0 border-surface-border/40 shrink-0">
-                                    <button
-                                        onClick={() => handleOpenEditModal(item)}
-                                        className="flex items-center gap-1 px-2.5 py-1.5 sm:p-2 rounded-lg text-xs sm:text-sm text-text-sub hover:text-primary hover:bg-surface-hover transition-colors cursor-pointer"
-                                        title="Chỉnh sửa"
-                                    >
-                                        <Pencil className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                                        <span className="sm:hidden font-medium">Sửa</span>
-                                    </button>
-                                    <button
-                                        onClick={() => handleDeleteAddress(item.id)}
-                                        disabled={deletingId === item.id}
-                                        className="flex items-center gap-1 px-2.5 py-1.5 sm:p-2 rounded-lg text-xs sm:text-sm text-text-sub hover:text-status-error hover:bg-status-error-bg transition-colors cursor-pointer disabled:opacity-50"
-                                        title="Xóa"
-                                    >
-                                        {deletingId === item.id ? (
-                                            <Loader2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 animate-spin" />
-                                        ) : (
-                                            <Trash2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                                        )}
-                                        <span className="sm:hidden font-medium">Xóa</span>
-                                    </button>
+                                    <div className="flex items-center justify-end gap-2 pt-3 sm:pt-0 border-t sm:border-t-0 border-surface-border/40 shrink-0">
+                                        <button
+                                            onClick={() => handleOpenEditModal(item)}
+                                            className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs sm:text-sm font-semibold text-text-sub hover:text-primary hover:bg-primary-light/50 transition-all duration-200 cursor-pointer hover:-translate-y-0.5"
+                                            title="Chỉnh sửa"
+                                        >
+                                            <Pencil className="w-4 h-4 text-primary" />
+                                            <span>Sửa</span>
+                                        </button>
+                                        <button
+                                            onClick={() => handleDeleteAddress(item.id)}
+                                            disabled={deletingId === item.id}
+                                            className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs sm:text-sm font-semibold text-text-sub hover:text-status-error hover:bg-status-error-bg transition-all duration-200 cursor-pointer disabled:opacity-50 hover:-translate-y-0.5"
+                                            title="Xóa"
+                                        >
+                                            {deletingId === item.id ? (
+                                                <Loader2 className="w-4 h-4 animate-spin text-status-error" />
+                                            ) : (
+                                                <Trash2 className="w-4 h-4 text-status-error" />
+                                            )}
+                                            <span>Xóa</span>
+                                        </button>
+                                    </div>
                                 </div>
-                            </div>
-                        ))}
-                    </div>
-                )}
+                            ))}
+                        </div>
+                    )}
+                </div>
             </div>
 
+            {/* MODAL FORM PHỤ THUỘC */}
             <AddressFormModal
                 isOpen={isModalOpen}
                 onClose={handleCloseModal}
