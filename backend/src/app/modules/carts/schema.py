@@ -39,7 +39,11 @@ class CartItemResponse(BaseModel):
     product_id: int
     product_name: str
     product_image: HttpUrl | None = None
-    unit_price: Decimal
+    price: Decimal = Field(..., description="Giá gốc của sản phẩm")
+    discount_percent: int | None = Field(
+        default=None, description="Phần trăm giảm giá của sản phẩm"
+    )
+    unit_price: Decimal = Field(..., description="Đơn giá bán thực tế sau giảm giá")
     quantity: int
     subtotal: Decimal
     stock_quantity: int
