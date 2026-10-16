@@ -4,27 +4,14 @@ import React, { useEffect } from "react";
 // 1. Import thêm useWatch và Control
 import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
 import { X, Loader2 } from "lucide-react";
 import { ShippingAddressCreate, ShippingAddressResponse, ShippingAddressUpdate } from "../types";
 import { useLocationStore } from "@/features/location/stores";
-
-// Schema & Types giữ nguyên...
-const addressSchema = z.object({
-    recipient_name: z.string().min(2, "Họ và tên phải có ít nhất 2 ký tự"),
-    phone: z
-        .string()
-        .min(10, "Số điện thoại không hợp lệ")
-        .max(11, "Số điện thoại không hợp lệ")
-        .regex(/(84|0[3|5|7|8|9])+([0-9]{8})\b/, "Số điện thoại không đúng định dạng"),
-    province_code: z.string().min(1, "Vui lòng chọn Tỉnh/Thành phố"),
-    ward_code: z.string().min(1, "Vui lòng chọn Phường/Xã"),
-    address_line: z.string().min(5, "Địa chỉ chi tiết phải từ 5 ký tự trở lên"),
-    is_default: z.boolean().default(false),
-});
-
-type AddressFormInput = z.input<typeof addressSchema>;
-type AddressFormOutput = z.output<typeof addressSchema>;
+import {
+    addressSchema,
+    AddressFormInput,
+    AddressFormOutput,
+} from "../schemas/address-schema";
 
 interface AddressFormModalProps {
     isOpen: boolean;
