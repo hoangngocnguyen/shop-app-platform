@@ -9,6 +9,7 @@ import AddressFormModal from "@/features/shipping-address/components/AddressForm
 import { toast } from "@/common/stores/useToastStore";
 import { confirm } from "@/common/stores/useConfirmStore";
 import { parseErrorMessage } from "@/lib/axios/parseError";
+import { Skeleton, EmptyState } from "@/components/ui";
 
 export default function ShippingAddressPage() {
     const {
@@ -135,25 +136,46 @@ export default function ShippingAddressPage() {
                 </div>
 
                 {error && (
-                    <div className="flex items-center gap-2 p-3 sm:p-3.5 rounded-xl bg-status-error-bg text-status-error text-xs sm:text-sm">
-                        <AlertCircle className="w-4 h-4 sm:w-5 sm:h-5 shrink-0" />
-                        <span>{error}</span>
+                    <div className="flex items-center justify-between gap-3 p-3.5 sm:p-4 rounded-xl bg-status-error-bg text-status-error text-xs sm:text-sm">
+                        <div className="flex items-center gap-2">
+                            <AlertCircle className="w-4 h-4 sm:w-5 sm:h-5 shrink-0" />
+                            <span>{error}</span>
+                        </div>
+                        <button
+                            onClick={() => fetchUserAddresses()}
+                            className="px-3 py-1.5 rounded-lg bg-status-error text-white font-medium hover:opacity-90 transition-opacity shrink-0 cursor-pointer text-xs"
+                        >
+                            Thử lại
+                        </button>
                     </div>
                 )}
 
                 {isLoading && addresses.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center py-10 sm:py-12 text-text-muted">
-                        <Loader2 className="w-7 h-7 sm:w-8 sm:h-8 animate-spin text-primary mb-2" />
-                        <p className="text-xs sm:text-sm">Đang tải danh sách địa chỉ...</p>
+                    <div className="grid grid-cols-1 gap-3 sm:gap-4">
+                        {[1, 2, 3].map((item) => (
+                            <div
+                                key={item}
+                                className="p-3.5 sm:p-4 rounded-xl border border-surface-border/60 bg-surface-bg space-y-2.5"
+                            >
+                                <div className="flex items-center gap-3">
+                                    <Skeleton className="h-5 w-32" />
+                                    <Skeleton className="h-4 w-24" />
+                                </div>
+                                <Skeleton className="h-4 w-3/4" />
+                                <Skeleton className="h-3 w-1/2" />
+                            </div>
+                        ))}
                     </div>
                 ) : addresses.length === 0 ? (
-                    <div className="text-center py-10 sm:py-12 space-y-2.5 sm:space-y-3">
-                        <MapPin className="w-10 h-10 sm:w-12 sm:h-12 text-text-disabled mx-auto" />
-                        <p className="text-text-sub font-medium text-sm sm:text-base">Chưa có địa chỉ giao hàng nào</p>
-                        <p className="text-xs text-text-muted max-w-xs mx-auto">
-                            Thêm địa chỉ để quá trình đặt hàng nhanh chóng và thuận tiện hơn.
-                        </p>
-                    </div>
+                    <EmptyState
+                        icon={MapPin}
+                        title="Chưa có địa chỉ giao hàng nào"
+                        description="Thêm địa chỉ để quá trình đặt hàng nhanh chóng và thuận tiện hơn."
+                        action={{
+                            label: "Thêm địa chỉ ngay",
+                            onClick: handleOpenCreateModal,
+                        }}
+                    />
                 ) : (
                     <div className="grid grid-cols-1 gap-3 sm:gap-4">
                         {addresses.map((item) => (
