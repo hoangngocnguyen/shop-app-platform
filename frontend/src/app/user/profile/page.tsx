@@ -28,6 +28,7 @@ import { confirm } from "@/common/stores/useConfirmStore";
 import { toast } from "@/common/stores/useToastStore";
 import { parseErrorMessage } from "@/lib/axios/parseError";
 import { useRouter } from "next/navigation";
+import { Skeleton } from "@/components/ui";
 
 export default function UserProfilePage() {
     const { profile, isLoading, error, fetchProfile, deleteAvatar } = useProfileStore();
@@ -88,10 +89,34 @@ export default function UserProfilePage() {
 
     if (isLoading && !profile) {
         return (
-            <div className="min-h-screen flex items-center justify-center bg-surface-bg">
-                <div className="flex items-center gap-3 text-text-sub">
-                    <Loader2 className="w-6 h-6 animate-spin text-primary" />
-                    <span className="text-sm font-medium">Đang tải thông tin hồ sơ...</span>
+            <div className="min-h-screen bg-surface-bg py-8 px-4 sm:px-6 lg:px-8">
+                <div className="max-w-5xl mx-auto space-y-6">
+                    <div className="flex items-center justify-between bg-surface-card p-4 sm:p-6 rounded-2xl border border-surface-border shadow-brand-sm">
+                        <div className="flex items-center gap-3">
+                            <Skeleton className="w-10 h-10 rounded-xl" />
+                            <div className="space-y-2">
+                                <Skeleton className="h-6 w-36" />
+                                <Skeleton className="h-3 w-56" />
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        <div className="lg:col-span-1 bg-surface-card rounded-2xl border border-surface-border p-6 flex flex-col items-center">
+                            <Skeleton className="w-32 h-32 rounded-full mb-4" />
+                            <Skeleton className="h-5 w-40 mb-2" />
+                            <Skeleton className="h-4 w-28 mb-4" />
+                            <Skeleton className="h-10 w-full rounded-xl mt-6" />
+                        </div>
+                        <div className="lg:col-span-2 bg-surface-card rounded-2xl border border-surface-border p-6 space-y-6">
+                            <Skeleton className="h-6 w-48" />
+                            <div className="space-y-4">
+                                <Skeleton className="h-12 w-full rounded-xl" />
+                                <Skeleton className="h-12 w-full rounded-xl" />
+                                <Skeleton className="h-12 w-full rounded-xl" />
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         );
@@ -123,9 +148,17 @@ export default function UserProfilePage() {
 
                 {/* Thông báo lỗi */}
                 {error && (
-                    <div className="flex items-center gap-3 p-4 rounded-xl bg-status-error-bg border border-status-error/20 text-status-error text-sm">
-                        <AlertCircle className="w-5 h-5 shrink-0" />
-                        <span>{error}</span>
+                    <div className="flex items-center justify-between gap-3 p-4 rounded-xl bg-status-error-bg border border-status-error/20 text-status-error text-sm">
+                        <div className="flex items-center gap-3">
+                            <AlertCircle className="w-5 h-5 shrink-0" />
+                            <span>{error}</span>
+                        </div>
+                        <button
+                            onClick={() => fetchProfile()}
+                            className="px-3 py-1.5 rounded-lg bg-status-error text-white font-medium hover:opacity-90 transition-opacity shrink-0 cursor-pointer text-xs"
+                        >
+                            Thử lại
+                        </button>
                     </div>
                 )}
 
