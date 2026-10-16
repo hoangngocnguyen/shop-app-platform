@@ -96,22 +96,34 @@ class CheckoutService:
                     "cart_item_ids không được rỗng khi checkout_type là 'CART'"
                 )
 
-            products = self.repository.get_products_by_ids(cart_ids)
-            found_ids = {p.product_id for p in products}
+            cart_items = self.repository.get_cart_items_for_user(user_id, cart_ids)
+            cart_item_lookup = {item.cart_item_id: item for item in cart_items}
+            missing_ids = [
+                item_id for item_id in cart_ids if item_id not in cart_item_lookup
+            ]
+            if missing_ids:
+                raise NotFoundException("Sản phẩm trong giỏ hàng", missing_ids[0])
 
-            # Kiểm tra sản phẩm có tồn tại đầy đủ trong Database không
-            for c_id in cart_ids:
-                if c_id not in found_ids:
-                    raise NotFoundException("Sản phẩm trong giỏ hàng", c_id)
+            for cart_item in cart_items:
+                product = cart_item.product
+                if not product:
+                    raise NotFoundException(
+                        "Sản phẩm trong giỏ hàng", cart_item.product_id
+                    )
 
-            for product in products:
-                if product.quantity < 1:
+                if product.quantity < cart_item.quantity:
                     raise AppException(
                         status_code=409,
-                        message=f"Sản phẩm '{product.product_name}' đã hết hàng trong kho.",
+                        message=(
+                            f"Sản phẩm '{product.product_name}' không còn đủ số lượng tồn kho "
+                            f"tại thời điểm xác nhận (hiện còn {product.quantity}, giỏ hàng đang cần {cart_item.quantity})."
+                        ),
                         error_code="INSUFFICIENT_STOCK",
                     )
-                checkout_items.append(self._build_checkout_item(product, quantity=1))
+
+                checkout_items.append(
+                    self._build_checkout_item(product, cart_item.quantity)
+                )
 
         subtotal = sum((item.total_price for item in checkout_items), Decimal("0.00"))
 

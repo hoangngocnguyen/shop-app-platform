@@ -6,6 +6,7 @@ from uuid import UUID
 from sqlalchemy import desc, func, or_, select
 from sqlalchemy.orm import Session, joinedload, selectinload
 
+from src.app.modules.carts.model import Cart, CartItem
 from src.app.modules.orders.model import Order, OrderDetail, OrderLog
 from src.app.modules.products.model import Product
 from src.app.modules.shipping_addresses.model import ShippingAddress
@@ -54,6 +55,26 @@ class OrderRepository:
         if not product_ids:
             return []
         stmt = select(Product).where(Product.product_id.in_(product_ids))
+        return list(self.db.scalars(stmt).all())
+
+    def get_cart_items_for_user(
+        self, user_id: UUID, cart_item_ids: Sequence[int]
+    ) -> list[CartItem]:
+        """Lấy các mục giỏ hàng theo cart_item_id, nhưng chỉ từ giỏ hàng của user hiện tại."""
+        if not cart_item_ids:
+            return []
+        unique_ids = list(
+            dict.fromkeys(int(item_id) for item_id in cart_item_ids if item_id > 0)
+        )
+        if not unique_ids:
+            return []
+
+        stmt = (
+            select(CartItem)
+            .join(Cart, Cart.cart_id == CartItem.cart_id)
+            .options(selectinload(CartItem.product))
+            .where(Cart.user_id == user_id, CartItem.cart_item_id.in_(unique_ids))
+        )
         return list(self.db.scalars(stmt).all())
 
     def get_shipping_address(
