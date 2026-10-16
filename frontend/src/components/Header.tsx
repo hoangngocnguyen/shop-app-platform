@@ -117,7 +117,7 @@ export default function Header() {
                                 className="flex items-center gap-1.5 p-1.5 sm:px-3 sm:py-2 rounded-xl hover:bg-surface-hover border border-surface-border text-text-main transition-all cursor-pointer"
                             >
                                 <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-[#002b49] text-white font-bold flex items-center justify-center text-xs sm:text-sm shadow-xs">
-                                    {user?.email ? user.email.charAt(0).toUpperCase() : "T"}
+                                    {(user?.name || user?.username) ? (user.name || user.username).charAt(0).toUpperCase() : "T"}
                                 </div>
                                 <span className="text-xs sm:text-sm font-semibold hidden sm:inline">
                                     Của tôi
@@ -130,7 +130,7 @@ export default function Header() {
                                 <div className="absolute right-0 mt-2 w-48 bg-surface-card rounded-2xl border border-surface-border shadow-brand-md py-1.5 z-50 animate-in fade-in duration-200">
                                     <div className="px-4 py-2 border-b border-surface-border">
                                         <p className="text-xs font-semibold text-text-main truncate">
-                                            {user?.email || "Tài khoản của tôi"}
+                                            {user?.name || user?.username || "Tài khoản của tôi"}
                                         </p>
                                     </div>
                                     <Link
