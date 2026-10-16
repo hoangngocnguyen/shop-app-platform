@@ -4,7 +4,7 @@ import React, { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { X, Loader2, Check, AlertCircle } from "lucide-react";
-import { ProfileFormInput, ProfileFormOutput, profileSchema } from "../schemas/profileSchema";
+import { ProfileFormInput, ProfileFormOutput, profileSchema } from "../schemas/profile-schema";
 import { useProfileStore } from "../stores";
 
 interface EditProfileModalProps {
