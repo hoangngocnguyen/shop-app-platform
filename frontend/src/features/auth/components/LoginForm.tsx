@@ -1,41 +1,51 @@
 'use client';
 
-import { useState, type FormEvent } from 'react';
+import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { Mascot } from 'page-mascot';
 import { ROUTES } from '@/constants/routes';
 import { toast } from '@/common/stores/useToastStore';
 import { useAuthStore } from '@/features/auth/stores/useAuthStore';
 import { createClient } from '@/lib/supabase/client';
+import { loginSchema, type LoginFormValues } from '../schemas/auth-schema';
 
 export function LoginForm() {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
-  const [loading, setLoading] = useState(false);
 
   const router = useRouter();
   const sync = useAuthStore((state) => state.sync);
 
-  const handleLogin = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
+  // Áp dụng React Hook Form kết hợp Zod Resolver theo quy chuẩn Tiêu chí 4
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+  } = useForm<LoginFormValues>({
+    resolver: zodResolver(loginSchema),
+    defaultValues: {
+      email: '',
+      password: '',
+    },
+  });
+
+  const onSubmit = async (values: LoginFormValues) => {
     setErrorMsg('');
     setSuccessMsg('');
-    setLoading(true);
 
     try {
       const supabase = createClient();
       const { error } = await supabase.auth.signInWithPassword({
-        email: email.trim(),
-        password,
+        email: values.email.trim(),
+        password: values.password,
       });
 
       if (error) {
         setErrorMsg(error.message);
-        setLoading(false);
         return;
       }
 
@@ -43,7 +53,6 @@ export function LoginForm() {
       if (!user) {
         await supabase.auth.signOut();
         setErrorMsg('Đăng nhập thành công nhưng không thể đồng bộ tài khoản. Vui lòng thử lại.');
-        setLoading(false);
         return;
       }
 
@@ -55,7 +64,6 @@ export function LoginForm() {
           ? submitError.message
           : 'Không thể đăng nhập. Vui lòng thử lại.',
       );
-      setLoading(false);
     }
   };
 
@@ -112,7 +120,7 @@ export function LoginForm() {
         </p>
       </div>
 
-      {/* Thông báo Lỗi */}
+      {/* Thông báo Lỗi từ máy chủ / Auth */}
       {errorMsg && (
         <div
           role="alert"
@@ -138,8 +146,8 @@ export function LoginForm() {
         </div>
       )}
 
-      {/* Form Đăng Nhập */}
-      <form onSubmit={handleLogin} className="relative space-y-5">
+      {/* Form Đăng Nhập dùng React Hook Form */}
+      <form onSubmit={handleSubmit(onSubmit)} className="relative space-y-5">
         {/* Email Input */}
         <div>
           <label
@@ -151,17 +159,23 @@ export function LoginForm() {
           <div className="relative">
             <input
               id="login-email"
-              name="email"
               type="email"
               autoComplete="email"
-              required
-              value={email}
-              disabled={loading || Boolean(successMsg)}
-              onChange={(event) => setEmail(event.target.value)}
+              disabled={isSubmitting || Boolean(successMsg)}
+              {...register('email')}
               placeholder="name@example.com"
-              className="w-full rounded-xl border border-surface-border bg-surface-bg/70 px-4 py-3 text-sm text-text-main placeholder-text-muted shadow-sm backdrop-blur-sm transition-all duration-200 outline-none hover:-translate-y-0.5 hover:border-primary/50 hover:shadow-md focus:-translate-y-0.5 focus:border-primary focus:bg-surface-card focus:shadow-md focus:ring-4 focus:ring-ring-brand/15 disabled:opacity-60"
+              className={`w-full rounded-xl border bg-surface-bg/70 px-4 py-3 text-sm text-text-main placeholder-text-muted shadow-sm backdrop-blur-sm transition-all duration-200 outline-none hover:-translate-y-0.5 hover:shadow-md focus:-translate-y-0.5 focus:bg-surface-card focus:shadow-md focus:ring-4 disabled:opacity-60 ${
+                errors.email
+                  ? 'border-status-error focus:border-status-error focus:ring-status-error/15'
+                  : 'border-surface-border hover:border-primary/50 focus:border-primary focus:ring-ring-brand/15'
+              }`}
             />
           </div>
+          {errors.email && (
+            <p className="mt-1.5 text-xs text-status-error font-medium">
+              {errors.email.message}
+            </p>
+          )}
         </div>
 
         {/* Mật Khẩu Input */}
@@ -183,15 +197,16 @@ export function LoginForm() {
           <div className="relative">
             <input
               id="login-password"
-              name="password"
               type={showPassword ? 'text' : 'password'}
               autoComplete="current-password"
-              required
-              value={password}
-              disabled={loading || Boolean(successMsg)}
-              onChange={(event) => setPassword(event.target.value)}
+              disabled={isSubmitting || Boolean(successMsg)}
+              {...register('password')}
               placeholder="••••••••"
-              className="w-full rounded-xl border border-surface-border bg-surface-bg/70 px-4 py-3 text-sm text-text-main placeholder-text-muted shadow-sm backdrop-blur-sm transition-all duration-200 outline-none hover:-translate-y-0.5 hover:border-primary/50 hover:shadow-md focus:-translate-y-0.5 focus:border-primary focus:bg-surface-card focus:shadow-md focus:ring-4 focus:ring-ring-brand/15 disabled:opacity-60"
+              className={`w-full rounded-xl border bg-surface-bg/70 px-4 py-3 text-sm text-text-main placeholder-text-muted shadow-sm backdrop-blur-sm transition-all duration-200 outline-none hover:-translate-y-0.5 hover:shadow-md focus:-translate-y-0.5 focus:bg-surface-card focus:shadow-md focus:ring-4 disabled:opacity-60 ${
+                errors.password
+                  ? 'border-status-error focus:border-status-error focus:ring-status-error/15'
+                  : 'border-surface-border hover:border-primary/50 focus:border-primary focus:ring-ring-brand/15'
+              }`}
             />
             <button
               type="button"
@@ -211,15 +226,20 @@ export function LoginForm() {
               )}
             </button>
           </div>
+          {errors.password && (
+            <p className="mt-1.5 text-xs text-status-error font-medium">
+              {errors.password.message}
+            </p>
+          )}
         </div>
 
         {/* Nút Submit Main */}
         <button
           type="submit"
-          disabled={loading || Boolean(successMsg)}
+          disabled={isSubmitting || Boolean(successMsg)}
           className="relative w-full rounded-xl bg-primary px-4 py-3.5 text-sm font-semibold text-primary-contrast shadow-md transition-all duration-300 hover:-translate-y-0.5 hover:bg-primary-hover hover:shadow-lg hover:shadow-primary/20 active:translate-y-0 active:shadow-md disabled:cursor-not-allowed disabled:opacity-70 disabled:transform-none"
         >
-          {loading ? (
+          {isSubmitting ? (
             <div className="flex items-center justify-center gap-2">
               <svg className="h-5 w-5 animate-spin text-primary-contrast" viewBox="0 0 24 24" fill="none">
                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
@@ -247,7 +267,7 @@ export function LoginForm() {
       <button
         type="button"
         onClick={handleGoogleLogin}
-        disabled={loading || Boolean(successMsg)}
+        disabled={isSubmitting || Boolean(successMsg)}
         className="relative flex w-full items-center justify-center gap-3 rounded-xl border border-surface-border bg-surface-bg/70 py-3 text-sm font-semibold text-text-main shadow-sm backdrop-blur-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/50 hover:bg-surface-card hover:shadow-md active:translate-y-0 disabled:opacity-60"
       >
         <svg className="h-5 w-5" viewBox="0 0 24 24">
