@@ -31,3 +31,8 @@ module-directory = "."
 
 [tool.ruff.lint]
 ignore = ["B008"]
+
+[dependency-groups]
+dev = [
+    "pytest>=9.1.1",
+]
