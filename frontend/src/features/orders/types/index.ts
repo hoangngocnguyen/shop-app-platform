@@ -9,7 +9,12 @@ export type OrderStatus =
     | "CANCELLED"
     | "RETURNED";
 
-export type PaymentMethod = "BANK_TRANSFER" | "VNPAY" | "COD";
+export const PAYMENT_METHOD = {
+    BANK_TRANSFER: "BANK_TRANSFER",
+    VNPAY: "VNPAY",
+    COD: "COD",
+} as const;
+export type PaymentMethod = (typeof PAYMENT_METHOD)[keyof typeof PAYMENT_METHOD];
 export type PaymentStatus = "PENDING" | "PAID" | "FAILED" | "REFUNDED";
 export type CancelledByType = "CUSTOMER" | "SHOP_OWNER" | "SYSTEM" | "ADMIN";
 
