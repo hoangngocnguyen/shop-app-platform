@@ -108,6 +108,12 @@ export default function HomePage() {
               <Link href={ROUTES.HOME} className="rounded-xl border border-surface-border bg-surface-card px-4 py-2 text-sm font-medium text-text-main transition hover:bg-surface-bg">
                 Trang chủ
               </Link>
+              <Link href="/user/cart" className="rounded-xl border border-surface-border bg-surface-card px-4 py-2 text-sm font-medium text-text-main transition hover:bg-surface-bg">
+                Giỏ hàng thật
+              </Link>
+              <Link href={ROUTES.PRODUCT_DETAIL} className="rounded-xl border border-primary/30 bg-primary-light px-4 py-2 text-sm font-semibold text-primary transition hover:bg-primary/10">
+                Mua ngay hẳn hoi
+              </Link>
               <Link href={ROUTES.PAYMENT} className="rounded-xl border border-surface-border bg-surface-card px-4 py-2 text-sm font-medium text-text-main transition hover:bg-surface-bg">
                 PAYMENT
               </Link>
@@ -119,6 +125,12 @@ export default function HomePage() {
               </Link>
               <Link href={ROUTES.USER.ADDRESS} className="rounded-xl border border-surface-border bg-surface-card px-4 py-2 text-sm font-medium text-text-main transition hover:bg-surface-bg">
                 Địa chỉ
+              </Link>
+              <Link href={ROUTES.CHECKOUT_TEST} className="rounded-xl border border-surface-border bg-surface-card px-4 py-2 text-sm font-medium text-text-main transition hover:bg-surface-bg">
+                Checkout Test
+              </Link>
+              <Link href={ROUTES.CHECKOUT} className="rounded-xl border border-surface-border bg-surface-card px-4 py-2 text-sm font-medium text-text-main transition hover:bg-surface-bg">
+                Checkout
               </Link>
               <Link href={ROUTES.ABOUT.FAQ} className="rounded-xl border border-surface-border bg-surface-card px-4 py-2 text-sm font-medium text-text-main transition hover:bg-surface-bg">
                 FAQ
