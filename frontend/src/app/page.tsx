@@ -17,7 +17,6 @@ import { AlertCircle, ChevronLeft, ChevronRight, PackageSearch } from "lucide-re
 export default function HomePage() {
     const {
         products,
-        total,
         page,
         totalPages,
         isLoading,

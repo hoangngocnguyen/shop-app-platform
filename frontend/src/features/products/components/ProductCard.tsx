@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { Eye, ShoppingCart, Loader2, Star } from "lucide-react";
 import { ProductResponse } from "../types";
 import { formatPrice } from "@/lib/formatPrice";
@@ -66,14 +67,12 @@ export default function ProductCard({ product }: ProductCardProps) {
                     href={ROUTES.PRODUCTS.DETAIL(product.product_id)}
                     className="block relative w-full h-44 sm:h-48 mb-3 overflow-hidden rounded-xl bg-slate-50 flex items-center justify-center p-2"
                 >
-                    <img
+                    <Image
                         src={product.image_src || "https://images.unsplash.com/photo-1592750475338-74b7b21085ab?w=400&auto=format&fit=crop&q=80"}
                         alt={product.product_name}
-                        className="w-full h-full object-contain filter drop-shadow-xs group-hover:scale-105 transition-transform duration-300"
-                        loading="lazy"
-                        onError={(e) => {
-                            e.currentTarget.src = "https://images.unsplash.com/photo-1580910051074-3eb694886505?w=400&auto=format&fit=crop&q=80";
-                        }}
+                        fill
+                        sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 16vw"
+                        className="object-contain filter drop-shadow-xs group-hover:scale-105 transition-transform duration-300 p-2"
                     />
                 </Link>
 

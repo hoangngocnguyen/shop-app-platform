@@ -1,4 +1,5 @@
 import React from "react";
+import Image from "next/image";
 import { ArrowRight, Sparkles } from "lucide-react";
 
 interface HeroBannerProps {
@@ -63,14 +64,13 @@ export default function HeroBanner({ onExploreClick }: HeroBannerProps) {
 
                         {/* Hình ảnh thiết bị */}
                         <div className="w-32 h-44 sm:w-40 sm:h-52 my-3 relative flex items-center justify-center">
-                            <img
+                            <Image
                                 src="https://res.cloudinary.com/demo/image/upload/v1/samples/ecommerce/analog-classic.jpg"
                                 alt="Sản phẩm nổi bật"
-                                className="w-full h-full object-contain filter drop-shadow-md group-hover:scale-105 transition-transform duration-300"
-                                onError={(e) => {
-                                    // Fallback nếu link demo lỗi
-                                    e.currentTarget.src = "https://images.unsplash.com/photo-1592750475338-74b7b21085ab?w=400&auto=format&fit=crop&q=80";
-                                }}
+                                fill
+                                sizes="(max-width: 640px) 128px, 160px"
+                                className="object-contain filter drop-shadow-md group-hover:scale-105 transition-transform duration-300"
+                                priority
                             />
                         </div>
 
