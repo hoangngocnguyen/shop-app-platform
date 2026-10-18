@@ -16,7 +16,8 @@ export const productApi = {
         const response = await api.get<PaginatedProducts>("/products", {
             params,
         });
-        return response.data;
+        const result = (response as unknown as { data: PaginatedProducts })?.data ?? response;
+        return result as PaginatedProducts;
     },
 
     /**
@@ -25,7 +26,8 @@ export const productApi = {
      */
     getPriceOptions: async (): Promise<PriceOptionDTO[]> => {
         const response = await api.get<PriceOptionDTO[]>("/products/price-options");
-        return response.data;
+        const result = (response as unknown as { data: PriceOptionDTO[] })?.data ?? response;
+        return result as PriceOptionDTO[];
     },
 
     /**
@@ -34,7 +36,8 @@ export const productApi = {
      */
     getProductDetail: async (id: number | string): Promise<ProductDetailResponse> => {
         const response = await api.get<ProductDetailResponse>(`/products/${id}`);
-        return response.data;
+        const result = (response as unknown as { data: ProductDetailResponse })?.data ?? response;
+        return result as ProductDetailResponse;
     },
 
     /**
@@ -45,6 +48,7 @@ export const productApi = {
         const response = await api.get<ProductResponse[]>(`/products/${id}/related`, {
             params: { limit },
         });
-        return response.data;
+        const result = (response as unknown as { data: ProductResponse[] })?.data ?? response;
+        return result as ProductResponse[];
     },
 };

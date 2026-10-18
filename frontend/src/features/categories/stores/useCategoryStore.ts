@@ -26,11 +26,11 @@ export const useCategoryStore = create<CategoryState>((set) => ({
         set({ isLoading: true, error: null });
         try {
             const data = await categoryApi.getCategories();
-            set({ categories: data, isLoading: false });
+            set({ categories: Array.isArray(data) ? data : [], isLoading: false });
             return data;
         } catch (err: unknown) {
             const errorMessage = parseErrorMessage(err, "Không thể tải danh sách danh mục");
-            set({ error: errorMessage, isLoading: false });
+            set({ error: errorMessage, isLoading: false, categories: [] });
             return null;
         }
     },
