@@ -95,6 +95,7 @@ export default function HomePage() {
                                     filterParams.search || filterParams.category_slug || filterParams.price_option
                                         ? "Không có sản phẩm nào phù hợp với bộ lọc hiện tại. Bạn vui lòng thử lại với từ khóa khác."
                                         : "Cửa hàng hiện đang cập nhật thêm sản phẩm mới. Vui lòng quay lại sau."
+                                }
                                 action={
                                     filterParams.search || filterParams.category_slug || filterParams.price_option ? (
                                         <Button
