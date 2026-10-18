@@ -9,7 +9,7 @@ import AddressFormModal from "@/features/shipping-address/components/AddressForm
 import { toast } from "@/common/stores/useToastStore";
 import { confirm } from "@/common/stores/useConfirmStore";
 import { parseErrorMessage } from "@/lib/axios/parseError";
-import { Skeleton, EmptyState } from "@/components/ui";
+import { Skeleton, EmptyState, Button } from "@/components/ui";
 
 export default function ShippingAddressPage() {
     const {
@@ -178,10 +178,15 @@ export default function ShippingAddressPage() {
                             icon={MapPin}
                             title="Chưa có địa chỉ giao hàng nào"
                             description="Hãy thêm địa chỉ giao hàng để quá trình mua sắm và thanh toán diễn ra nhanh chóng hơn."
-                            action={{
-                                label: "Thêm địa chỉ ngay",
-                                onClick: handleOpenCreateModal,
-                            }}
+                            action={
+                                <Button
+                                    onClick={handleOpenCreateModal}
+                                    size="sm"
+                                    className="shadow-brand-sm"
+                                >
+                                    Thêm địa chỉ ngay
+                                </Button>
+                            }
                         />
                     ) : (
                         /* Danh sách địa chỉ thành công */
