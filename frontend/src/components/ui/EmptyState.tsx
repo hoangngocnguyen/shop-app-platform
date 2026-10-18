@@ -1,5 +1,6 @@
 import React from 'react';
 import { PackageOpen } from 'lucide-react';
+import { Button } from './Button';
 
 export interface EmptyStateActionObject {
   label: string;
@@ -27,12 +28,13 @@ export function EmptyState({
     if (typeof action === 'object' && 'label' in action) {
       const actionObj = action as EmptyStateActionObject;
       return (
-        <button
+        <Button
           onClick={actionObj.onClick}
-          className="px-4 py-2 rounded-xl bg-primary text-primary-contrast text-xs font-semibold hover:opacity-90 transition-opacity cursor-pointer"
+          size="sm"
+          className="shadow-brand-sm"
         >
           {actionObj.label}
-        </button>
+        </Button>
       );
     }
     return action as React.ReactNode;
