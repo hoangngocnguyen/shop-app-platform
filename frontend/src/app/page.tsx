@@ -11,7 +11,7 @@ import {
     ProductCardSkeleton,
 } from "@/features/products/components";
 import { useProductStore } from "@/features/products/stores";
-import { EmptyState } from "@/components/ui";
+import { EmptyState, Button } from "@/components/ui";
 import { AlertCircle, ChevronLeft, ChevronRight, PackageSearch } from "lucide-react";
 
 export default function HomePage() {
@@ -95,14 +95,16 @@ export default function HomePage() {
                                     filterParams.search || filterParams.category_slug || filterParams.price_option
                                         ? "Không có sản phẩm nào phù hợp với bộ lọc hiện tại. Bạn vui lòng thử lại với từ khóa khác."
                                         : "Cửa hàng hiện đang cập nhật thêm sản phẩm mới. Vui lòng quay lại sau."
-                                }
                                 action={
-                                    filterParams.search || filterParams.category_slug || filterParams.price_option
-                                        ? {
-                                              label: "Xóa tất cả bộ lọc",
-                                              onClick: resetFilter,
-                                          }
-                                        : undefined
+                                    filterParams.search || filterParams.category_slug || filterParams.price_option ? (
+                                        <Button
+                                            onClick={resetFilter}
+                                            size="sm"
+                                            className="shadow-brand-sm"
+                                        >
+                                            Xóa tất cả bộ lọc
+                                        </Button>
+                                    ) : undefined
                                 }
                             />
                         </div>
