@@ -12,7 +12,6 @@ import {
   LogOut,
   Home,
   ShieldCheck,
-  Loader2,
   AlertCircle,
   Hash,
   MapPin,
