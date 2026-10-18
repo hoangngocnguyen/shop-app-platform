@@ -37,7 +37,10 @@ export default function ProductFilterBar() {
         return () => document.removeEventListener("mousedown", handleClickOutside);
     }, []);
 
-    const sortOptions = [
+    const sortOptions: Array<{
+        label: string;
+        value: "newest" | "price_asc" | "price_desc" | "best_seller";
+    }> = [
         { label: "Mặc định", value: "newest" },
         { label: "Giá tăng dần", value: "price_asc" },
         { label: "Giá giảm dần", value: "price_desc" },
@@ -80,7 +83,7 @@ export default function ProductFilterBar() {
                                 <button
                                     key={opt.value}
                                     onClick={() => {
-                                        setFilter({ sort_by: opt.value as any });
+                                        setFilter({ sort_by: opt.value });
                                         setIsSortOpen(false);
                                     }}
                                     className={`w-full text-left px-3.5 py-2 text-xs transition-colors cursor-pointer ${
@@ -122,7 +125,7 @@ export default function ProductFilterBar() {
                                     !filterParams.price_option
                                         ? "bg-primary-light text-primary font-bold"
                                         : "text-text-sub hover:text-text-main hover:bg-surface-hover"
-                                }`}
+                                    }`}
                             >
                                 Tất cả mức giá
                             </button>
@@ -162,7 +165,7 @@ export default function ProductFilterBar() {
             {/* Thông báo kết quả tìm kiếm nếu có search */}
             {filterParams.search && (
                 <div className="text-xs text-text-muted">
-                    Kết quả tìm kiếm cho: <span className="font-bold text-text-main">"{filterParams.search}"</span>
+                    Kết quả tìm kiếm cho: <span className="font-bold text-text-main">&quot;{filterParams.search}&quot;</span>
                 </div>
             )}
         </div>
