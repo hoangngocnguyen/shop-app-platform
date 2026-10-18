@@ -10,7 +10,8 @@ export const categoryApi = {
         const response = await api.get<CategoryResponse[]>("/categories", {
             params: parentId !== undefined && parentId !== null ? { parent_id: parentId } : {},
         });
-        return response.data;
+        const result = (response as unknown as { data: CategoryResponse[] })?.data ?? response;
+        return (result as CategoryResponse[]) || [];
     },
 
     /**
@@ -19,6 +20,7 @@ export const categoryApi = {
      */
     getCategoryBySlug: async (slug: string): Promise<CategoryResponse> => {
         const response = await api.get<CategoryResponse>(`/categories/${slug}`);
-        return response.data;
+        const result = (response as unknown as { data: CategoryResponse })?.data ?? response;
+        return result as CategoryResponse;
     },
 };

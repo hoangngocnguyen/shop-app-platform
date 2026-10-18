@@ -102,17 +102,17 @@ export const useProductStore = create<ProductState>((set, get) => ({
         try {
             const data = await productApi.getProducts(currentFilters);
             set({
-                products: data.items,
-                total: data.total,
-                page: data.page,
-                pageSize: data.page_size,
-                totalPages: data.total_pages,
+                products: data?.items || [],
+                total: data?.total || 0,
+                page: data?.page || 1,
+                pageSize: data?.page_size || 12,
+                totalPages: data?.total_pages || 1,
                 isLoading: false,
             });
             return data;
         } catch (err: unknown) {
             const errorMessage = parseErrorMessage(err, "Không thể tải danh sách sản phẩm");
-            set({ error: errorMessage, isLoading: false });
+            set({ error: errorMessage, isLoading: false, products: [] });
             return null;
         }
     },
@@ -121,7 +121,7 @@ export const useProductStore = create<ProductState>((set, get) => ({
         set({ isLoadingPriceOptions: true });
         try {
             const options = await productApi.getPriceOptions();
-            set({ priceOptions: options, isLoadingPriceOptions: false });
+            set({ priceOptions: Array.isArray(options) ? options : [], isLoadingPriceOptions: false });
             return options;
         } catch (err) {
             console.error("Lỗi khi tải metadata dải giá:", err);
@@ -147,7 +147,7 @@ export const useProductStore = create<ProductState>((set, get) => ({
         set({ isLoadingRelated: true });
         try {
             const related = await productApi.getRelatedProducts(id, limit);
-            set({ relatedProducts: related, isLoadingRelated: false });
+            set({ relatedProducts: Array.isArray(related) ? related : [], isLoadingRelated: false });
             return related;
         } catch (err) {
             console.error("Lỗi khi tải sản phẩm liên quan:", err);
