@@ -1,7 +1,7 @@
 import axios, { AxiosError } from "axios";
 import { createClient } from "@/lib/supabase/client";
 import { useAuthStore } from "@/features/auth/stores/useAuthStore";
-import type { ApiResponse, ApiErrorResponse } from "@/types/api";
+import type { ApiErrorResponse } from "@/types/api";
 
 const api = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_URL,

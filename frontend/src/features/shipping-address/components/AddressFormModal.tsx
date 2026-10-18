@@ -15,6 +15,7 @@ import {
     AlertCircle,
 } from "lucide-react";
 import { ShippingAddressCreate, ShippingAddressResponse, ShippingAddressUpdate } from "../types";
+import { ProvinceResponse, WardResponse } from "@/features/location/types";
 import { useLocationStore } from "@/features/location/stores";
 import {
     addressSchema,
@@ -235,9 +236,9 @@ export default function AddressFormModal({
                                     <option value="">
                                         {isLoadingProvinces ? "Đang tải Tỉnh/Thành..." : "-- Chọn Tỉnh/Thành --"}
                                     </option>
-                                    {provinces?.map((province: any) => {
-                                        const code = province.code || province.id || province.province_code;
-                                        const name = province.name || province.province_name;
+                                    {provinces?.map((province: ProvinceResponse) => {
+                                        const code = province.code;
+                                        const name = province.name;
                                         return (
                                             <option key={code} value={code}>
                                                 {name}
@@ -282,9 +283,9 @@ export default function AddressFormModal({
                                                 ? "Đang tải Phường/Xã..."
                                                 : "-- Chọn Phường/Xã --"}
                                     </option>
-                                    {wards?.map((ward: any) => {
-                                        const code = ward.code || ward.id || ward.ward_code;
-                                        const name = ward.name || ward.ward_name;
+                                    {wards?.map((ward: WardResponse) => {
+                                        const code = ward.code;
+                                        const name = ward.name;
                                         return (
                                             <option key={code} value={code}>
                                                 {name}
