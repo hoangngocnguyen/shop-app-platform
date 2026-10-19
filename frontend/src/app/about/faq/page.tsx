@@ -1,3 +1,4 @@
+// Client Component: Cần quản lý state tìm kiếm, lọc danh mục và đóng/mở Accordion
 "use client";
 
 import React, { useState, useMemo } from "react";
