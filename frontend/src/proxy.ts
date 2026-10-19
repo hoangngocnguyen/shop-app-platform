@@ -8,20 +8,33 @@ import { ROUTES } from '@/constants/routes';
  */
 export async function proxy(request: NextRequest) {
   const { supabase, response } = createClient(request);
-
-  // Lấy thông tin user an toàn qua getUser() từ Supabase Auth
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
   const pathname = request.nextUrl.pathname;
-  
+
   const isAuthRoute =
     pathname.startsWith(ROUTES.AUTH.LOGIN) ||
     pathname.startsWith(ROUTES.AUTH.REGISTER);
 
   // Các route yêu cầu đăng nhập (bắt đầu bằng /user)
   const isProtectedRoute = pathname.startsWith('/user');
+
+  // Trường hợp chưa cấu hình Supabase (môi trường dev local chưa điền env)
+  if (!supabase) {
+    if (isProtectedRoute) {
+      const url = request.nextUrl.clone();
+      url.pathname = ROUTES.AUTH.LOGIN;
+      return NextResponse.redirect(url);
+    }
+    return response;
+  }
+
+  // Lấy thông tin user an toàn qua getUser() từ Supabase Auth
+  let user = null;
+  try {
+    const { data } = await supabase.auth.getUser();
+    user = data.user;
+  } catch {
+    user = null;
+  }
 
   // 1. Chưa đăng nhập mà cố tình truy cập trang bảo vệ (/user/...) -> Chuyển hướng về /login
   if (!user && isProtectedRoute) {
