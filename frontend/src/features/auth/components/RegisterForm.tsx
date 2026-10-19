@@ -1,44 +1,49 @@
 'use client';
 
-import { useState, type FormEvent } from 'react';
+import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { Mascot } from 'page-mascot';
 import { ROUTES } from '@/constants/routes';
 import { toast } from '@/common/stores/useToastStore';
 import { useAuthStore } from '@/features/auth/stores/useAuthStore';
 import { createClient } from '@/lib/supabase/client';
+import { registerSchema, type RegisterFormValues } from '../schemas/auth-schema';
 
 export function RegisterForm() {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
-  const [loading, setLoading] = useState(false);
 
   const router = useRouter();
   const sync = useAuthStore((state) => state.sync);
 
-  const handleRegister = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
+  // Áp dụng React Hook Form kết hợp Zod Resolver theo quy chuẩn Tiêu chí 4
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+  } = useForm<RegisterFormValues>({
+    resolver: zodResolver(registerSchema),
+    defaultValues: {
+      email: '',
+      password: '',
+      confirmPassword: '',
+    },
+  });
+
+  const onSubmit = async (values: RegisterFormValues) => {
     setErrorMsg('');
     setSuccessMsg('');
-
-    if (password !== confirmPassword) {
-      setErrorMsg('Mật khẩu xác nhận không trùng khớp.');
-      return;
-    }
-
-    setLoading(true);
 
     try {
       const supabase = createClient();
       const { data, error } = await supabase.auth.signUp({
-        email: email.trim(),
-        password,
+        email: values.email.trim(),
+        password: values.password,
       });
 
       if (error) {
@@ -69,8 +74,6 @@ export function RegisterForm() {
           ? submitError.message
           : 'Không thể tạo tài khoản. Vui lòng thử lại.',
       );
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -79,33 +82,13 @@ export function RegisterForm() {
       
       {/* Header & Logo Đăng Ký Chuyển Động Sang Trọng */}
       <div className="mb-8 text-center">
-        <>
-          <Mascot
-            directions="/mascots/frog-directions.webp"
-            reactions="/mascots/frog-reactions.webp"
-            size={104}
-            className="mx-auto"
-            label="Linh vật ếch"
-          />
-
-          {/* Icon chính với hiệu ứng xoay 3D nổi bật khi rê chuột */}
-          <div className="hidden">
-            <svg
-              className="h-8 w-8 transition-transform duration-500"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              strokeWidth="2"
-              aria-hidden="true"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M16 21v-2a4 4 0 00-4-4H8a4 4 0 00-8 4v2m6-10a4 4 0 100-8 4 4 0 000 8zm10 0v6m3-3h-6"
-              />
-            </svg>
-          </div>
-        </>
+        <Mascot
+          directions="/mascots/frog-directions.webp"
+          reactions="/mascots/frog-reactions.webp"
+          size={104}
+          className="mx-auto"
+          label="Linh vật ếch"
+        />
 
         <h2 className="text-2xl font-bold tracking-tight text-text-main">
           Tạo tài khoản
@@ -115,7 +98,7 @@ export function RegisterForm() {
         </p>
       </div>
 
-      {/* Thông báo lỗi */}
+      {/* Thông báo lỗi từ Supabase/Auth */}
       {errorMsg && (
         <div
           role="alert"
@@ -149,9 +132,9 @@ export function RegisterForm() {
         </div>
       )}
 
-      {/* Form Đăng Ký */}
-      <form onSubmit={handleRegister} className="space-y-5">
-        {/* Email Input - Hiệu ứng Nổi khi Hover & Focus */}
+      {/* Form Đăng Ký dùng React Hook Form */}
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+        {/* Email Input */}
         <div>
           <label
             htmlFor="register-email"
@@ -162,20 +145,26 @@ export function RegisterForm() {
           <div className="relative">
             <input
               id="register-email"
-              name="email"
               type="email"
               autoComplete="email"
-              required
-              value={email}
-              disabled={loading || Boolean(successMsg)}
-              onChange={(event) => setEmail(event.target.value)}
+              disabled={isSubmitting || Boolean(successMsg)}
+              {...register('email')}
               placeholder="name@example.com"
-              className="w-full rounded-xl border border-surface-border bg-surface-bg/60 px-4 py-3 text-sm text-text-main placeholder-text-muted shadow-sm transition-all duration-200 outline-none hover:-translate-y-0.5 hover:border-primary/60 hover:shadow-md focus:-translate-y-0.5 focus:border-primary focus:bg-surface-card focus:shadow-md focus:ring-4 focus:ring-ring-brand/15 disabled:opacity-60"
+              className={`w-full rounded-xl border bg-surface-bg/60 px-4 py-3 text-sm text-text-main placeholder-text-muted shadow-sm transition-all duration-200 outline-none hover:-translate-y-0.5 hover:shadow-md focus:-translate-y-0.5 focus:bg-surface-card focus:shadow-md focus:ring-4 disabled:opacity-60 ${
+                errors.email
+                  ? 'border-status-error focus:border-status-error focus:ring-status-error/15'
+                  : 'border-surface-border hover:border-primary/60 focus:border-primary focus:ring-ring-brand/15'
+              }`}
             />
           </div>
+          {errors.email && (
+            <p className="mt-1.5 text-xs text-status-error font-medium">
+              {errors.email.message}
+            </p>
+          )}
         </div>
 
-        {/* Mật Khẩu Input - Hiệu ứng Nổi & Nút Ẩn/Hiện */}
+        {/* Mật Khẩu Input */}
         <div>
           <label
             htmlFor="register-password"
@@ -186,16 +175,16 @@ export function RegisterForm() {
           <div className="relative">
             <input
               id="register-password"
-              name="password"
               type={showPassword ? 'text' : 'password'}
               autoComplete="new-password"
-              required
-              minLength={6}
-              value={password}
-              disabled={loading || Boolean(successMsg)}
-              onChange={(event) => setPassword(event.target.value)}
+              disabled={isSubmitting || Boolean(successMsg)}
+              {...register('password')}
               placeholder="Ít nhất 6 ký tự"
-              className="w-full rounded-xl border border-surface-border bg-surface-bg/60 px-4 py-3 text-sm text-text-main placeholder-text-muted shadow-sm transition-all duration-200 outline-none hover:-translate-y-0.5 hover:border-primary/60 hover:shadow-md focus:-translate-y-0.5 focus:border-primary focus:bg-surface-card focus:shadow-md focus:ring-4 focus:ring-ring-brand/15 disabled:opacity-60"
+              className={`w-full rounded-xl border bg-surface-bg/60 px-4 py-3 text-sm text-text-main placeholder-text-muted shadow-sm transition-all duration-200 outline-none hover:-translate-y-0.5 hover:shadow-md focus:-translate-y-0.5 focus:bg-surface-card focus:shadow-md focus:ring-4 disabled:opacity-60 ${
+                errors.password
+                  ? 'border-status-error focus:border-status-error focus:ring-status-error/15'
+                  : 'border-surface-border hover:border-primary/60 focus:border-primary focus:ring-ring-brand/15'
+              }`}
             />
             <button
               type="button"
@@ -215,9 +204,14 @@ export function RegisterForm() {
               )}
             </button>
           </div>
+          {errors.password && (
+            <p className="mt-1.5 text-xs text-status-error font-medium">
+              {errors.password.message}
+            </p>
+          )}
         </div>
 
-        {/* Xác Nhận Mật Khẩu Input - Hiệu ứng Nổi & Nút Ẩn/Hiện */}
+        {/* Xác Nhận Mật Khẩu Input */}
         <div>
           <label
             htmlFor="register-confirm-password"
@@ -228,16 +222,16 @@ export function RegisterForm() {
           <div className="relative">
             <input
               id="register-confirm-password"
-              name="confirmPassword"
               type={showConfirmPassword ? 'text' : 'password'}
               autoComplete="new-password"
-              required
-              minLength={6}
-              value={confirmPassword}
-              disabled={loading || Boolean(successMsg)}
-              onChange={(event) => setConfirmPassword(event.target.value)}
+              disabled={isSubmitting || Boolean(successMsg)}
+              {...register('confirmPassword')}
               placeholder="Nhập lại mật khẩu"
-              className="w-full rounded-xl border border-surface-border bg-surface-bg/60 px-4 py-3 text-sm text-text-main placeholder-text-muted shadow-sm transition-all duration-200 outline-none hover:-translate-y-0.5 hover:border-primary/60 hover:shadow-md focus:-translate-y-0.5 focus:border-primary focus:bg-surface-card focus:shadow-md focus:ring-4 focus:ring-ring-brand/15 disabled:opacity-60"
+              className={`w-full rounded-xl border bg-surface-bg/60 px-4 py-3 text-sm text-text-main placeholder-text-muted shadow-sm transition-all duration-200 outline-none hover:-translate-y-0.5 hover:shadow-md focus:-translate-y-0.5 focus:bg-surface-card focus:shadow-md focus:ring-4 disabled:opacity-60 ${
+                errors.confirmPassword
+                  ? 'border-status-error focus:border-status-error focus:ring-status-error/15'
+                  : 'border-surface-border hover:border-primary/60 focus:border-primary focus:ring-ring-brand/15'
+              }`}
             />
             <button
               type="button"
@@ -257,15 +251,20 @@ export function RegisterForm() {
               )}
             </button>
           </div>
+          {errors.confirmPassword && (
+            <p className="mt-1.5 text-xs text-status-error font-medium">
+              {errors.confirmPassword.message}
+            </p>
+          )}
         </div>
 
-        {/* Nút Submit - Hiệu ứng Nổi mềm mại */}
+        {/* Nút Submit Main */}
         <button
           type="submit"
-          disabled={loading || Boolean(successMsg)}
+          disabled={isSubmitting || Boolean(successMsg)}
           className="relative w-full rounded-xl bg-primary px-4 py-3.5 text-sm font-semibold text-primary-contrast shadow-md transition-all duration-300 hover:-translate-y-0.5 hover:bg-primary-hover hover:shadow-lg hover:shadow-primary/25 active:translate-y-0 active:shadow-md disabled:cursor-not-allowed disabled:opacity-70 disabled:transform-none"
         >
-          {loading ? (
+          {isSubmitting ? (
             <div className="flex items-center justify-center gap-2">
               <svg className="h-5 w-5 animate-spin text-primary-contrast" viewBox="0 0 24 24" fill="none">
                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />

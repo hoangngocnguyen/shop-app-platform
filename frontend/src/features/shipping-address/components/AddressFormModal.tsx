@@ -3,36 +3,25 @@
 import React, { useEffect } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
-import { 
-  X, 
-  Loader2, 
-  User, 
-  Phone, 
-  MapPin, 
-  Building2, 
-  Home, 
-  Check, 
-  AlertCircle 
+import {
+    X,
+    Loader2,
+    User,
+    Phone,
+    MapPin,
+    Building2,
+    Home,
+    Check,
+    AlertCircle,
 } from "lucide-react";
 import { ShippingAddressCreate, ShippingAddressResponse, ShippingAddressUpdate } from "../types";
+import { ProvinceResponse, WardResponse } from "@/features/location/types";
 import { useLocationStore } from "@/features/location/stores";
-
-const addressSchema = z.object({
-    recipient_name: z.string().min(2, "Họ và tên phải có ít nhất 2 ký tự"),
-    phone: z
-        .string()
-        .min(10, "Số điện thoại không hợp lệ")
-        .max(11, "Số điện thoại không hợp lệ")
-        .regex(/(84|0[3|5|7|8|9])+([0-9]{8})\b/, "Số điện thoại không đúng định dạng"),
-    province_code: z.string().min(1, "Vui lòng chọn Tỉnh/Thành phố"),
-    ward_code: z.string().min(1, "Vui lòng chọn Phường/Xã"),
-    address_line: z.string().min(5, "Địa chỉ chi tiết phải từ 5 ký tự trở lên"),
-    is_default: z.boolean().default(false),
-});
-
-type AddressFormInput = z.input<typeof addressSchema>;
-type AddressFormOutput = z.output<typeof addressSchema>;
+import {
+    addressSchema,
+    AddressFormInput,
+    AddressFormOutput,
+} from "../schemas/address-schema";
 
 interface AddressFormModalProps {
     isOpen: boolean;
@@ -247,9 +236,9 @@ export default function AddressFormModal({
                                     <option value="">
                                         {isLoadingProvinces ? "Đang tải Tỉnh/Thành..." : "-- Chọn Tỉnh/Thành --"}
                                     </option>
-                                    {provinces?.map((province: any) => {
-                                        const code = province.code || province.id || province.province_code;
-                                        const name = province.name || province.province_name;
+                                    {provinces?.map((province: ProvinceResponse) => {
+                                        const code = province.code;
+                                        const name = province.name;
                                         return (
                                             <option key={code} value={code}>
                                                 {name}
@@ -294,9 +283,9 @@ export default function AddressFormModal({
                                                 ? "Đang tải Phường/Xã..."
                                                 : "-- Chọn Phường/Xã --"}
                                     </option>
-                                    {wards?.map((ward: any) => {
-                                        const code = ward.code || ward.id || ward.ward_code;
-                                        const name = ward.name || ward.ward_name;
+                                    {wards?.map((ward: WardResponse) => {
+                                        const code = ward.code;
+                                        const name = ward.name;
                                         return (
                                             <option key={code} value={code}>
                                                 {name}

@@ -14,7 +14,7 @@ import {
   Phone,
   Calendar,
 } from "lucide-react";
-import { ProfileFormInput, ProfileFormOutput, profileSchema } from "../schemas/profileSchema";
+import { ProfileFormInput, ProfileFormOutput, profileSchema } from "../schemas/profile-schema";
 import { useProfileStore } from "../stores";
 
 interface EditProfileModalProps {
