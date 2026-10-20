@@ -5,7 +5,7 @@
   --background: #ffffff;
   --foreground: #171717;
 
-  /* Brand Tokens */
+  /* Brand Tokens (Mint / Teal Brand) */
   --color-primary-val: #0f766e;
   --color-primary-hover-val: #115e59;
   --color-primary-light-val: #ecfdf5;
@@ -15,12 +15,12 @@
   --color-accent-hover-val: #d97706;
   --color-accent-light-val: #fef3c7;
 
-  /* Surface & Border Tokens */
-  --color-surface-bg-val: #f8fafc;
+  /* Surface & Border Tokens (Tông Mint Thanh Lịch & Tươi Mát) */
+  --color-surface-bg-val: #f0fdfa;
   --color-surface-card-val: #ffffff;
-  --color-surface-border-val: #e2e8f0;
-  --color-surface-hover-val: #f1f5f9;
-  --color-surface-active-val: #e2e8f0;
+  --color-surface-border-val: #ccfbf1;
+  --color-surface-hover-val: #e6fffa;
+  --color-surface-active-val: #99f6e4;
 
   /* Text Tokens */
   --color-text-main-val: #0f172a;
@@ -40,13 +40,17 @@
 
   /* Interactive Controls */
   --color-ring-val: #0f766e;
-  --shadow-color-val: rgba(15, 118, 110, 0.15);
+  --shadow-color-val: rgba(15, 118, 110, 0.12);
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --background: #041f1e;
+    --foreground: #e6fffa;
+    --color-surface-bg-val: #042f2e;
+    --color-surface-card-val: #0f3d39;
+    --color-surface-border-val: #134e4a;
+    --color-surface-hover-val: #115e59;
   }
 }
 
@@ -107,5 +111,17 @@
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  }
+}
+
+/* 4. UTILITIES */
+@layer utilities {
+  .line-clamp-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    word-break: break-word;
   }
 }

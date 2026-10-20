@@ -17,6 +17,7 @@ interface ProductState {
     pageSize: number;
     totalPages: number;
     isLoading: boolean;
+    isLoadingMore: boolean;
     error: string | null;
 
     // Bộ lọc & Dải giá
@@ -35,6 +36,7 @@ interface ProductState {
 
     // Actions
     fetchProducts: (overrideParams?: Partial<ProductFilterParams>) => Promise<PaginatedProducts | null>;
+    loadMoreProducts: () => Promise<PaginatedProducts | null>;
     fetchPriceOptions: () => Promise<PriceOptionDTO[] | null>;
     fetchProductDetail: (id: number | string) => Promise<ProductDetailResponse | null>;
     fetchRelatedProducts: (id: number | string, limit?: number) => Promise<ProductResponse[] | null>;
@@ -59,6 +61,7 @@ export const useProductStore = create<ProductState>((set, get) => ({
     pageSize: 12,
     totalPages: 1,
     isLoading: false,
+    isLoadingMore: false,
     error: null,
 
     filterParams: DEFAULT_FILTERS,
@@ -113,6 +116,46 @@ export const useProductStore = create<ProductState>((set, get) => ({
         } catch (err: unknown) {
             const errorMessage = parseErrorMessage(err, "Không thể tải danh sách sản phẩm");
             set({ error: errorMessage, isLoading: false, products: [] });
+            return null;
+        }
+    },
+
+    loadMoreProducts: async () => {
+        const { page, totalPages, isLoadingMore, isLoading, filterParams, products } = get();
+        // Không load nếu đã hết trang hoặc đang loading
+        if (page >= totalPages || isLoadingMore || isLoading) {
+            return null;
+        }
+
+        const nextPage = page + 1;
+        set({ isLoadingMore: true });
+
+        try {
+            const data = await productApi.getProducts({
+                ...filterParams,
+                page: nextPage,
+            });
+
+            if (data?.items) {
+                // Lọc bỏ trùng lặp id nếu có
+                const existingIds = new Set(products.map((p) => p.product_id));
+                const newItems = data.items.filter((p) => !existingIds.has(p.product_id));
+
+                set({
+                    products: [...products, ...newItems],
+                    total: data.total ?? get().total,
+                    page: data.page ?? nextPage,
+                    pageSize: data.page_size ?? get().pageSize,
+                    totalPages: data.total_pages ?? totalPages,
+                    isLoadingMore: false,
+                });
+            } else {
+                set({ isLoadingMore: false });
+            }
+            return data;
+        } catch (err: unknown) {
+            console.error("Lỗi khi tải thêm sản phẩm:", err);
+            set({ isLoadingMore: false });
             return null;
         }
     },

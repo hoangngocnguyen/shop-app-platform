@@ -1,10 +1,9 @@
 "use client";
 
-import React, { useEffect } from "react";
+import React, { useEffect, useRef } from "react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import {
-    HeroBanner,
     CategoryTabs,
     ProductFilterBar,
     ProductCard,
@@ -12,34 +11,52 @@ import {
 } from "@/features/products/components";
 import { useProductStore } from "@/features/products/stores";
 import { EmptyState, Button } from "@/components/ui";
-import { AlertCircle, ChevronLeft, ChevronRight, PackageSearch } from "lucide-react";
+import { AlertCircle, ChevronDown, CheckCircle2, PackageSearch } from "lucide-react";
 
 export default function HomePage() {
     const {
         products,
         page,
+        total,
+        pageSize,
         totalPages,
         isLoading,
+        isLoadingMore,
         error,
         fetchProducts,
+        loadMoreProducts,
         filterParams,
-        setFilter,
         resetFilter,
     } = useProductStore();
 
+    const observerTarget = useRef<HTMLDivElement>(null);
+
+    // Fetch dữ liệu ban đầu
     useEffect(() => {
         fetchProducts();
     }, [fetchProducts]);
 
-    const handlePageChange = (newPage: number) => {
-        if (newPage >= 1 && newPage <= totalPages && newPage !== page) {
-            setFilter({ page: newPage });
-            const gridSection = document.getElementById("product-grid-section");
-            if (gridSection) {
-                gridSection.scrollIntoView({ behavior: "smooth" });
-            }
-        }
-    };
+    // Cơ chế phân trang cuộn tự động (Infinite Scroll) khi lướt xuống cuối danh sách
+    useEffect(() => {
+        const target = observerTarget.current;
+        if (!target) return;
+
+        const observer = new IntersectionObserver(
+            (entries) => {
+                if (entries[0].isIntersecting && page < totalPages && !isLoadingMore && !isLoading) {
+                    loadMoreProducts();
+                }
+            },
+            { threshold: 0.1, rootMargin: "150px" }
+        );
+
+        observer.observe(target);
+        return () => {
+            observer.disconnect();
+        };
+    }, [page, totalPages, isLoadingMore, isLoading, loadMoreProducts]);
+
+    const remainingCount = Math.max(0, total - products.length);
 
     return (
         <div className="min-h-screen bg-surface-bg flex flex-col justify-between selection:bg-primary selection:text-primary-contrast">
@@ -49,16 +66,13 @@ export default function HomePage() {
             {/* NỘI DUNG CHÍNH */}
             <main className="flex-1 max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
                 
-                {/* 1. HERO BANNER */}
-                <HeroBanner />
-
-                {/* 2. THANH TAB DANH MỤC */}
+                {/* 1. THANH TAB DANH MỤC (Đã bỏ banner theo yêu cầu) */}
                 <CategoryTabs />
 
-                {/* 3. THANH CÔNG CỤ LỌC & SẮP XẾP */}
+                {/* 2. THANH CÔNG CỤ LỌC & SẮP XẾP */}
                 <ProductFilterBar />
 
-                {/* 4. KHU VỰC DANH SÁCH SẢN PHẨM (VỚI ĐỦ 4 TRẠNG THÁI UI) */}
+                {/* 3. KHU VỰC DANH SÁCH SẢN PHẨM (VỚI ĐỦ 4 TRẠNG THÁI UI) */}
                 <section id="product-grid-section" className="space-y-6">
                     
                     {/* A. ERROR STATE */}
@@ -77,7 +91,7 @@ export default function HomePage() {
                         </div>
                     )}
 
-                    {/* B. LOADING STATE (SKELETON) */}
+                    {/* B. LOADING STATE (SKELETON KHI CHƯA CÓ SẢN PHẨM) */}
                     {isLoading && products.length === 0 ? (
                         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3 sm:gap-4">
                             {Array.from({ length: 12 }).map((_, index) => (
@@ -86,7 +100,7 @@ export default function HomePage() {
                         </div>
                     ) : products.length === 0 ? (
                         /* C. EMPTY STATE */
-                        <div className="py-8 bg-surface-card rounded-3xl border border-surface-border">
+                        <div className="py-12 bg-surface-card rounded-3xl border border-surface-border">
                             <EmptyState
                                 icon={PackageSearch}
                                 title="Không tìm thấy sản phẩm nào"
@@ -109,7 +123,7 @@ export default function HomePage() {
                             />
                         </div>
                     ) : (
-                        /* D. SUCCESS STATE */
+                        /* D. SUCCESS STATE & PHÂN TRANG LOAD MORE DẠNG CUỘN */
                         <>
                             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3 sm:gap-4">
                                 {products.map((product) => (
@@ -117,37 +131,39 @@ export default function HomePage() {
                                 ))}
                             </div>
 
-                            {/* THANH PHÂN TRANG (PAGINATION) */}
-                            {totalPages > 1 && (
-                                <div className="flex items-center justify-center gap-2 pt-8 pb-4">
-                                    <button
-                                        onClick={() => handlePageChange(page - 1)}
-                                        disabled={page <= 1 || isLoading}
-                                        className="p-2 sm:px-3 sm:py-2 rounded-xl border border-surface-border bg-surface-card hover:bg-surface-hover text-text-sub text-xs sm:text-sm font-semibold transition-colors disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer flex items-center gap-1"
-                                        title="Trang trước"
-                                    >
-                                        <ChevronLeft className="w-4 h-4" />
-                                        <span className="hidden sm:inline">Trước</span>
-                                    </button>
-
-                                    <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-surface-card border border-surface-border text-xs sm:text-sm font-bold text-text-main">
-                                        <span>Trang</span>
-                                        <span className="text-primary">{page}</span>
-                                        <span>/</span>
-                                        <span>{totalPages}</span>
+                            {/* KHU VỰC PHÂN TRANG DẠNG CUỘN / TẢI THÊM (LOAD MORE) */}
+                            <div className="flex flex-col items-center justify-center pt-8 pb-4 gap-3">
+                                {page < totalPages ? (
+                                    <div className="flex flex-col items-center gap-2.5">
+                                        <Button
+                                            onClick={() => loadMoreProducts()}
+                                            isLoading={isLoadingMore}
+                                            variant="outline"
+                                            size="lg"
+                                            className="px-8 py-3 rounded-2xl bg-surface-card hover:bg-surface-hover border-surface-border text-text-main text-xs sm:text-sm font-bold shadow-brand-sm hover:border-primary transition-all duration-200 flex items-center gap-2 cursor-pointer group"
+                                        >
+                                            <ChevronDown className="w-4 h-4 text-primary group-hover:translate-y-0.5 transition-transform" />
+                                            <span>
+                                                Xem thêm {Math.min(remainingCount, pageSize)} sản phẩm
+                                            </span>
+                                            <span className="text-[11px] font-normal text-text-sub">
+                                                (Còn {remainingCount} sản phẩm)
+                                            </span>
+                                        </Button>
+                                        <span className="text-xs text-text-sub font-medium">
+                                            Đang hiển thị {products.length} / {total} sản phẩm
+                                        </span>
                                     </div>
+                                ) : (
+                                    <div className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-surface-card border border-surface-border text-xs text-text-sub shadow-2xs font-medium">
+                                        <CheckCircle2 className="w-4 h-4 text-primary" />
+                                        <span>Bạn đã xem hết toàn bộ {total} sản phẩm</span>
+                                    </div>
+                                )}
 
-                                    <button
-                                        onClick={() => handlePageChange(page + 1)}
-                                        disabled={page >= totalPages || isLoading}
-                                        className="p-2 sm:px-3 sm:py-2 rounded-xl border border-surface-border bg-surface-card hover:bg-surface-hover text-text-sub text-xs sm:text-sm font-semibold transition-colors disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer flex items-center gap-1"
-                                        title="Trang sau"
-                                    >
-                                        <span className="hidden sm:inline">Sau</span>
-                                        <ChevronRight className="w-4 h-4" />
-                                    </button>
-                                </div>
-                            )}
+                                {/* Sentinel div kích hoạt tải trang dạng cuộn tự động */}
+                                <div ref={observerTarget} className="h-2 w-full pointer-events-none" />
+                            </div>
                         </>
                     )}
 
