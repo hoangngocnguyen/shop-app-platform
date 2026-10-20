@@ -52,7 +52,7 @@ export default function ProductCard({ product }: ProductCardProps) {
     };
 
     return (
-        <div className="group relative bg-surface-card rounded-2xl border border-surface-border p-3.5 sm:p-4 shadow-sm hover:shadow-brand-md hover:-translate-y-1.5 transition-all duration-300 flex flex-col justify-between overflow-hidden">
+        <div className="group relative bg-surface-card rounded-2xl border border-primary/20 p-3.5 sm:p-4 shadow-xs hover:shadow-brand-md hover:-translate-y-1.5 transition-all duration-300 flex flex-col justify-between overflow-hidden">
             
             {/* BADGE GIẢM GIÁ */}
             {hasDiscount && (
@@ -65,7 +65,7 @@ export default function ProductCard({ product }: ProductCardProps) {
                 {/* HÌNH ẢNH SẢN PHẨM */}
                 <Link
                     href={ROUTES.PRODUCTS.DETAIL(product.product_id)}
-                    className="block relative w-full h-44 sm:h-48 mb-3 overflow-hidden rounded-xl bg-surface-hover/50 flex items-center justify-center p-2 border border-surface-border/50"
+                    className="block relative w-full h-44 sm:h-48 mb-3 overflow-hidden rounded-xl bg-primary-light/30 flex items-center justify-center p-2 border border-primary/10"
                 >
                     <Image
                         src={product.image_src || "https://images.unsplash.com/photo-1592750475338-74b7b21085ab?w=400&auto=format&fit=crop&q=80"}
@@ -113,17 +113,17 @@ export default function ProductCard({ product }: ProductCardProps) {
                 {/* Nút Xem chi tiết */}
                 <Link
                     href={ROUTES.PRODUCTS.DETAIL(product.product_id)}
-                    className="w-full py-2 px-3 rounded-xl border border-surface-border bg-surface-card hover:bg-surface-hover hover:border-primary text-text-main text-xs font-semibold flex items-center justify-center gap-1.5 transition-all duration-200 cursor-pointer shadow-2xs"
+                    className="w-full py-2 px-3 rounded-xl border border-primary/20 bg-surface-card hover:bg-primary-light/50 hover:border-primary text-text-main text-xs font-semibold flex items-center justify-center gap-1.5 transition-all duration-200 cursor-pointer shadow-2xs"
                 >
                     <Eye className="w-3.5 h-3.5 text-text-sub" />
                     <span>Xem chi tiết</span>
                 </Link>
 
-                {/* Nút Thêm vào giỏ */}
+                {/* Nút Thêm vào giỏ (Dùng màu Primary của Lead) */}
                 <button
                     onClick={handleAddToCart}
                     disabled={isAdding || product.quantity <= 0}
-                    className="w-full py-2 px-3 rounded-xl bg-[#002b49] hover:bg-[#001c30] text-white text-xs font-semibold flex items-center justify-center gap-1.5 transition-all duration-200 shadow-sm hover:shadow-brand-sm active:scale-98 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                    className="w-full py-2 px-3 rounded-xl bg-primary hover:bg-primary-hover text-primary-contrast text-xs font-semibold flex items-center justify-center gap-1.5 transition-all duration-200 shadow-sm hover:shadow-brand-sm active:scale-98 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
                 >
                     {isAdding ? (
                         <>

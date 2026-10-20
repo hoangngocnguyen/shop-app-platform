@@ -3,7 +3,7 @@ import { Skeleton } from "@/components/ui";
 
 export default function ProductCardSkeleton() {
     return (
-        <div className="bg-surface-card rounded-2xl border border-surface-border p-3.5 sm:p-4 shadow-sm space-y-3">
+        <div className="bg-surface-card rounded-2xl border border-primary/20 p-3.5 sm:p-4 shadow-xs space-y-3">
             {/* Ảnh skeleton */}
             <Skeleton className="w-full h-44 sm:h-48 rounded-xl" />
 
