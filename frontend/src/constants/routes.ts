@@ -14,5 +14,9 @@ export const ROUTES = {
     TERM: '/about/term',
     RETURN_POLICY: '/about/return-policy',
   },
+  PRODUCTS: {
+    DETAIL: (id: number | string) => `/products/${id}`,
+  },
+  CART: '/user/cart',
   STORES: '/stores',
 } as const;
