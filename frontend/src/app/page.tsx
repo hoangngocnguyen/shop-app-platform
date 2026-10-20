@@ -59,7 +59,7 @@ export default function HomePage() {
     const remainingCount = Math.max(0, total - products.length);
 
     return (
-        <div className="min-h-screen bg-primary-light/40 flex flex-col justify-between selection:bg-primary selection:text-primary-contrast">
+        <div className="min-h-screen bg-surface-bg flex flex-col justify-between selection:bg-primary selection:text-primary-contrast">
             {/* THANH ĐIỀU HƯỚNG HEADER */}
             <Header />
 
