@@ -65,7 +65,7 @@ export default function ProductCard({ product }: ProductCardProps) {
                 {/* HÌNH ẢNH SẢN PHẨM */}
                 <Link
                     href={ROUTES.PRODUCTS.DETAIL(product.product_id)}
-                    className="block relative w-full h-44 sm:h-48 mb-3 overflow-hidden rounded-xl bg-slate-50 flex items-center justify-center p-2"
+                    className="block relative w-full h-44 sm:h-48 mb-3 overflow-hidden rounded-xl bg-surface-hover/50 flex items-center justify-center p-2 border border-surface-border/50"
                 >
                     <Image
                         src={product.image_src || "https://images.unsplash.com/photo-1592750475338-74b7b21085ab?w=400&auto=format&fit=crop&q=80"}
@@ -76,10 +76,10 @@ export default function ProductCard({ product }: ProductCardProps) {
                     />
                 </Link>
 
-                {/* TÊN SẢN PHẨM (2 dòng có truncate) */}
+                {/* TÊN SẢN PHẨM (Khóa chuẩn 2 dòng với dấu 3 chấm line-clamp-2) */}
                 <Link
                     href={ROUTES.PRODUCTS.DETAIL(product.product_id)}
-                    className="block font-bold text-xs sm:text-sm text-text-main line-clamp-2 min-h-[2.5rem] leading-snug group-hover:text-primary transition-colors mb-2"
+                    className="block font-bold text-xs sm:text-sm text-text-main line-clamp-2 h-10 leading-5 group-hover:text-primary transition-colors mb-2 overflow-hidden"
                     title={product.product_name}
                 >
                     {product.product_name}
@@ -113,7 +113,7 @@ export default function ProductCard({ product }: ProductCardProps) {
                 {/* Nút Xem chi tiết */}
                 <Link
                     href={ROUTES.PRODUCTS.DETAIL(product.product_id)}
-                    className="w-full py-2 px-3 rounded-xl border border-surface-border bg-surface-card hover:bg-surface-hover hover:border-text-sub text-text-main text-xs font-semibold flex items-center justify-center gap-1.5 transition-all duration-200 cursor-pointer shadow-2xs"
+                    className="w-full py-2 px-3 rounded-xl border border-surface-border bg-surface-card hover:bg-surface-hover hover:border-primary text-text-main text-xs font-semibold flex items-center justify-center gap-1.5 transition-all duration-200 cursor-pointer shadow-2xs"
                 >
                     <Eye className="w-3.5 h-3.5 text-text-sub" />
                     <span>Xem chi tiết</span>
