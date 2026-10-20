@@ -70,7 +70,7 @@ export default function ProductFilterBar() {
                 <div className="relative" ref={sortRef}>
                     <button
                         onClick={() => setIsSortOpen(!isSortOpen)}
-                        className="flex items-center gap-2 px-3.5 py-2 rounded-xl border border-surface-border bg-surface-card hover:bg-surface-hover text-text-main text-xs sm:text-sm font-medium transition-colors cursor-pointer shadow-xs"
+                        className="flex items-center gap-2 px-3.5 py-2 rounded-xl border border-primary/20 bg-surface-card hover:bg-primary-light/40 text-text-main text-xs sm:text-sm font-medium transition-colors cursor-pointer shadow-xs"
                     >
                         <span className="text-text-muted">Sắp xếp:</span>
                         <span className="font-bold">{currentSortLabel}</span>
@@ -78,7 +78,7 @@ export default function ProductFilterBar() {
                     </button>
 
                     {isSortOpen && (
-                        <div className="absolute left-0 mt-1.5 w-44 bg-surface-card rounded-xl border border-surface-border shadow-brand-md py-1 z-30 animate-in fade-in duration-150">
+                        <div className="absolute left-0 mt-1.5 w-44 bg-surface-card rounded-xl border border-primary/20 shadow-brand-md py-1 z-30 animate-in fade-in duration-150">
                             {sortOptions.map((opt) => (
                                 <button
                                     key={opt.value}
@@ -89,7 +89,7 @@ export default function ProductFilterBar() {
                                     className={`w-full text-left px-3.5 py-2 text-xs transition-colors cursor-pointer ${
                                         filterParams.sort_by === opt.value
                                             ? "bg-primary-light text-primary font-bold"
-                                            : "text-text-sub hover:text-text-main hover:bg-surface-hover"
+                                            : "text-text-sub hover:text-text-main hover:bg-primary-light/40"
                                     }`}
                                 >
                                     {opt.label}
@@ -105,8 +105,8 @@ export default function ProductFilterBar() {
                         onClick={() => setIsPriceOpen(!isPriceOpen)}
                         className={`flex items-center gap-2 px-3.5 py-2 rounded-xl border transition-colors cursor-pointer shadow-xs text-xs sm:text-sm ${
                             filterParams.price_option
-                                ? "border-primary bg-primary-light/50 text-primary font-bold"
-                                : "border-surface-border bg-surface-card hover:bg-surface-hover text-text-main font-medium"
+                                ? "border-primary bg-primary-light text-primary font-bold shadow-xs"
+                                : "border-primary/20 bg-surface-card hover:bg-primary-light/40 text-text-main font-medium"
                         }`}
                     >
                         <SlidersHorizontal className="w-3.5 h-3.5 text-text-muted" />
@@ -115,7 +115,7 @@ export default function ProductFilterBar() {
                     </button>
 
                     {isPriceOpen && (
-                        <div className="absolute left-0 mt-1.5 w-52 bg-surface-card rounded-xl border border-surface-border shadow-brand-md py-1 z-30 animate-in fade-in duration-150">
+                        <div className="absolute left-0 mt-1.5 w-52 bg-surface-card rounded-xl border border-primary/20 shadow-brand-md py-1 z-30 animate-in fade-in duration-150">
                             <button
                                 onClick={() => {
                                     setFilter({ price_option: undefined });
@@ -124,8 +124,8 @@ export default function ProductFilterBar() {
                                 className={`w-full text-left px-3.5 py-2 text-xs transition-colors cursor-pointer ${
                                     !filterParams.price_option
                                         ? "bg-primary-light text-primary font-bold"
-                                        : "text-text-sub hover:text-text-main hover:bg-surface-hover"
-                                    }`}
+                                        : "text-text-sub hover:text-text-main hover:bg-primary-light/40"
+                                }`}
                             >
                                 Tất cả mức giá
                             </button>
@@ -139,7 +139,7 @@ export default function ProductFilterBar() {
                                     className={`w-full text-left px-3.5 py-2 text-xs transition-colors cursor-pointer ${
                                         filterParams.price_option === opt.key
                                             ? "bg-primary-light text-primary font-bold"
-                                            : "text-text-sub hover:text-text-main hover:bg-surface-hover"
+                                            : "text-text-sub hover:text-text-main hover:bg-primary-light/40"
                                     }`}
                                 >
                                     {opt.label}

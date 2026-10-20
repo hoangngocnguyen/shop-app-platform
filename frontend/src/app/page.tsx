@@ -59,14 +59,14 @@ export default function HomePage() {
     const remainingCount = Math.max(0, total - products.length);
 
     return (
-        <div className="min-h-screen bg-surface-bg flex flex-col justify-between selection:bg-primary selection:text-primary-contrast">
+        <div className="min-h-screen bg-primary-light/40 flex flex-col justify-between selection:bg-primary selection:text-primary-contrast">
             {/* THANH ĐIỀU HƯỚNG HEADER */}
             <Header />
 
             {/* NỘI DUNG CHÍNH */}
             <main className="flex-1 max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
                 
-                {/* 1. THANH TAB DANH MỤC (Đã bỏ banner theo yêu cầu) */}
+                {/* 1. THANH TAB DANH MỤC */}
                 <CategoryTabs />
 
                 {/* 2. THANH CÔNG CỤ LỌC & SẮP XẾP */}
@@ -100,7 +100,7 @@ export default function HomePage() {
                         </div>
                     ) : products.length === 0 ? (
                         /* C. EMPTY STATE */
-                        <div className="py-12 bg-surface-card rounded-3xl border border-surface-border">
+                        <div className="py-12 bg-surface-card rounded-3xl border border-primary/20 shadow-xs">
                             <EmptyState
                                 icon={PackageSearch}
                                 title="Không tìm thấy sản phẩm nào"
@@ -140,7 +140,7 @@ export default function HomePage() {
                                             isLoading={isLoadingMore}
                                             variant="outline"
                                             size="lg"
-                                            className="px-8 py-3 rounded-2xl bg-surface-card hover:bg-surface-hover border-surface-border text-text-main text-xs sm:text-sm font-bold shadow-brand-sm hover:border-primary transition-all duration-200 flex items-center gap-2 cursor-pointer group"
+                                            className="px-8 py-3 rounded-2xl bg-surface-card hover:bg-primary-light/50 border-primary/20 text-text-main text-xs sm:text-sm font-bold shadow-brand-sm hover:border-primary transition-all duration-200 flex items-center gap-2 cursor-pointer group"
                                         >
                                             <ChevronDown className="w-4 h-4 text-primary group-hover:translate-y-0.5 transition-transform" />
                                             <span>
@@ -155,7 +155,7 @@ export default function HomePage() {
                                         </span>
                                     </div>
                                 ) : (
-                                    <div className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-surface-card border border-surface-border text-xs text-text-sub shadow-2xs font-medium">
+                                    <div className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-surface-card border border-primary/20 text-xs text-text-sub shadow-2xs font-medium">
                                         <CheckCircle2 className="w-4 h-4 text-primary" />
                                         <span>Bạn đã xem hết toàn bộ {total} sản phẩm</span>
                                     </div>

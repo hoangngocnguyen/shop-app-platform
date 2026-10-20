@@ -5,7 +5,7 @@
   --background: #ffffff;
   --foreground: #171717;
 
-  /* Brand Tokens (Mint / Teal Brand) */
+  /* Brand Tokens */
   --color-primary-val: #0f766e;
   --color-primary-hover-val: #115e59;
   --color-primary-light-val: #ecfdf5;
@@ -15,12 +15,12 @@
   --color-accent-hover-val: #d97706;
   --color-accent-light-val: #fef3c7;
 
-  /* Surface & Border Tokens (Tông Mint Thanh Lịch & Tươi Mát) */
-  --color-surface-bg-val: #f0fdfa;
+  /* Surface & Border Tokens */
+  --color-surface-bg-val: #f8fafc;
   --color-surface-card-val: #ffffff;
-  --color-surface-border-val: #ccfbf1;
-  --color-surface-hover-val: #e6fffa;
-  --color-surface-active-val: #99f6e4;
+  --color-surface-border-val: #e2e8f0;
+  --color-surface-hover-val: #f1f5f9;
+  --color-surface-active-val: #e2e8f0;
 
   /* Text Tokens */
   --color-text-main-val: #0f172a;
@@ -40,17 +40,13 @@
 
   /* Interactive Controls */
   --color-ring-val: #0f766e;
-  --shadow-color-val: rgba(15, 118, 110, 0.12);
+  --shadow-color-val: rgba(15, 118, 110, 0.15);
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #041f1e;
-    --foreground: #e6fffa;
-    --color-surface-bg-val: #042f2e;
-    --color-surface-card-val: #0f3d39;
-    --color-surface-border-val: #134e4a;
-    --color-surface-hover-val: #115e59;
+    --background: #0a0a0a;
+    --foreground: #ededed;
   }
 }
 

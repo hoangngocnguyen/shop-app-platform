@@ -27,8 +27,8 @@ export default function CategoryTabs() {
                     onClick={() => handleSelectCategory(undefined)}
                     className={`px-4 sm:px-5 py-2 sm:py-2.5 rounded-xl text-xs sm:text-sm font-bold whitespace-nowrap transition-all duration-200 cursor-pointer ${
                         isAllActive
-                            ? "bg-[#002b49] text-white shadow-xs scale-100"
-                            : "bg-surface-card border border-surface-border text-text-sub hover:text-text-main hover:bg-surface-hover"
+                            ? "bg-primary text-primary-contrast shadow-brand-sm scale-100 font-bold"
+                            : "bg-surface-card border border-primary/20 text-text-sub hover:text-text-main hover:bg-primary-light/40"
                     }`}
                 >
                     Tất cả
@@ -41,10 +41,10 @@ export default function CategoryTabs() {
                         <button
                             key={cat.category_id}
                             onClick={() => handleSelectCategory(cat.slug)}
-                            className={`px-4 sm:px-5 py-2 sm:py-2.5 rounded-xl text-xs sm:text-sm font-semibold whitespace-nowrap transition-all duration-200 cursor-pointer ${
+                            className={`px-4 sm:px-5 py-2 sm:py-2.5 rounded-xl text-xs sm:text-sm whitespace-nowrap transition-all duration-200 cursor-pointer ${
                                 isActive
-                                    ? "bg-[#002b49] text-white shadow-xs font-bold"
-                                    : "bg-surface-card border border-surface-border text-text-sub hover:text-text-main hover:bg-surface-hover"
+                                    ? "bg-primary text-primary-contrast shadow-brand-sm font-bold scale-100"
+                                    : "bg-surface-card border border-primary/20 text-text-sub hover:text-text-main hover:bg-primary-light/40 font-semibold"
                             }`}
                         >
                             {cat.category_name}
@@ -58,7 +58,7 @@ export default function CategoryTabs() {
                         {[1, 2, 3, 4, 5].map((item) => (
                             <div
                                 key={item}
-                                className="h-9 sm:h-10 w-24 sm:w-28 rounded-xl bg-slate-200 animate-pulse shrink-0"
+                                className="h-9 sm:h-10 w-24 sm:w-28 rounded-xl bg-primary-light/50 animate-pulse shrink-0 border border-primary/10"
                             />
                         ))}
                     </>
