@@ -1,9 +1,8 @@
 "use client";
 
 import React, { useState } from "react";
-import Link from "next/link";
 import Image from "next/image";
-import { Eye, ShoppingCart, Loader2, Star } from "lucide-react";
+import { ShoppingCart, Loader2, Star } from "lucide-react";
 import { ProductResponse } from "../types";
 import { formatPrice } from "@/lib/formatPrice";
 import { ROUTES } from "@/constants/routes";
@@ -26,6 +25,12 @@ export default function ProductCard({ product }: ProductCardProps) {
     const currentPrice = product.sale_price ?? product.price;
     const hasDiscount = Boolean(product.discount_percent && product.discount_percent > 0);
 
+    // Bấm vào card chuyển ngay đến trang chi tiết sản phẩm
+    const handleCardClick = () => {
+        router.push(ROUTES.PRODUCTS.DETAIL(product.product_id));
+    };
+
+    // Bấm thêm vào giỏ hàng (chặn sự kiện click để không bị nhảy trang)
     const handleAddToCart = async (e: React.MouseEvent) => {
         e.preventDefault();
         e.stopPropagation();
@@ -52,8 +57,20 @@ export default function ProductCard({ product }: ProductCardProps) {
     };
 
     return (
-        <div className="group relative bg-surface-card rounded-2xl border border-primary/20 p-3.5 sm:p-4 shadow-xs hover:shadow-brand-md hover:-translate-y-1.5 transition-all duration-300 flex flex-col justify-between overflow-hidden">
-            
+        <div
+            onClick={handleCardClick}
+            role="link"
+            tabIndex={0}
+            onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                    if (e.target === e.currentTarget) {
+                        e.preventDefault();
+                        handleCardClick();
+                    }
+                }
+            }}
+            className="group relative bg-surface-card rounded-2xl border border-primary/20 p-3.5 sm:p-4 shadow-xs hover:shadow-brand-md hover:-translate-y-1.5 transition-all duration-300 flex flex-col justify-between overflow-hidden cursor-pointer"
+        >
             {/* BADGE GIẢM GIÁ */}
             {hasDiscount && (
                 <span className="absolute top-3 left-3 bg-amber-400 text-amber-950 font-black text-[10px] sm:text-xs px-2 py-0.5 rounded-md shadow-xs z-10">
@@ -63,10 +80,7 @@ export default function ProductCard({ product }: ProductCardProps) {
 
             <div>
                 {/* HÌNH ẢNH SẢN PHẨM */}
-                <Link
-                    href={ROUTES.PRODUCTS.DETAIL(product.product_id)}
-                    className="block relative w-full h-44 sm:h-48 mb-3 overflow-hidden rounded-xl bg-primary-light/30 flex items-center justify-center p-2 border border-primary/10"
-                >
+                <div className="relative w-full h-44 sm:h-48 mb-3 overflow-hidden rounded-xl bg-primary-light/20 flex items-center justify-center p-2 border border-primary/10">
                     <Image
                         src={product.image_src || "https://images.unsplash.com/photo-1592750475338-74b7b21085ab?w=400&auto=format&fit=crop&q=80"}
                         alt={product.product_name}
@@ -74,16 +88,15 @@ export default function ProductCard({ product }: ProductCardProps) {
                         sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 16vw"
                         className="object-contain filter drop-shadow-xs group-hover:scale-105 transition-transform duration-300 p-2"
                     />
-                </Link>
+                </div>
 
                 {/* TÊN SẢN PHẨM (Khóa chuẩn 2 dòng với dấu 3 chấm line-clamp-2) */}
-                <Link
-                    href={ROUTES.PRODUCTS.DETAIL(product.product_id)}
-                    className="block font-bold text-xs sm:text-sm text-text-main line-clamp-2 h-10 leading-5 group-hover:text-primary transition-colors mb-2 overflow-hidden"
+                <h3
+                    className="font-bold text-xs sm:text-sm text-text-main line-clamp-2 h-10 leading-5 group-hover:text-primary transition-colors mb-2 overflow-hidden"
                     title={product.product_name}
                 >
                     {product.product_name}
-                </Link>
+                </h3>
 
                 {/* GIÁ BÁN */}
                 <div className="flex items-baseline gap-2 mb-2 flex-wrap">
@@ -108,22 +121,12 @@ export default function ProductCard({ product }: ProductCardProps) {
                 </div>
             </div>
 
-            {/* CẶP NÚT HÀNH ĐỘNG */}
-            <div className="space-y-2 pt-1">
-                {/* Nút Xem chi tiết */}
-                <Link
-                    href={ROUTES.PRODUCTS.DETAIL(product.product_id)}
-                    className="w-full py-2 px-3 rounded-xl border border-primary/20 bg-surface-card hover:bg-primary-light/50 hover:border-primary text-text-main text-xs font-semibold flex items-center justify-center gap-1.5 transition-all duration-200 cursor-pointer shadow-2xs"
-                >
-                    <Eye className="w-3.5 h-3.5 text-text-sub" />
-                    <span>Xem chi tiết</span>
-                </Link>
-
-                {/* Nút Thêm vào giỏ (Dùng màu Primary của Lead) */}
+            {/* NÚT THÊM VÀO GIỎ HÀNG */}
+            <div className="pt-1">
                 <button
                     onClick={handleAddToCart}
                     disabled={isAdding || product.quantity <= 0}
-                    className="w-full py-2 px-3 rounded-xl bg-primary hover:bg-primary-hover text-primary-contrast text-xs font-semibold flex items-center justify-center gap-1.5 transition-all duration-200 shadow-sm hover:shadow-brand-sm active:scale-98 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                    className="w-full py-2.5 px-3 rounded-xl bg-primary hover:bg-primary-hover text-primary-contrast text-xs font-semibold flex items-center justify-center gap-1.5 transition-all duration-200 shadow-sm hover:shadow-brand-sm active:scale-98 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
                 >
                     {isAdding ? (
                         <>
@@ -140,7 +143,6 @@ export default function ProductCard({ product }: ProductCardProps) {
                     )}
                 </button>
             </div>
-
         </div>
     );
 }
