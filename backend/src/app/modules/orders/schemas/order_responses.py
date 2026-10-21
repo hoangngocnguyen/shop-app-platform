@@ -3,6 +3,7 @@ from decimal import Decimal
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field, HttpUrl
+from src.app.core.pagination import PaginatedResponse
 
 from src.app.modules.orders.enums.order_enums import (
     CancelledByType,
@@ -124,44 +125,8 @@ class OrderSummaryResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
-class OrderListResponse(BaseModel):
-    """Response — 200 OK cho GET /api/v1/orders."""
-
-    items: list[OrderSummaryResponse] = Field(
-        ..., description="Danh sách đơn hàng trên trang hiện tại"
-    )
-    total_items: int = Field(
-        ..., ge=0, description="Tổng số đơn hàng phù hợp với bộ lọc"
-    )
-    total_pages: int = Field(..., ge=0, description="Tổng số trang")
-    current_page: int = Field(..., ge=1, description="Trang hiện tại")
-    limit: int = Field(..., ge=1, description="Số bản ghi tối đa trên mỗi trang")
-
-    model_config = ConfigDict(
-        from_attributes=True,
-        json_schema_extra={
-            "example": {
-                "items": [
-                    {
-                        "order_id": "OD261013050123AB12CD",
-                        "status": "PENDING",
-                        "payment_method": "COD",
-                        "payment_status": "PENDING",
-                        "total_amount": "530000.00",
-                        "total_items": 2,
-                        "created_at": "2026-10-13T05:00:00Z",
-                        "cancel_reason": None,
-                        "cancelled_by_type": None,
-                        "cancelled_at": None,
-                    }
-                ],
-                "total_items": 1,
-                "total_pages": 1,
-                "current_page": 1,
-                "limit": 10,
-            }
-        },
-    )
+# Chuẩn hóa phân trang PaginatedResponse toàn dự án
+OrderListResponse = PaginatedResponse[OrderSummaryResponse]
 
 
 class OrderLogResponse(BaseModel):
