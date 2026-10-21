@@ -1,4 +1,5 @@
 export * from './types';
+export * from './schemas/auth-schema';
 export * from './api/auth';
 export { useAuthStore } from './stores/useAuthStore';
 export * from './components/LoginForm';

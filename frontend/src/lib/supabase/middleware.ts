@@ -6,9 +6,18 @@ export function createClient(request: NextRequest) {
     request,
   });
 
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
+
+  // Nếu chưa cấu hình Supabase URL hoặc Key (ví dụ dev local chưa điền env)
+  // trả về null để proxy không bị crash toàn bộ ứng dụng
+  if (!supabaseUrl || !supabaseKey) {
+    return { supabase: null, response: supabaseResponse };
+  }
+
   const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,
+    supabaseUrl,
+    supabaseKey,
     {
       cookies: {
         getAll() {
