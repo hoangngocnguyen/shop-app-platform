@@ -14,8 +14,9 @@ export async function proxy(request: NextRequest) {
     pathname.startsWith(ROUTES.AUTH.LOGIN) ||
     pathname.startsWith(ROUTES.AUTH.REGISTER);
 
-  // Các route yêu cầu đăng nhập (bắt đầu bằng /user)
-  const isProtectedRoute = pathname.startsWith('/user');
+  // Các route yêu cầu đăng nhập (bắt đầu bằng /user hoặc /admin)
+  const isProtectedRoute =
+    pathname.startsWith('/user') || pathname.startsWith('/admin');
 
   // Trường hợp chưa cấu hình Supabase (môi trường dev local chưa điền env)
   if (!supabase) {
@@ -36,7 +37,7 @@ export async function proxy(request: NextRequest) {
     user = null;
   }
 
-  // 1. Chưa đăng nhập mà cố tình truy cập trang bảo vệ (/user/...) -> Chuyển hướng về /login
+  // 1. Chưa đăng nhập mà cố tình truy cập trang bảo vệ (/user/... hoặc /admin/...) -> Chuyển hướng về /login
   if (!user && isProtectedRoute) {
     const url = request.nextUrl.clone();
     url.pathname = ROUTES.AUTH.LOGIN;
