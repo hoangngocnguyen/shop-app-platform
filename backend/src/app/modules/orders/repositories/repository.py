@@ -179,7 +179,7 @@ class OrderRepository:
         status: str | None = None,
         search: str | None = None,
         page: int = 1,
-        limit: int = 10,
+        page_size: int = 10,
     ) -> tuple[list[Order], int, int]:
         """
         Lấy danh sách đơn hàng có phân trang, hỗ trợ lọc theo trạng thái
@@ -211,18 +211,18 @@ class OrderRepository:
                 )
             )
 
-        # Tính tổng số bản ghi
-        count_stmt = select(func.count(Order.order_id)).select_from(
-            base_query.subquery()
+        # Tính tổng số bản ghi (dùng func.count() để tránh sinh Cartesian product với bảng Order)
+        count_stmt = select(func.count()).select_from(
+            base_query.order_by(None).subquery()
         )
         total_items: int = self.db.scalar(count_stmt) or 0
 
-        total_pages = math.ceil(total_items / limit) if total_items > 0 else 1
-        offset = (page - 1) * limit
+        total_pages = math.ceil(total_items / page_size) if total_items > 0 else 1
+        offset = (page - 1) * page_size
 
         # Sắp xếp theo ngày đặt mới nhất
         paged_stmt = (
-            base_query.order_by(desc(Order.order_date)).offset(offset).limit(limit)
+            base_query.order_by(desc(Order.order_date)).offset(offset).limit(page_size)
         )
         orders = list(self.db.scalars(paged_stmt).all())
 

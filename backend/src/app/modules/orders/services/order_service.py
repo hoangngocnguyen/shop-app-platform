@@ -14,6 +14,7 @@ from zoneinfo import ZoneInfo
 from pydantic import HttpUrl
 
 from src.app.core.exceptions import AppException, BadRequestException, NotFoundException
+from src.app.core.pagination import PaginatedResponse, paginate_list
 from src.app.modules.orders.enums.order_enums import (
     CANCEL_REASON_TEXT,
     CancelledByType,
@@ -223,8 +224,8 @@ class OrderService:
         order_status: OrderStatus | None = None,
         search: str | None = None,
         page: int = 1,
-        limit: int = 10,
-    ) -> OrderListResponse:
+        page_size: int = 10,
+    ) -> PaginatedResponse[OrderSummaryResponse]:
         """Lấy danh sách lịch sử đơn hàng của người dùng hiện tại (hỗ trợ phân trang và lọc)."""
         status_val = order_status.value if order_status else None
         orders, total_items, total_pages = self.repository.get_user_orders_paginated(
@@ -232,7 +233,7 @@ class OrderService:
             status=status_val,
             search=search,
             page=page,
-            limit=limit,
+            page_size=page_size,
         )
 
         summary_items: list[OrderSummaryResponse] = []
@@ -307,12 +308,11 @@ class OrderService:
                 )
             )
 
-        return OrderListResponse(
+        return paginate_list(
             items=summary_items,
-            total_items=total_items,
-            total_pages=total_pages,
-            current_page=page,
-            limit=limit,
+            total=total_items,
+            page=page,
+            page_size=page_size,
         )
 
     # ==========================================================================

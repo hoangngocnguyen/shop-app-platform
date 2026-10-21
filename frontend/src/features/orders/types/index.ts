@@ -129,13 +129,14 @@ export interface OrderSummaryResponse {
     cancelled_at: string | null;
     items: OrderItemSummaryResponse[];
 }
-export interface OrderListResponse {
+export interface PaginatedOrders {
     items: OrderSummaryResponse[];
-    total_items: number;
+    total: number;
+    page: number;
+    page_size: number;
     total_pages: number;
-    current_page: number;
-    limit: number;
 }
+export type OrderListResponse = PaginatedOrders;
 export interface OrderLogResponse { status: OrderStatus | string; note: string | null; timestamp: string }
 export interface OrderDetailResponse {
     order_id: string;
@@ -175,5 +176,6 @@ export interface OrderListParams {
     orderStatus?: OrderStatus;
     search?: string;
     page?: number;
+    page_size?: number;
     limit?: number;
 }

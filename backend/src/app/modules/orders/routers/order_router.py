@@ -16,6 +16,7 @@ from sqlalchemy.orm import Session
 
 from src.app.core.database import get_db
 from src.app.core.deps import get_current_user_id
+from src.app.core.pagination import PaginatedResponse
 from src.app.core.response import ApiResponse, success_response
 from src.app.modules.orders.catalogs import build_cancellation_reason_catalog
 from src.app.modules.orders.enums.order_enums import CustomerCancelReason, OrderStatus
@@ -31,6 +32,7 @@ from src.app.modules.orders.schemas.order_responses import (
     OrderCreateResponse,
     OrderDetailResponse,
     OrderListResponse,
+    OrderSummaryResponse,
 )
 from src.app.modules.orders.services.checkout_service import CheckoutService
 from src.app.modules.orders.services.order_service import OrderService
@@ -56,7 +58,9 @@ def get_checkout_service(db: Session = Depends(get_db)) -> CheckoutService:
     status_code=status.HTTP_200_OK,
     summary="Lấy danh sách lý do khách hàng có thể hủy đơn",
 )
-def get_customer_cancellation_reasons() -> ApiResponse[CancellationReasonCatalogResponse]:
+def get_customer_cancellation_reasons() -> (
+    ApiResponse[CancellationReasonCatalogResponse]
+):
     return success_response(
         data=build_cancellation_reason_catalog(list(CustomerCancelReason)),
         message="Lấy danh sách lý do hủy đơn thành công",
@@ -102,7 +106,7 @@ def create_order(
 
 @router.get(
     "",
-    response_model=ApiResponse[OrderListResponse],
+    response_model=ApiResponse[PaginatedResponse[OrderSummaryResponse]],
     status_code=status.HTTP_200_OK,
     summary="Lấy danh sách lịch sử đơn hàng của người dùng",
     description=(
@@ -123,24 +127,31 @@ def get_orders(
     page: int = Query(
         default=1,
         ge=1,
-        description="Trang hiện tại, tối thiểu 1",
+        description="Số trang hiện tại (bắt đầu từ 1)",
     ),
-    limit: int = Query(
+    page_size: int = Query(
         default=10,
         ge=1,
         le=100,
-        description="Số đơn hàng hiển thị trên mỗi trang",
+        description="Số lượng đơn hàng hiển thị trên mỗi trang (1 - 100)",
+    ),
+    limit: int | None = Query(
+        default=None,
+        ge=1,
+        le=100,
+        description="Bí danh limit (tương thích ngược)",
     ),
     current_user_id: UUID = Depends(get_current_user_id),
     service: OrderService = Depends(get_order_service),
-) -> ApiResponse[OrderListResponse]:
+) -> ApiResponse[PaginatedResponse[OrderSummaryResponse]]:
     """Endpoint lấy danh sách lịch sử đơn hàng."""
+    effective_page_size = limit if limit is not None else page_size
     result = service.get_orders(
         user_id=current_user_id,
         order_status=orderStatus,
         search=search,
         page=page,
-        limit=limit,
+        page_size=effective_page_size,
     )
     return success_response(
         data=result,

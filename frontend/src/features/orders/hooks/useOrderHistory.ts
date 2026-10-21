@@ -4,11 +4,11 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { orderApi } from "@/features/orders/api";
 import type { OrderListResponse, OrderStatus, OrderSummaryResponse } from "@/features/orders/types";
 
-const DEFAULT_LIMIT = 5;
+const DEFAULT_PAGE_SIZE = 5;
 
 type ActiveOrderStatus = OrderStatus | "ALL";
 
-export function useOrderHistory() {
+export function useOrderHistory(pageSize = DEFAULT_PAGE_SIZE) {
     const [activeStatus, setActiveStatus] = useState<ActiveOrderStatus>("ALL");
     const [orders, setOrders] = useState<OrderSummaryResponse[]>([]);
     const [page, setPage] = useState(1);
@@ -30,12 +30,12 @@ export function useOrderHistory() {
 
                 const response: OrderListResponse = await orderApi.getOrders({
                     page: nextPage,
-                    limit: DEFAULT_LIMIT,
+                    page_size: pageSize,
                     orderStatus: activeStatus === "ALL" ? undefined : activeStatus,
                 });
 
                 const nextOrders = response.items ?? [];
-                setTotalItems(response.total_items ?? 0);
+                setTotalItems(response.total ?? 0);
                 setTotalPages(response.total_pages ?? 0);
                 setOrders((prev) => (shouldAppend ? [...prev, ...nextOrders] : nextOrders));
                 setPage(nextPage);
@@ -47,7 +47,7 @@ export function useOrderHistory() {
                 setIsLoadingMore(false);
             }
         },
-        [activeStatus],
+        [activeStatus, pageSize],
     );
 
     useEffect(() => {
