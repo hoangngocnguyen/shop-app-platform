@@ -130,7 +130,7 @@ function CheckoutPageContent() {
                     if (result) {
                         setPreviewData(result);
                     } else if (payload.checkout_type === "BUY_NOW" && payload.buy_now_item && payload.buy_now_item.product_id > 0) {
-                        const product = await productApi.getProductById(payload.buy_now_item.product_id);
+                        const product = await productApi.getProductDetail(payload.buy_now_item.product_id);
                         setPreviewData(buildPreviewFromProduct(payload.buy_now_item.product_id, payload.buy_now_item.quantity, product));
                     } else {
                         setPreviewData(null);

@@ -58,8 +58,14 @@ export default function ProductInfo({ product }: ProductInfoProps) {
             setTimeout(() => setIsSuccess(false), 2000);
 
             if (redirectCheckout) {
-                toast.success("Đang chuyển đến giỏ hàng...");
-                router.push(ROUTES.CART);
+                const params = new URLSearchParams({
+                    checkout_type: "BUY_NOW",
+                    product_id: String(product.product_id),
+                    quantity: String(quantity),
+                });
+
+                toast.success("Đang chuyển đến thanh toán...");
+                router.push(`${ROUTES.CHECKOUT}?${params.toString()}`);
             } else {
                 toast.success(`Đã thêm ${quantity} sản phẩm vào giỏ hàng thành công!`);
             }
@@ -81,11 +87,10 @@ export default function ProductInfo({ product }: ProductInfoProps) {
                         </span>
                     )}
                     <span
-                        className={`px-2.5 py-1 rounded-lg text-xs font-semibold ${
-                            isOutOfStock
+                        className={`px-2.5 py-1 rounded-lg text-xs font-semibold ${isOutOfStock
                                 ? "bg-status-error-bg text-status-error border border-status-error/30"
                                 : "bg-status-success-bg text-status-success border border-status-success/30"
-                        }`}
+                            }`}
                     >
                         {isOutOfStock ? "Tạm hết hàng" : `Còn hàng (${product.quantity})`}
                     </span>
@@ -187,11 +192,10 @@ export default function ProductInfo({ product }: ProductInfoProps) {
                         type="button"
                         onClick={() => handleAddToCart(false)}
                         disabled={isAdding || isOutOfStock}
-                        className={`h-12 px-6 rounded-2xl font-bold text-sm border-2 transition-all flex items-center justify-center gap-2 cursor-pointer shadow-xs ${
-                            isSuccess
+                        className={`h-12 px-6 rounded-2xl font-bold text-sm border-2 transition-all flex items-center justify-center gap-2 cursor-pointer shadow-xs ${isSuccess
                                 ? "bg-status-success text-white border-status-success"
                                 : "border-primary text-primary hover:bg-primary/5 active:scale-[0.98]"
-                        } disabled:opacity-50 disabled:cursor-not-allowed`}
+                            } disabled:opacity-50 disabled:cursor-not-allowed`}
                     >
                         {isSuccess ? (
                             <>
