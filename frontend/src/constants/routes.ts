@@ -22,7 +22,6 @@ export const ROUTES = {
   CHECKOUT: '/checkout',
   CHECKOUT_TEST: '/checkout/test',
   CHECKOUT_SUCCESS: '/checkout/success',
-  PRODUCTS: '/products',
   PRODUCT_DETAIL: '/products/6',
   PAYMENT: '/payment',
   PAYMENT_RESULT: '/payment/result',
