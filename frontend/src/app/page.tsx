@@ -1,158 +1,177 @@
-'use client';
+"use client";
 
-import Link from 'next/link';
-import { useAuthStore } from '@/features/auth/stores/useAuthStore';
-import { ROUTES } from '@/constants/routes';
+import React, { useEffect, useRef } from "react";
+import Header from "@/components/Header";
+import Footer from "@/components/Footer";
+import {
+  CategoryTabs,
+  ProductFilterBar,
+  ProductCard,
+  ProductCardSkeleton,
+} from "@/features/products/components";
+import { useProductStore } from "@/features/products/stores";
+import { EmptyState, Button } from "@/components/ui";
+import { AlertCircle, ChevronDown, CheckCircle2, PackageSearch } from "lucide-react";
 
 export default function HomePage() {
-  const { user, logout, isAuthenticated } = useAuthStore();
+  const {
+    products,
+    page,
+    total,
+    pageSize,
+    totalPages,
+    isLoading,
+    isLoadingMore,
+    error,
+    fetchProducts,
+    loadMoreProducts,
+    filterParams,
+    resetFilter,
+  } = useProductStore();
 
-  const handleLogout = async () => {
-    logout();
-  };
+  const observerTarget = useRef<HTMLDivElement>(null);
+
+  // Fetch dữ liệu ban đầu
+  useEffect(() => {
+    fetchProducts();
+  }, [fetchProducts]);
+
+  // Cơ chế phân trang cuộn tự động (Infinite Scroll) khi lướt xuống cuối danh sách
+  useEffect(() => {
+    const target = observerTarget.current;
+    if (!target) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && page < totalPages && !isLoadingMore && !isLoading) {
+          loadMoreProducts();
+        }
+      },
+      { threshold: 0.1, rootMargin: "150px" }
+    );
+
+    observer.observe(target);
+    return () => {
+      observer.disconnect();
+    };
+  }, [page, totalPages, isLoadingMore, isLoading, loadMoreProducts]);
+
+  const remainingCount = Math.max(0, total - products.length);
 
   return (
-    <div className="min-h-screen bg-surface-bg text-text-main flex flex-col justify-between selection:bg-primary selection:text-primary-contrast">
-      {/* Navigation Bar */}
-      <header className="border-b border-surface-border/80 backdrop-blur-md bg-surface-card/80 sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2 font-bold text-xl tracking-tight">
-            <span className="text-primary font-extrabold">
-              Shop App Platform
-            </span>
-          </Link>
+    <div className="min-h-screen bg-surface-bg flex flex-col justify-between selection:bg-primary selection:text-primary-contrast">
+      {/* THANH ĐIỀU HƯỚNG HEADER */}
+      <Header />
 
-          <nav className="flex items-center gap-3">
-            {isAuthenticated() ? (
-              <button
-                onClick={handleLogout}
-                className="text-sm px-4 py-2 rounded-xl border border-surface-border bg-surface-card hover:bg-surface-bg text-text-sub font-medium transition shadow-brand-sm cursor-pointer"
-              >
-                Đăng xuất
-              </button>
-            ) : (
-              <>
-                <Link
-                  href={ROUTES.AUTH.LOGIN}
-                  className="text-sm text-text-sub hover:text-text-main font-medium transition px-3 py-2"
-                >
-                  Đăng nhập
-                </Link>
-                <Link
-                  href={ROUTES.AUTH.REGISTER}
-                  className="text-sm px-4 py-2 rounded-xl bg-primary hover:bg-primary-hover text-primary-contrast font-medium transition shadow-brand-sm"
-                >
-                  Đăng ký
-                </Link>
-              </>
-            )}
-          </nav>
-        </div>
-      </header>
+      {/* NỘI DUNG CHÍNH */}
+      <main className="flex-1 max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
 
-      {/* Hero Section */}
-      <main className="flex-1 flex items-center justify-center relative overflow-hidden px-6 py-20">
-        {/* Glow effect ăn theo tông primary-light */}
-        <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-primary-light rounded-full blur-[120px] pointer-events-none opacity-60" />
+        {/* 1. THANH TAB DANH MỤC */}
+        <CategoryTabs />
 
-        <div className="max-w-3xl text-center space-y-8 relative z-10">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-surface-border bg-primary-light text-primary text-xs font-semibold tracking-wide shadow-brand-sm">
-            ⚡ Nền tảng bán hàng thế hệ mới
-          </div>
+        {/* 2. THANH CÔNG CỤ LỌC & SẮP XẾP */}
+        <ProductFilterBar />
 
-          <h1 className="text-4xl sm:text-6xl font-extrabold tracking-tight text-text-main leading-tight">
-            Quản lý và phát triển cửa hàng của bạn một cách{' '}
-            <span className="text-primary">
-              thông minh
-            </span>
-          </h1>
+        {/* 3. KHU VỰC DANH SÁCH SẢN PHẨM (VỚI ĐỦ 4 TRẠNG THÁI UI) */}
+        <section id="product-grid-section" className="space-y-6">
 
-          <p className="text-lg text-text-sub max-w-2xl mx-auto leading-relaxed">
-            Giải pháp toàn diện hỗ trợ quản lý sản phẩm, đơn hàng và khách hàng tối ưu nhất cho doanh nghiệp vừa và nhỏ.
-          </p>
-
-          {isAuthenticated() ? (
-            <div className="pt-2 flex flex-col items-center gap-4">
-              <div className="text-text-sub text-sm bg-surface-card border border-surface-border shadow-brand-sm rounded-xl px-5 py-3">
-                Xin chào trở lại, <span className="font-semibold text-primary">{user?.user_id}</span>!
+          {/* A. ERROR STATE */}
+          {error && (
+            <div className="flex items-center justify-between gap-3 p-4 rounded-2xl bg-status-error-bg border border-status-error/30 text-status-error text-sm shadow-sm mb-6">
+              <div className="flex items-center gap-2.5">
+                <AlertCircle className="w-5 h-5 shrink-0" />
+                <span>{error}</span>
               </div>
-              <Link
-                href="/dashboard"
-                className="inline-flex items-center justify-center px-6 py-3.5 rounded-xl bg-primary hover:bg-primary-hover text-primary-contrast font-semibold transition shadow-brand-md gap-2"
+              <button
+                onClick={() => fetchProducts()}
+                className="px-3.5 py-1.5 rounded-xl bg-status-error text-white font-medium hover:opacity-90 transition-opacity shrink-0 cursor-pointer text-xs"
               >
-                Vào Trang Quản Lý (Dashboard) &rarr;
-              </Link>
-            </div>
-          ) : (
-            <div className="pt-2 flex flex-wrap justify-center gap-4">
-              <Link
-                href={ROUTES.AUTH.REGISTER}
-                className="px-6 py-3.5 rounded-xl bg-primary hover:bg-primary-hover text-primary-contrast font-semibold transition shadow-brand-md"
-              >
-                Bắt đầu ngay miễn phí
-              </Link>
-              <Link
-                href={ROUTES.AUTH.LOGIN}
-                className="px-6 py-3.5 rounded-xl border border-surface-border bg-surface-card hover:bg-surface-bg text-text-main font-semibold transition shadow-brand-sm"
-              >
-                Đăng nhập tài khoản
-              </Link>
+                Thử lại
+              </button>
             </div>
           )}
 
-          <div className="pt-6">
-            <p className="mb-4 text-sm font-medium uppercase tracking-[0.2em] text-text-muted">
-              Truy cập nhanh
-            </p>
-            <div className="flex flex-wrap justify-center gap-3">
-              <Link href={ROUTES.HOME} className="rounded-xl border border-surface-border bg-surface-card px-4 py-2 text-sm font-medium text-text-main transition hover:bg-surface-bg">
-                Trang chủ
-              </Link>
-              <Link href="/user/cart" className="rounded-xl border border-surface-border bg-surface-card px-4 py-2 text-sm font-medium text-text-main transition hover:bg-surface-bg">
-                Giỏ hàng thật
-              </Link>
-              <Link href={ROUTES.PRODUCT_DETAIL} className="rounded-xl border border-primary/30 bg-primary-light px-4 py-2 text-sm font-semibold text-primary transition hover:bg-primary/10">
-                Mua ngay hẳn hoi
-              </Link>
-              <Link href={ROUTES.PAYMENT} className="rounded-xl border border-surface-border bg-surface-card px-4 py-2 text-sm font-medium text-text-main transition hover:bg-surface-bg">
-                PAYMENT
-              </Link>
-              <Link href={ROUTES.PAYMENT_RESULT} className="rounded-xl border border-surface-border bg-surface-card px-4 py-2 text-sm font-medium text-text-main transition hover:bg-surface-bg">
-                Kết quả thanh toán
-              </Link>
-              <Link href={ROUTES.USER.PROFILE} className="rounded-xl border border-surface-border bg-surface-card px-4 py-2 text-sm font-medium text-text-main transition hover:bg-surface-bg">
-                Hồ sơ
-              </Link>
-              <Link href={ROUTES.USER.ADDRESS} className="rounded-xl border border-surface-border bg-surface-card px-4 py-2 text-sm font-medium text-text-main transition hover:bg-surface-bg">
-                Địa chỉ
-              </Link>
-              <Link href={ROUTES.CHECKOUT_TEST} className="rounded-xl border border-surface-border bg-surface-card px-4 py-2 text-sm font-medium text-text-main transition hover:bg-surface-bg">
-                Checkout Test
-              </Link>
-              <Link href={ROUTES.CHECKOUT} className="rounded-xl border border-surface-border bg-surface-card px-4 py-2 text-sm font-medium text-text-main transition hover:bg-surface-bg">
-                Checkout
-              </Link>
-              <Link href={ROUTES.ABOUT.FAQ} className="rounded-xl border border-surface-border bg-surface-card px-4 py-2 text-sm font-medium text-text-main transition hover:bg-surface-bg">
-                FAQ
-              </Link>
-              <Link href={ROUTES.ABOUT.SHIPPING} className="rounded-xl border border-surface-border bg-surface-card px-4 py-2 text-sm font-medium text-text-main transition hover:bg-surface-bg">
-                Vận chuyển
-              </Link>
-              <Link href={ROUTES.ABOUT.RETURN_POLICY} className="rounded-xl border border-surface-border bg-surface-card px-4 py-2 text-sm font-medium text-text-main transition hover:bg-surface-bg">
-                Chính sách đổi trả
-              </Link>
-              <Link href={ROUTES.STORES} className="rounded-xl border border-surface-border bg-surface-card px-4 py-2 text-sm font-medium text-text-main transition hover:bg-surface-bg">
-                Cửa hàng
-              </Link>
+          {/* B. LOADING STATE (SKELETON KHI CHƯA CÓ SẢN PHẨM) */}
+          {isLoading && products.length === 0 ? (
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3 sm:gap-4">
+              {Array.from({ length: 12 }).map((_, index) => (
+                <ProductCardSkeleton key={index} />
+              ))}
             </div>
-          </div>
-        </div>
+          ) : products.length === 0 ? (
+            /* C. EMPTY STATE */
+            <div className="py-12 bg-surface-card rounded-3xl border border-primary/20 shadow-xs">
+              <EmptyState
+                icon={PackageSearch}
+                title="Không tìm thấy sản phẩm nào"
+                description={
+                  filterParams.search || filterParams.category_slug || filterParams.price_option
+                    ? "Không có sản phẩm nào phù hợp với bộ lọc hiện tại. Bạn vui lòng thử lại với từ khóa khác."
+                    : "Cửa hàng hiện đang cập nhật thêm sản phẩm mới. Vui lòng quay lại sau."
+                }
+                action={
+                  filterParams.search || filterParams.category_slug || filterParams.price_option ? (
+                    <Button
+                      onClick={resetFilter}
+                      size="sm"
+                      className="shadow-brand-sm"
+                    >
+                      Xóa tất cả bộ lọc
+                    </Button>
+                  ) : undefined
+                }
+              />
+            </div>
+          ) : (
+            /* D. SUCCESS STATE & PHÂN TRANG LOAD MORE DẠNG CUỘN */
+            <>
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3 sm:gap-4">
+                {products.map((product) => (
+                  <ProductCard key={product.product_id} product={product} />
+                ))}
+              </div>
+
+              {/* KHU VỰC PHÂN TRANG DẠNG CUỘN / TẢI THÊM (LOAD MORE) */}
+              <div className="flex flex-col items-center justify-center pt-8 pb-4 gap-3">
+                {page < totalPages ? (
+                  <div className="flex flex-col items-center gap-2.5">
+                    <Button
+                      onClick={() => loadMoreProducts()}
+                      isLoading={isLoadingMore}
+                      variant="outline"
+                      size="lg"
+                      className="px-8 py-3 rounded-2xl bg-surface-card hover:bg-primary-light/50 border-primary/20 text-text-main text-xs sm:text-sm font-bold shadow-brand-sm hover:border-primary transition-all duration-200 flex items-center gap-2 cursor-pointer group"
+                    >
+                      <ChevronDown className="w-4 h-4 text-primary group-hover:translate-y-0.5 transition-transform" />
+                      <span>
+                        Xem thêm {Math.min(remainingCount, pageSize)} sản phẩm
+                      </span>
+                      <span className="text-[11px] font-normal text-text-sub">
+                        (Còn {remainingCount} sản phẩm)
+                      </span>
+                    </Button>
+                    <span className="text-xs text-text-sub font-medium">
+                      Đang hiển thị {products.length} / {total} sản phẩm
+                    </span>
+                  </div>
+                ) : (
+                  <div className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-surface-card border border-primary/20 text-xs text-text-sub shadow-2xs font-medium">
+                    <CheckCircle2 className="w-4 h-4 text-primary" />
+                    <span>Bạn đã xem hết toàn bộ {total} sản phẩm</span>
+                  </div>
+                )}
+
+                {/* Sentinel div kích hoạt tải trang dạng cuộn tự động */}
+                <div ref={observerTarget} className="h-2 w-full pointer-events-none" />
+              </div>
+            </>
+          )}
+
+        </section>
       </main>
 
-      {/* Footer */}
-      <footer className="border-t border-surface-border bg-surface-card py-6 text-center text-xs text-text-muted">
-        © {new Date().getFullYear()} Shop App Platform. Built with Next.js & Supabase.
-      </footer>
+      {/* CHÂN TRANG FOOTER */}
+      <Footer />
     </div>
   );
 }
