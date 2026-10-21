@@ -1,6 +1,7 @@
 "use client";
 
 import { Suspense, useEffect, useMemo, useRef, useState } from "react";
+import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import {
@@ -8,14 +9,13 @@ import {
     ArrowLeft,
     Banknote,
     Check,
+    ChevronDown,
     ChevronRight,
     CreditCard,
     Loader2,
     MapPin,
     PackageCheck,
     ShieldCheck,
-    ShoppingBag,
-    Sparkles,
 } from "lucide-react";
 import { toast } from "@/common/stores/useToastStore";
 import AddressFormModal from "@/features/shipping-address/components/AddressFormModal";
@@ -73,6 +73,68 @@ const parsePayloadFromSearch = (searchParams: URLSearchParams): CheckoutPreviewR
     };
 };
 
+function ProductListCard({ previewData, isFetchingPreview }: { previewData: CheckoutPreviewResponse | null; isFetchingPreview: boolean }) {
+    const [isExpanded, setIsExpanded] = useState(false);
+
+    if (isFetchingPreview) {
+        return (
+            <div className="flex items-center gap-2 rounded-2xl border border-surface-border bg-surface-bg px-3 py-3 text-sm text-text-sub">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Đang tải sản phẩm...
+            </div>
+        );
+    }
+
+    if (!previewData || previewData.items.length === 0) {
+        return (
+            <div className="rounded-2xl border border-dashed border-surface-border bg-surface-bg px-4 py-5 text-sm text-text-sub">
+                Không có sản phẩm nào trong đơn hàng.
+            </div>
+        );
+    }
+
+    const visibleItems = isExpanded ? previewData.items : previewData.items.slice(0, 3);
+
+    return (
+        <div className="space-y-3">
+            {visibleItems.map((item) => (
+                <div key={`${item.product_id}-${item.product_name}`} className="flex gap-2.5 rounded-2xl border border-surface-border bg-surface-bg p-2.5 sm:gap-3 sm:p-3">
+                    <div className="h-14 w-14 shrink-0 overflow-hidden rounded-xl bg-surface-card sm:h-16 sm:w-16">
+                        {item.product_image ? (
+                            <Image src={item.product_image} alt={item.product_name} width={64} height={64} unoptimized className="h-full w-full object-cover" />
+                        ) : (
+                            <div className="flex h-full w-full items-center justify-center text-[10px] font-semibold text-text-muted sm:text-xs">
+                                SP
+                            </div>
+                        )}
+                    </div>
+
+                    <div className="min-w-0 flex-1">
+                        <p className="line-clamp-2 text-[13px] font-semibold text-text-main sm:text-sm">{item.product_name}</p>
+                        <div className="mt-1.5 flex items-center justify-between gap-3 text-[11px] text-text-sub sm:mt-2 sm:text-xs">
+                            <span>
+                                {item.quantity} x {formatMoney(item.price)}
+                            </span>
+                            <span className="font-bold text-text-main">{formatMoney(item.total_price)}</span>
+                        </div>
+                    </div>
+                </div>
+            ))}
+
+            {previewData.items.length > 3 ? (
+                <button
+                    type="button"
+                    onClick={() => setIsExpanded((prev) => !prev)}
+                    className="mt-1 inline-flex w-full items-center justify-center gap-2 rounded-2xl border border-surface-border bg-surface-bg px-3 py-2 text-sm font-semibold text-text-sub transition hover:border-primary/40 hover:text-primary sm:py-2.5"
+                >
+                    {isExpanded ? "Thu gọn" : `Xem thêm ${previewData.items.length - 3} sản phẩm`}
+                    <ChevronDown className={`h-4 w-4 transition-transform ${isExpanded ? "rotate-180" : ""}`} />
+                </button>
+            ) : null}
+        </div>
+    );
+}
+
 export default function CheckoutPage() {
     return (
         <Suspense fallback={<div className="min-h-screen bg-surface-bg px-4 py-8 text-center text-sm text-text-sub">Đang tải thông tin checkout...</div>}>
@@ -104,7 +166,7 @@ function CheckoutPageContent() {
     } = useShippingAddressStore();
 
     const [previewData, setPreviewData] = useState<CheckoutPreviewResponse | null>(null);
-    const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("VNPAY");
+    const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>(PAYMENT_METHOD.COD);
     const [note, setNote] = useState("");
     const [isAddressPickerOpen, setIsAddressPickerOpen] = useState(false);
     const [isAddressFormOpen, setIsAddressFormOpen] = useState(false);
@@ -154,14 +216,11 @@ function CheckoutPageContent() {
         };
     }, [payload, previewCheckout]);
 
-    useEffect(() => {
-        if (!addresses.length) return;
-
-        const defaultAddress = addresses.find((address) => address.is_default) ?? addresses[0];
-        if (!selectedAddress || selectedAddress.id !== defaultAddress.id) {
-            setSelectedAddress(defaultAddress);
-        }
-    }, [addresses, selectedAddress, setSelectedAddress]);
+    const defaultAddress = useMemo(
+        () => addresses.find((address) => address.is_default) ?? addresses[0] ?? null,
+        [addresses],
+    );
+    const currentSelectedAddress = selectedAddress ?? defaultAddress;
 
     const subtotal = useMemo(() => Number(previewData?.subtotal ?? 0), [previewData]);
     const shippingFee = 0;
@@ -172,7 +231,7 @@ function CheckoutPageContent() {
             return;
         }
 
-        if (!selectedAddress) {
+        if (!currentSelectedAddress) {
             toast.error("Vui lòng chọn địa chỉ giao hàng trước khi đặt hàng.");
             return;
         }
@@ -193,7 +252,7 @@ function CheckoutPageContent() {
                     price: item.price,
                 })),
                 expected_subtotal: previewData.subtotal,
-                address_id: selectedAddress.id,
+                address_id: currentSelectedAddress.id,
                 payment_method: paymentMethod,
                 note: note.trim() || null,
             });
@@ -243,27 +302,21 @@ function CheckoutPageContent() {
     };
 
     return (
-        <main className="min-h-screen bg-surface-bg px-4 py-8 sm:px-6 lg:px-8">
+        <main className="min-h-screen bg-surface-bg px-3 pb-28 pt-5 sm:px-5 sm:pb-8 sm:pt-7 lg:px-8 lg:pb-8">
             <div className="mx-auto max-w-6xl">
-                <div className="mb-6 flex items-center justify-between gap-3">
+                <div className="mb-4 flex items-center justify-between gap-3 sm:mb-6">
                     <Link href="/user/cart" className="inline-flex items-center gap-2 text-sm font-medium text-text-sub hover:text-primary">
                         <ArrowLeft className="h-4 w-4" />
-                        Quay lại giỏ hàng
+                        <span className="hidden sm:inline">Quay lại giỏ hàng</span>
+                        <span className="sm:hidden">Quay lại</span>
                     </Link>
-                    <div className="inline-flex items-center gap-2 rounded-full border border-surface-border bg-surface-card px-3 py-1.5 text-xs font-semibold text-text-sub shadow-brand-sm">
-                        <Sparkles className="h-3.5 w-3.5 text-primary" />
-                        Preview đơn hàng
-                    </div>
                 </div>
 
-                <div className="mb-6 rounded-3xl border border-surface-border bg-surface-card p-6 shadow-brand-md">
+                <div className="mb-5 rounded-2xl border border-surface-border bg-surface-card p-4 shadow-brand-md sm:mb-6 sm:rounded-3xl sm:p-6">
                     <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
                         <div>
-                            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-text-muted">Thanh toán</p>
-                            <h1 className="mt-2 text-2xl font-black tracking-tight text-text-main sm:text-3xl">Xác nhận đơn hàng</h1>
-                        </div>
-                        <div className="rounded-2xl border border-primary/20 bg-primary-light px-3 py-2 text-sm font-semibold text-primary">
-                            {payload.checkout_type === "BUY_NOW" ? "Mua ngay" : "Từ giỏ hàng"}
+                            <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-text-muted sm:text-xs">Thanh toán</p>
+                            <h1 className="mt-2 text-xl font-black tracking-tight text-text-main sm:text-2xl lg:text-3xl">Xác nhận đơn hàng</h1>
                         </div>
                     </div>
                 </div>
@@ -275,91 +328,39 @@ function CheckoutPageContent() {
                     </div>
                 ) : null}
 
-                <div className="grid gap-6 lg:grid-cols-[minmax(0,1.5fr)_340px]">
-                    <section className="space-y-6">
-                        <div className="rounded-3xl border border-surface-border bg-surface-card p-5 shadow-brand-sm sm:p-6">
-                            <div className="mb-5 flex items-center gap-3">
-                                <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-primary-light text-primary">
-                                    <ShoppingBag className="h-5 w-5" />
-                                </div>
-                                <div>
-                                    <h2 className="text-lg font-bold text-text-main">Danh sách sản phẩm</h2>
-                                    <p className="text-xs text-text-muted">Danh sách sản phẩm đang được kiểm tra và xác nhận trước khi đặt hàng</p>
-                                </div>
-                            </div>
-
-                            {isFetchingPreview ? (
-                                <div className="flex min-h-32 items-center justify-center gap-2 text-sm text-text-sub">
-                                    <Loader2 className="h-4 w-4 animate-spin text-primary" />
-                                    Đang tải preview đơn hàng...
-                                </div>
-                            ) : previewData && previewData.items.length > 0 ? (
-                                <div className="space-y-4">
-                                    {previewData.items.map((item) => (
-                                        <div key={`${item.product_id}-${item.quantity}`} className="flex items-center gap-4 rounded-2xl border border-surface-border bg-surface-bg p-3 sm:p-4">
-                                            <div className="h-16 w-16 overflow-hidden rounded-xl border border-surface-border bg-white">
-                                                {item.product_image ? (
-                                                    <img src={item.product_image} alt={item.product_name} className="h-full w-full object-cover" />
-                                                ) : (
-                                                    <div className="flex h-full w-full items-center justify-center bg-primary-light text-xs font-bold text-primary">IMG</div>
-                                                )}
-                                            </div>
-
-                                            <div className="min-w-0 flex-1">
-                                                <p className="truncate text-sm font-bold text-text-main sm:text-base">{item.product_name}</p>
-                                                <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-text-sub">
-                                                    <span>Đơn giá: {formatMoney(item.price)}</span>
-                                                    <span className="text-text-muted">•</span>
-                                                    <span>Số lượng: {item.quantity}</span>
-                                                </div>
-                                            </div>
-
-                                            <div className="text-right">
-                                                <p className="text-sm font-semibold text-text-sub">Thành tiền</p>
-                                                <p className="mt-1 text-base font-extrabold text-text-main">{formatMoney(item.total_price)}</p>
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-                            ) : (
-                                <div className="rounded-2xl border border-dashed border-surface-border bg-surface-bg p-6 text-center text-sm text-text-sub">
-                                    Không có dữ liệu preview đơn hàng.
-                                </div>
-                            )}
-                        </div>
-
-                        <div className="rounded-3xl border border-surface-border bg-surface-card p-5 shadow-brand-sm sm:p-6">
+                <div className="grid gap-4 md:gap-5 lg:grid-cols-[minmax(0,1.5fr)_340px] lg:gap-6">
+                    <section className="space-y-4 sm:space-y-5 lg:space-y-6">
+                        <div className="rounded-2xl border border-surface-border bg-surface-card p-4 shadow-brand-sm sm:rounded-3xl sm:p-5 lg:p-6">
                             <div className="mb-4 flex items-center gap-3">
-                                <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-primary-light text-primary">
-                                    <MapPin className="h-5 w-5" />
+                                <div className="flex h-9 w-9 items-center justify-center rounded-2xl bg-primary-light text-primary sm:h-10 sm:w-10">
+                                    <MapPin className="h-4 w-4 sm:h-5 sm:w-5" />
                                 </div>
                                 <div>
-                                    <h2 className="text-lg font-bold text-text-main">Địa chỉ giao hàng</h2>
-                                    <p className="text-xs text-text-muted">Chỉ định nơi nhận hàng cho đơn mua</p>
+                                    <h2 className="text-base font-bold text-text-main sm:text-lg">Địa chỉ giao hàng</h2>
                                 </div>
                             </div>
 
-                            {selectedAddress ? (
-                                <div className="rounded-2xl border border-primary/20 bg-primary-light/30 p-4">
+                            {currentSelectedAddress ? (
+                                <div className="rounded-2xl border border-primary/20 bg-primary-light/30 p-3 sm:p-4">
                                     <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                                        <div>
-                                            <div className="mb-2 flex items-center gap-2">
-                                                <span className="text-sm font-bold text-text-main">{selectedAddress.recipient_name}</span>
-                                                {selectedAddress.is_default ? (
+                                        <div className="min-w-0 flex-1">
+                                            <div className="mb-2 flex flex-wrap items-center gap-2">
+                                                <span className="text-sm font-bold text-text-main">{currentSelectedAddress.recipient_name}</span>
+                                                {currentSelectedAddress.is_default ? (
                                                     <span className="rounded-full bg-primary px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-primary-contrast">Mặc định</span>
                                                 ) : null}
                                             </div>
-                                            <p className="text-sm font-medium text-text-sub">{selectedAddress.phone}</p>
-                                            <p className="mt-1 text-sm leading-6 text-text-main">{selectedAddress.address_line}</p>
-                                            {selectedAddress.ward_name || selectedAddress.province_name ? (
-                                                <p className="text-xs text-text-muted">{[selectedAddress.ward_name, selectedAddress.province_name].filter(Boolean).join(", ")}</p>
+                                            <p className="text-sm font-medium text-text-sub">{currentSelectedAddress.phone}</p>
+                                            <p className="mt-1 text-sm leading-6 text-text-main">{currentSelectedAddress.address_line}</p>
+                                            {currentSelectedAddress.ward_name || currentSelectedAddress.province_name ? (
+                                                <p className="text-xs text-text-muted">{[currentSelectedAddress.ward_name, currentSelectedAddress.province_name].filter(Boolean).join(", ")}</p>
                                             ) : null}
                                         </div>
 
                                         <button
                                             type="button"
                                             onClick={() => setIsAddressPickerOpen(true)}
-                                            className="rounded-xl border border-surface-border bg-surface-card px-3 py-2 text-sm font-semibold text-text-sub transition hover:border-primary/40 hover:text-primary"
+                                            className="w-full rounded-xl border border-surface-border bg-surface-card px-3 py-2 text-sm font-semibold text-text-sub transition hover:border-primary/40 hover:text-primary sm:w-auto"
                                         >
                                             Thay đổi
                                         </button>
@@ -376,21 +377,57 @@ function CheckoutPageContent() {
                             )}
                         </div>
 
-                        <div className="rounded-3xl border border-surface-border bg-surface-card p-5 shadow-brand-sm sm:p-6">
+                        <div className="rounded-2xl border border-surface-border bg-surface-card p-4 shadow-brand-sm sm:rounded-3xl sm:p-5 lg:p-6">
                             <div className="mb-4 flex items-center gap-3">
-                                <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-primary-light text-primary">
-                                    <CreditCard className="h-5 w-5" />
+                                <div className="flex h-9 w-9 items-center justify-center rounded-2xl bg-primary-light text-primary sm:h-10 sm:w-10">
+                                    <PackageCheck className="h-4 w-4 sm:h-5 sm:w-5" />
                                 </div>
                                 <div>
-                                    <h2 className="text-lg font-bold text-text-main">Phương thức thanh toán</h2>
-                                    <p className="text-xs text-text-muted">Chọn cách thanh toán cho đơn hàng</p>
+                                    <h2 className="text-base font-bold text-text-main sm:text-lg">Ghi chú đơn hàng</h2>
+                                </div>
+                            </div>
+
+                            <textarea
+                                value={note}
+                                onChange={(event) => setNote(event.target.value)}
+                                rows={3}
+                                placeholder="Ghi chú cho đơn hàng (ví dụ: giao giờ hành chính...)"
+                                className="w-full rounded-2xl border border-surface-border bg-surface-bg px-3 py-2.5 text-sm text-text-main placeholder:text-text-muted outline-none transition focus:border-primary focus:ring-4 focus:ring-primary/10 sm:px-4 sm:py-3"
+                            />
+                        </div>
+
+                        <div className="rounded-2xl border border-surface-border bg-surface-card p-4 shadow-brand-sm sm:rounded-3xl sm:p-5 lg:p-6">
+                            <div className="mb-4 flex items-center justify-between gap-3">
+                                <div className="flex items-center gap-3">
+                                    <div className="flex h-9 w-9 items-center justify-center rounded-2xl bg-primary-light text-primary sm:h-10 sm:w-10">
+                                        <PackageCheck className="h-4 w-4 sm:h-5 sm:w-5" />
+                                    </div>
+                                    <div>
+                                        <h2 className="text-base font-bold text-text-main sm:text-lg">Sản phẩm</h2>
+                                    </div>
+                                </div>
+                                <span className="rounded-full bg-surface-bg px-2 py-1 text-[11px] font-semibold text-text-sub sm:px-2.5 sm:text-xs">
+                                    {previewData?.items.length ?? 0} món
+                                </span>
+                            </div>
+
+                            <ProductListCard key={payloadKey} previewData={previewData} isFetchingPreview={isFetchingPreview} />
+                        </div>
+
+                        <div className="rounded-2xl border border-surface-border bg-surface-card p-4 shadow-brand-sm sm:rounded-3xl sm:p-5 lg:p-6">
+                            <div className="mb-4 flex items-center gap-3">
+                                <div className="flex h-9 w-9 items-center justify-center rounded-2xl bg-primary-light text-primary sm:h-10 sm:w-10">
+                                    <CreditCard className="h-4 w-4 sm:h-5 sm:w-5" />
+                                </div>
+                                <div>
+                                    <h2 className="text-base font-bold text-text-main sm:text-lg">Phương thức thanh toán</h2>
                                 </div>
                             </div>
 
                             <div className="space-y-3">
                                 {[
-                                    { value: PAYMENT_METHOD.VNPAY, label: "Thanh toán VNPAY", description: "Thanh toán qua cổng VNPAY an toàn, nhanh chóng", icon: CreditCard },
                                     { value: PAYMENT_METHOD.COD, label: "Thanh toán khi nhận hàng (COD)", description: "Thanh toán trực tiếp khi người giao hàng đến", icon: Banknote },
+                                    { value: PAYMENT_METHOD.VNPAY, label: "Thanh toán VNPAY", description: "Thanh toán qua cổng VNPAY an toàn, nhanh chóng", icon: CreditCard },
                                 ].map((option) => {
                                     const Icon = option.icon;
                                     const isSelected = paymentMethod === option.value;
@@ -400,11 +437,11 @@ function CheckoutPageContent() {
                                             key={option.value}
                                             type="button"
                                             onClick={() => setPaymentMethod(option.value as PaymentMethod)}
-                                            className={`flex w-full items-center gap-4 rounded-2xl border p-4 text-left transition ${isSelected ? "border-primary bg-primary-light/30 shadow-brand-sm" : "border-surface-border bg-surface-bg hover:border-primary/40"
+                                            className={`flex w-full items-center gap-3 rounded-2xl border p-3 text-left transition sm:gap-4 sm:p-4 ${isSelected ? "border-primary bg-primary-light/30 shadow-brand-sm" : "border-surface-border bg-surface-bg hover:border-primary/40"
                                                 }`}
                                         >
-                                            <div className={`flex h-11 w-11 items-center justify-center rounded-2xl ${isSelected ? "bg-primary text-primary-contrast" : "bg-surface-card text-text-sub"}`}>
-                                                <Icon className="h-5 w-5" />
+                                            <div className={`flex h-10 w-10 items-center justify-center rounded-2xl sm:h-11 sm:w-11 ${isSelected ? "bg-primary text-primary-contrast" : "bg-surface-card text-text-sub"}`}>
+                                                <Icon className="h-4 w-4 sm:h-5 sm:w-5" />
                                             </div>
 
                                             <div className="flex-1">
@@ -412,57 +449,37 @@ function CheckoutPageContent() {
                                                     <span className="text-sm font-bold text-text-main">{option.label}</span>
                                                     {isSelected ? <Check className="h-4 w-4 text-primary" /> : null}
                                                 </div>
-                                                <p className="mt-1 text-xs text-text-sub">{option.description}</p>
+                                                <p className="mt-1 text-[11px] text-text-sub sm:text-xs">{option.description}</p>
                                             </div>
                                         </button>
                                     );
                                 })}
                             </div>
                         </div>
-
-                        <div className="rounded-3xl border border-surface-border bg-surface-card p-5 shadow-brand-sm sm:p-6">
-                            <div className="mb-4 flex items-center gap-3">
-                                <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-primary-light text-primary">
-                                    <PackageCheck className="h-5 w-5" />
-                                </div>
-                                <div>
-                                    <h2 className="text-lg font-bold text-text-main">Ghi chú đơn hàng</h2>
-                                    <p className="text-xs text-text-muted">Tùy chọn, giúp người giao hàng thuận tiện hơn</p>
-                                </div>
-                            </div>
-
-                            <textarea
-                                value={note}
-                                onChange={(event) => setNote(event.target.value)}
-                                rows={4}
-                                placeholder="Ghi chú cho đơn hàng (ví dụ: giao giờ hành chính...)"
-                                className="w-full rounded-2xl border border-surface-border bg-surface-bg px-4 py-3 text-sm text-text-main placeholder:text-text-muted outline-none transition focus:border-primary focus:ring-4 focus:ring-primary/10"
-                            />
-                        </div>
                     </section>
 
-                    <aside className="lg:sticky lg:top-4 lg:h-fit">
-                        <div className="rounded-3xl border border-surface-border bg-surface-card p-5 shadow-brand-md sm:p-6">
-                            <div className="mb-5 flex items-center gap-3">
-                                <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-primary-light text-primary">
-                                    <ShieldCheck className="h-5 w-5" />
+                    <aside className="hidden lg:sticky lg:top-4 lg:block lg:h-fit">
+                        <div className="rounded-2xl border border-surface-border bg-surface-card p-4 shadow-brand-md sm:rounded-3xl sm:p-5 lg:p-6">
+                            <div className="mb-4 flex items-center gap-3 sm:mb-5">
+                                <div className="flex h-9 w-9 items-center justify-center rounded-2xl bg-primary-light text-primary sm:h-10 sm:w-10">
+                                    <ShieldCheck className="h-4 w-4 sm:h-5 sm:w-5" />
                                 </div>
                                 <div>
-                                    <h2 className="text-lg font-bold text-text-main">Tóm tắt đơn hàng</h2>
+                                    <h2 className="text-base font-bold text-text-main sm:text-lg">Tóm tắt đơn hàng</h2>
                                 </div>
                             </div>
 
                             <div className="space-y-3 text-sm text-text-sub">
-                                <div className="flex items-center justify-between">
+                                <div className="flex items-center justify-between gap-3">
                                     <span>Tạm tính</span>
                                     <span className="font-semibold text-text-main">{formatMoney(subtotal)}</span>
                                 </div>
-                                <div className="flex items-center justify-between">
+                                <div className="flex items-center justify-between gap-3">
                                     <span>Phí vận chuyển</span>
                                     <span className="font-medium text-text-sub">{shippingFee === 0 ? "Tính khi giao" : formatMoney(shippingFee)}</span>
                                 </div>
                                 <div className="my-3 h-px bg-surface-border" />
-                                <div className="flex items-center justify-between text-base font-black text-primary">
+                                <div className="flex items-center justify-between gap-3 text-base font-black text-primary">
                                     <span>Tổng cộng</span>
                                     <span>{formatMoney(total)}</span>
                                 </div>
@@ -470,9 +487,9 @@ function CheckoutPageContent() {
 
                             <button
                                 type="button"
-                                disabled={!selectedAddress || !previewData || previewData.items.length === 0 || isSubmittingOrder || orderLoading}
+                                disabled={!currentSelectedAddress || !previewData || previewData.items.length === 0 || isSubmittingOrder || orderLoading}
                                 onClick={submitOrder}
-                                className="mt-6 inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-primary px-4 py-3.5 text-sm font-bold text-primary-contrast shadow-brand-sm transition hover:bg-primary-hover disabled:cursor-not-allowed disabled:bg-surface-border disabled:text-text-muted"
+                                className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-primary px-4 py-3 text-sm font-bold text-primary-contrast shadow-brand-sm transition hover:bg-primary-hover disabled:cursor-not-allowed disabled:bg-surface-border disabled:text-text-muted sm:mt-6 sm:py-3.5"
                             >
                                 {isSubmittingOrder || orderLoading ? (
                                     <>
@@ -488,6 +505,31 @@ function CheckoutPageContent() {
                             </button>
                         </div>
                     </aside>
+                </div>
+            </div>
+
+            <div className="fixed inset-x-0 bottom-0 z-40 border-t border-surface-border bg-surface-card/95 px-3 py-2.5 shadow-[0_-8px_24px_rgba(0,0,0,0.08)] backdrop-blur-sm lg:hidden">
+                <div className="mx-auto flex max-w-md items-center justify-between gap-2.5">
+                    <div className="min-w-0">
+                        <p className="text-[10px] font-normal tracking-[0.08em] text-text-muted">Tổng cộng</p>
+                        <p className="text-sm font-medium text-primary">{formatMoney(total)}</p>
+                    </div>
+
+                    <button
+                        type="button"
+                        disabled={!currentSelectedAddress || !previewData || previewData.items.length === 0 || isSubmittingOrder || orderLoading}
+                        onClick={submitOrder}
+                        className="inline-flex w-30 items-center justify-center rounded-xl bg-primary px-2.5 py-2.5 text-sm font-medium text-primary-contrast shadow-brand-sm transition hover:bg-primary-hover disabled:cursor-not-allowed disabled:bg-surface-border disabled:text-text-muted"
+                    >
+                        {isSubmittingOrder || orderLoading ? (
+                            <>
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                                <span className="ml-1 text-[12px]">Đang đặt...</span>
+                            </>
+                        ) : (
+                            <span className="text-[13px]">Đặt hàng</span>
+                        )}
+                    </button>
                 </div>
             </div>
 
@@ -511,7 +553,7 @@ function CheckoutPageContent() {
                                             setSelectedAddress(address);
                                             setIsAddressPickerOpen(false);
                                         }}
-                                        className={`w-full rounded-2xl border p-4 text-left transition ${selectedAddress?.id === address.id ? "border-primary bg-primary-light/30" : "border-surface-border bg-surface-bg hover:border-primary/40"
+                                        className={`w-full rounded-2xl border p-4 text-left transition ${currentSelectedAddress?.id === address.id ? "border-primary bg-primary-light/30" : "border-surface-border bg-surface-bg hover:border-primary/40"
                                             }`}
                                     >
                                         <div className="flex items-center justify-between gap-3">
