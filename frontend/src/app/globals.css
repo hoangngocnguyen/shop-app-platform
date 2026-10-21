@@ -15,6 +15,11 @@
   --color-accent-hover-val: #d97706;
   --color-accent-light-val: #fef3c7;
 
+  /* Price Tokens (Màu đỏ hiển thị giá tiền) */
+  --color-price-val: #dc2626;
+  --color-price-hover-val: #b91c1c;
+  --color-price-light-val: #fef2f2;
+
   /* Surface & Border Tokens */
   --color-surface-bg-val: #f8fafc;
   --color-surface-card-val: #ffffff;
@@ -66,6 +71,11 @@
   --color-accent: var(--color-accent-val);
   --color-accent-hover: var(--color-accent-hover-val);
   --color-accent-light: var(--color-accent-light-val);
+
+  /* Price */
+  --color-price: var(--color-price-val);
+  --color-price-hover: var(--color-price-hover-val);
+  --color-price-light: var(--color-price-light-val);
 
   /* Surface */
   --color-surface-bg: var(--color-surface-bg-val);
