@@ -1,6 +1,17 @@
 import api from "@/lib/axios/client";
-import { AdminCancellationReasonCatalog, CancelOrderRequest, CheckoutPreviewRequest, CheckoutPreviewResponse, CreateOrderRequest, CustomerCancellationReasonCatalog, OrderActionResponse, OrderCreateResponse, OrderDetailResponse, OrderListParams, OrderListResponse } from "../types";
-
+import {
+    AdminCancellationReasonCatalog,
+    CancelOrderRequest,
+    CheckoutPreviewRequest,
+    CheckoutPreviewResponse,
+    CreateOrderRequest,
+    CustomerCancellationReasonCatalog,
+    OrderActionResponse,
+    OrderCreateResponse,
+    OrderDetailResponse,
+    OrderListParams,
+    OrderListResponse,
+} from "../types";
 
 export const orderApi = {
     getCancellationReasons: async (): Promise<CustomerCancellationReasonCatalog> => {
@@ -26,6 +37,9 @@ export const orderApi = {
     getOrderById: async (orderId: string): Promise<OrderDetailResponse> => {
         const response = await api.get<OrderDetailResponse>(`/orders/${encodeURIComponent(orderId)}`);
         return response.data;
+    },
+    getOrderDetail: async (orderId: string): Promise<OrderDetailResponse> => {
+        return orderApi.getOrderById(orderId);
     },
     completeOrder: async (orderId: string): Promise<OrderActionResponse> => {
         const response = await api.patch<OrderActionResponse>(`/orders/${encodeURIComponent(orderId)}/complete`);
