@@ -8,7 +8,14 @@ import { toast } from "@/common/stores/useToastStore";
 import { useOrderStore } from "@/features/orders/stores";
 import { orderApi } from "@/features/orders/api";
 import { paymentApi } from "@/features/payment/api";
-import { PAYMENT_METHOD, type OrderDetailResponse, type PaymentMethod } from "@/features/orders/types";
+import {
+    ORDER_STATUS,
+    ORDER_STATUS_LABELS,
+    PAYMENT_METHOD,
+    PAYMENT_STATUS,
+    type OrderDetailResponse,
+    type PaymentMethod,
+} from "@/features/orders/types";
 
 const PAYMENT_METHOD_LABELS: Record<PaymentMethod, string> = {
     [PAYMENT_METHOD.BANK_TRANSFER]: "Chuyển khoản ngân hàng",
@@ -24,9 +31,9 @@ const formatMoney = (value: number | string) => {
 const buildFallbackOrderDetail = (orderIdValue: string, createdOrderValue?: { order_id: string; payment_method: OrderDetailResponse["payment_method"]; status: OrderDetailResponse["status"]; total: number | string }): OrderDetailResponse => ({
     order_id: createdOrderValue?.order_id ?? orderIdValue,
     user_id: "",
-    payment_method: createdOrderValue?.payment_method ?? "VNPAY",
-    payment_status: "PENDING",
-    status: createdOrderValue?.status ?? "PENDING",
+    payment_method: createdOrderValue?.payment_method ?? PAYMENT_METHOD.VNPAY,
+    payment_status: PAYMENT_STATUS.PENDING,
+    status: createdOrderValue?.status ?? ORDER_STATUS.PENDING,
     address_id: null,
     shipping_recipient_name: "",
     shipping_phone: "",
@@ -97,7 +104,7 @@ function OrderSuccessContent() {
         return PAYMENT_METHOD_LABELS[detail.payment_method];
     }, [detail]);
 
-    const canPayNow = detail?.payment_method === PAYMENT_METHOD.VNPAY && (detail.payment_status === "PENDING" || !detail.payment_status);
+    const canPayNow = detail?.payment_method === PAYMENT_METHOD.VNPAY && (detail.payment_status === PAYMENT_STATUS.PENDING || !detail.payment_status);
 
     const handlePayNow = async () => {
         if (!orderId) return;
@@ -119,9 +126,9 @@ function OrderSuccessContent() {
 
     const renderState = detail ?? {
         order_id: orderId || "#ORD-UNKNOWN",
-        payment_method: "VNPAY" as const,
-        payment_status: "PENDING" as const,
-        status: "PENDING" as const,
+        payment_method: PAYMENT_METHOD.VNPAY,
+        payment_status: PAYMENT_STATUS.PENDING,
+        status: ORDER_STATUS.PENDING,
         total_amount: 0,
     };
 
@@ -166,7 +173,7 @@ function OrderSuccessContent() {
                         </div>
                         <div>
                             <p className="text-xs font-semibold uppercase tracking-wide text-text-muted">Trạng thái</p>
-                            <p className="mt-1 text-base font-bold text-text-main">{renderState.status}</p>
+                            <p className="mt-1 text-base font-bold text-text-main">{ORDER_STATUS_LABELS[renderState.status] ?? renderState.status}</p>
                         </div>
                     </div>
                 </div>
