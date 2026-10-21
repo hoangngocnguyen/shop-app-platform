@@ -8,7 +8,7 @@ import { confirm } from "@/common/stores/useConfirmStore";
 import { toast } from "@/common/stores/useToastStore";
 import { orderApi } from "@/features/orders/api";
 import { OrderHistoryCard } from "@/features/orders/components/OrderHistoryCard";
-import { OrderHistoryExpandPanel } from "@/features/orders/components/OrderHistoryExpandPanel";
+import { OrderDetailModal } from "@/features/orders/components/OrderDetailModal";
 import { OrderHistoryTabs } from "@/features/orders/components/OrderHistoryTabs";
 import { LoadMoreButton } from "@/features/orders/components/LoadMoreButton";
 import { useOrderHistory } from "@/features/orders/hooks/useOrderHistory";
@@ -188,26 +188,29 @@ export default function UserOrdersPage() {
                 ) : (
                     <div className="space-y-4">
                         {orders.map((order) => (
-                            <div key={order.order_id} className="space-y-0 overflow-hidden rounded-2xl">
-                                <OrderHistoryCard
-                                    order={order}
-                                    expanded={selectedOrderId === order.order_id}
-                                    onToggle={handleToggleOrder}
-                                    onComplete={handleCompleteOrder}
-                                    onCancel={handleCancelOrder}
-                                    isCompleting={isCompleting === order.order_id}
-                                    isCancelling={isCancelling === order.order_id}
-                                />
-                                {selectedOrderId === order.order_id && (
-                                    <OrderHistoryExpandPanel order={selectedOrder} loading={isDetailLoading} />
-                                )}
-                            </div>
+                            <OrderHistoryCard
+                                key={order.order_id}
+                                order={order}
+                                expanded={selectedOrderId === order.order_id}
+                                onToggle={handleToggleOrder}
+                                onComplete={handleCompleteOrder}
+                                onCancel={handleCancelOrder}
+                                isCompleting={isCompleting === order.order_id}
+                                isCancelling={isCancelling === order.order_id}
+                            />
                         ))}
 
                         <LoadMoreButton hasMore={hasMore} isLoading={isLoadingMore} onLoadMore={loadMore} />
                     </div>
                 )}
             </div>
+
+            <OrderDetailModal
+                isOpen={Boolean(selectedOrderId)}
+                onClose={() => setSelectedOrderId(null)}
+                order={selectedOrder}
+                loading={isDetailLoading}
+            />
         </div>
     );
 }

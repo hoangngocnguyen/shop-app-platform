@@ -8,7 +8,7 @@ export interface ModalProps {
   onClose: () => void;
   title?: string;
   children: React.ReactNode;
-  maxWidth?: 'sm' | 'md' | 'lg' | 'xl';
+  maxWidth?: 'sm' | 'md' | 'lg' | 'xl' | '2xl';
 }
 
 export function Modal({
@@ -16,7 +16,7 @@ export function Modal({
   onClose,
   title,
   children,
-  maxWidth = 'md',
+  maxWidth = 'lg',
 }: ModalProps) {
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -39,32 +39,31 @@ export function Modal({
     md: 'max-w-md',
     lg: 'max-w-lg',
     xl: 'max-w-xl',
+    '2xl': 'max-w-3xl',
   }[maxWidth];
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200"
+      className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/45 p-4 backdrop-blur-[2px] sm:p-6"
       onClick={onClose}
     >
       <div
-        className={`w-full ${maxWidthStyles} bg-surface-card rounded-2xl border border-surface-border shadow-brand-md overflow-hidden animate-in zoom-in-95 duration-200`}
+        className={`relative my-4 w-full ${maxWidthStyles} overflow-hidden rounded-[28px] border border-surface-border bg-surface-card shadow-[0_24px_80px_rgba(15,23,42,0.18)] animate-in fade-in duration-200`}
         onClick={(e) => e.stopPropagation()}
       >
         {title && (
-          <div className="flex items-center justify-between px-6 py-4 border-b border-surface-border">
-            <h3 className="text-base sm:text-lg font-bold text-text-main">
-              {title}
-            </h3>
+          <div className="flex items-center justify-between border-b border-surface-border bg-surface-bg/70 px-5 py-4 sm:px-6">
+            <h3 className="text-base font-bold tracking-tight text-text-main sm:text-lg">{title}</h3>
             <button
               type="button"
               onClick={onClose}
-              className="text-text-muted hover:text-text-main p-1.5 rounded-lg hover:bg-surface-hover transition-colors cursor-pointer"
+              className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-surface-border bg-surface-card text-text-muted transition hover:bg-surface-hover hover:text-text-main"
             >
-              <X className="w-5 h-5" />
+              <X className="h-4 w-4" />
             </button>
           </div>
         )}
-        <div className="p-6">{children}</div>
+        <div className="max-h-[80vh] overflow-y-auto p-4 sm:p-6">{children}</div>
       </div>
     </div>
   );
