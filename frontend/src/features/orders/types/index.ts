@@ -1,13 +1,25 @@
 export type CheckoutType = "BUY_NOW" | "CART";
 
-export type OrderStatus =
-    | "PENDING"
-    | "PROCESSING"
-    | "SHIPPING"
-    | "DELIVERED"
-    | "COMPLETED"
-    | "CANCELLED"
-    | "RETURNED";
+export const ORDER_STATUS = {
+    PENDING: "PENDING",
+    PROCESSING: "PROCESSING",
+    SHIPPING: "SHIPPING",
+    DELIVERED: "DELIVERED",
+    COMPLETED: "COMPLETED",
+    CANCELLED: "CANCELLED",
+    RETURNED: "RETURNED",
+} as const;
+export type OrderStatus = (typeof ORDER_STATUS)[keyof typeof ORDER_STATUS];
+
+export const ORDER_STATUS_LABELS: Record<OrderStatus, string> = {
+    [ORDER_STATUS.PENDING]: "Đang chờ xử lý",
+    [ORDER_STATUS.PROCESSING]: "Đang xử lý",
+    [ORDER_STATUS.SHIPPING]: "Đang giao hàng",
+    [ORDER_STATUS.DELIVERED]: "Đã giao hàng",
+    [ORDER_STATUS.COMPLETED]: "Hoàn thành",
+    [ORDER_STATUS.CANCELLED]: "Đã hủy",
+    [ORDER_STATUS.RETURNED]: "Đã trả hàng",
+};
 
 export const PAYMENT_METHOD = {
     BANK_TRANSFER: "BANK_TRANSFER",
@@ -15,7 +27,22 @@ export const PAYMENT_METHOD = {
     COD: "COD",
 } as const;
 export type PaymentMethod = (typeof PAYMENT_METHOD)[keyof typeof PAYMENT_METHOD];
-export type PaymentStatus = "PENDING" | "PAID" | "FAILED" | "REFUNDED";
+
+export const PAYMENT_STATUS = {
+    PENDING: "PENDING",
+    PAID: "PAID",
+    FAILED: "FAILED",
+    REFUNDED: "REFUNDED",
+} as const;
+export type PaymentStatus = (typeof PAYMENT_STATUS)[keyof typeof PAYMENT_STATUS];
+
+export const PAYMENT_STATUS_LABELS: Record<PaymentStatus, string> = {
+    [PAYMENT_STATUS.PENDING]: "Chờ thanh toán",
+    [PAYMENT_STATUS.PAID]: "Đã thanh toán",
+    [PAYMENT_STATUS.FAILED]: "Thanh toán thất bại",
+    [PAYMENT_STATUS.REFUNDED]: "Đã hoàn tiền",
+};
+
 export type CancelledByType = "CUSTOMER" | "SHOP_OWNER" | "SYSTEM" | "ADMIN";
 
 export type CustomerCancelReason =
