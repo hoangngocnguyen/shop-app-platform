@@ -3,6 +3,7 @@ import {
     ProductResponse,
     ProductDetailResponse,
     PriceOptionDTO,
+    CategoryResponse,
     PaginatedProductResponse,
     ProductQueryParams,
     AdminProductQueryParams,
@@ -17,6 +18,7 @@ export type {
     ProductResponse,
     ProductDetailResponse,
     PriceOptionDTO,
+    CategoryResponse,
     PaginatedProductResponse,
     ProductQueryParams,
     AdminProductQueryParams,
@@ -29,14 +31,38 @@ export type {
 
 export const adminProductApi = {
     /**
+     * Lấy danh sách danh mục phục vụ chọn danh mục khi tạo/sửa hoặc lọc sản phẩm.
+     * GET /categories
+     */
+    getCategories: async (): Promise<CategoryResponse[]> => {
+        try {
+            const response = await api.get<CategoryResponse[]>("/categories");
+            return response.data || [];
+        } catch {
+            return [];
+        }
+    },
+
+    /**
      * Lấy danh sách sản phẩm quản trị (Admin) có phân trang và bộ lọc tồn kho.
      * GET /admin/products
+     * Params: page, page_size, category_id, search, stock_status, sort_by
      */
     getAdminProducts: async (
         params?: AdminProductQueryParams
     ): Promise<PaginatedProductResponse> => {
+        const queryParams: Record<string, string | number> = {};
+        if (params?.page) queryParams.page = params.page;
+        if (params?.page_size) queryParams.page_size = params.page_size;
+        if (params?.category_id) queryParams.category_id = params.category_id;
+        if (params?.search && params.search.trim()) queryParams.search = params.search.trim();
+        if (params?.stock_status && params.stock_status !== "all") {
+            queryParams.stock_status = params.stock_status;
+        }
+        if (params?.sort_by) queryParams.sort_by = params.sort_by;
+
         const response = await api.get<PaginatedProductResponse>("/admin/products", {
-            params,
+            params: queryParams,
         });
         return response.data;
     },
@@ -50,19 +76,29 @@ export const adminProductApi = {
         file?: File | null
     ): Promise<ProductResponse> => {
         const formData = new FormData();
-        formData.append("product_name", payload.product_name);
+        formData.append("product_name", payload.product_name.trim());
         formData.append("category_id", String(payload.category_id));
         formData.append("price", String(payload.price));
 
-        if (payload.sale_price !== undefined && payload.sale_price !== null) {
+        if (
+            payload.sale_price !== undefined &&
+            payload.sale_price !== null &&
+            Number(payload.sale_price) > 0
+        ) {
             formData.append("sale_price", String(payload.sale_price));
         }
-        if (payload.quantity !== undefined && payload.quantity !== null) {
-            formData.append("quantity", String(payload.quantity));
+
+        formData.append("quantity", String(payload.quantity ?? 0));
+
+        if (payload.brand && payload.brand.trim()) {
+            formData.append("brand", payload.brand.trim());
         }
-        if (payload.brand) formData.append("brand", payload.brand);
-        if (payload.origin) formData.append("origin", payload.origin);
-        if (payload.description) formData.append("description", payload.description);
+        if (payload.origin && payload.origin.trim()) {
+            formData.append("origin", payload.origin.trim());
+        }
+        if (payload.description && payload.description.trim()) {
+            formData.append("description", payload.description.trim());
+        }
         if (file) {
             formData.append("file", file);
         }
@@ -85,8 +121,13 @@ export const adminProductApi = {
         file?: File | null
     ): Promise<ProductResponse> => {
         const formData = new FormData();
-        if (payload.product_name !== undefined && payload.product_name !== null) {
-            formData.append("product_name", payload.product_name);
+
+        if (
+            payload.product_name !== undefined &&
+            payload.product_name !== null &&
+            payload.product_name.trim()
+        ) {
+            formData.append("product_name", payload.product_name.trim());
         }
         if (payload.category_id !== undefined && payload.category_id !== null) {
             formData.append("category_id", String(payload.category_id));
@@ -94,20 +135,36 @@ export const adminProductApi = {
         if (payload.price !== undefined && payload.price !== null) {
             formData.append("price", String(payload.price));
         }
-        if (payload.sale_price !== undefined && payload.sale_price !== null) {
+        if (
+            payload.sale_price !== undefined &&
+            payload.sale_price !== null &&
+            Number(payload.sale_price) > 0
+        ) {
             formData.append("sale_price", String(payload.sale_price));
         }
         if (payload.quantity !== undefined && payload.quantity !== null) {
             formData.append("quantity", String(payload.quantity));
         }
-        if (payload.brand !== undefined && payload.brand !== null) {
-            formData.append("brand", payload.brand);
+        if (
+            payload.brand !== undefined &&
+            payload.brand !== null &&
+            payload.brand.trim()
+        ) {
+            formData.append("brand", payload.brand.trim());
         }
-        if (payload.origin !== undefined && payload.origin !== null) {
-            formData.append("origin", payload.origin);
+        if (
+            payload.origin !== undefined &&
+            payload.origin !== null &&
+            payload.origin.trim()
+        ) {
+            formData.append("origin", payload.origin.trim());
         }
-        if (payload.description !== undefined && payload.description !== null) {
-            formData.append("description", payload.description);
+        if (
+            payload.description !== undefined &&
+            payload.description !== null &&
+            payload.description.trim()
+        ) {
+            formData.append("description", payload.description.trim());
         }
         if (file) {
             formData.append("file", file);

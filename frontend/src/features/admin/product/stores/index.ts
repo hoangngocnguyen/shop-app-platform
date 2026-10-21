@@ -4,6 +4,7 @@ import {
     ProductResponse,
     ProductDetailResponse,
     PriceOptionDTO,
+    CategoryResponse,
     PaginatedProductResponse,
     ProductQueryParams,
     AdminProductQueryParams,
@@ -22,6 +23,7 @@ interface ProductState {
     selectedProduct: ProductDetailResponse | null;
     relatedProducts: ProductResponse[];
     priceOptions: PriceOptionDTO[];
+    categories: CategoryResponse[];
     isLoading: boolean;
     error: string | null;
 
@@ -31,10 +33,12 @@ interface ProductState {
     setSelectedProduct: (product: ProductDetailResponse | null) => void;
     setRelatedProducts: (products: ProductResponse[]) => void;
     setPriceOptions: (options: PriceOptionDTO[]) => void;
+    setCategories: (categories: CategoryResponse[]) => void;
     setIsLoading: (isLoading: boolean) => void;
     setError: (error: string | null) => void;
 
     // Async Actions - Quản trị sản phẩm (Admin Services)
+    fetchCategories: () => Promise<CategoryResponse[] | null>;
     fetchAdminProducts: (params?: AdminProductQueryParams) => Promise<PaginatedProductResponse | null>;
     createProduct: (payload: ProductCreate, file?: File | null) => Promise<ProductResponse | null>;
     updateProduct: (
@@ -64,6 +68,7 @@ const initialState = {
     selectedProduct: null,
     relatedProducts: [],
     priceOptions: [],
+    categories: [],
     isLoading: false,
     error: null,
 };
@@ -76,12 +81,24 @@ export const useProductStore = create<ProductState>((set, get) => ({
     setSelectedProduct: (selectedProduct) => set({ selectedProduct }),
     setRelatedProducts: (relatedProducts) => set({ relatedProducts }),
     setPriceOptions: (priceOptions) => set({ priceOptions }),
+    setCategories: (categories) => set({ categories }),
     setIsLoading: (isLoading) => set({ isLoading }),
     setError: (error) => set({ error }),
 
     // =========================================================================
     // 1. ADMIN SERVICES
     // =========================================================================
+
+    // Lấy danh sách danh mục
+    fetchCategories: async () => {
+        try {
+            const categories = await adminProductApi.getCategories();
+            set({ categories });
+            return categories;
+        } catch {
+            return null;
+        }
+    },
 
     // Lấy danh sách sản phẩm quản trị (Admin) có phân trang và bộ lọc tồn kho
     fetchAdminProducts: async (params?: AdminProductQueryParams) => {
