@@ -7,6 +7,7 @@ export const ROUTES = {
   USER: {
     PROFILE: '/user/profile',
     ADDRESS: '/user/shipping-address',
+    ORDERS: '/user/orders',
   },
   ABOUT: {
     FAQ: '/about/faq',
