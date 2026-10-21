@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useState, useMemo } from "react";
+import { useRouter } from "next/navigation";
 import { Loader2, AlertCircle } from "lucide-react";
 import { useCartStore } from "@/features/cart/stores";
 import { CartItemResponse } from "@/features/cart/types";
@@ -15,8 +16,10 @@ import {
 import { confirm } from "@/common/stores/useConfirmStore";
 import { toast } from "@/common/stores/useToastStore";
 import { parseErrorMessage } from "@/lib/axios/parseError";
+import { ROUTES } from "@/constants/routes";
 
 export default function CartPage() {
+    const router = useRouter();
     const {
         cart,
         isLoading,
@@ -119,6 +122,20 @@ export default function CartPage() {
             .reduce((acc, cur) => acc + cur.subtotal, 0);
     }, [cart, selectedItemIds]);
 
+    const handleCheckout = () => {
+        if (selectedItemIds.length === 0) {
+            toast.warning("Vui lòng chọn ít nhất một sản phẩm để thanh toán.");
+            return;
+        }
+
+        const params = new URLSearchParams({
+            checkout_type: "CART",
+            cart_item_ids: selectedItemIds.join(","),
+        });
+
+        router.push(`${ROUTES.CHECKOUT}?${params.toString()}`);
+    };
+
     if (isLoading && !cart) {
         return (
             <div className="min-h-screen flex items-center justify-center bg-surface-bg">
@@ -184,6 +201,7 @@ export default function CartPage() {
             <CartBottomBar
                 totalPrice={selectedTotalPrice}
                 selectedCount={selectedItemIds.length}
+                onCheckout={handleCheckout}
             />
 
             {/* Modal cập nhật số lượng */}
