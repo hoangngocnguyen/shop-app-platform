@@ -3,7 +3,7 @@
 import { Suspense, useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { CheckCircle2, CreditCard, Loader2, ShoppingBag } from "lucide-react";
+import { CheckCircle2, ClipboardList, CreditCard, Loader2, ShoppingBag } from "lucide-react";
 import { toast } from "@/common/stores/useToastStore";
 import { useOrderStore } from "@/features/orders/stores";
 import { orderApi } from "@/features/orders/api";
@@ -199,6 +199,14 @@ function OrderSuccessContent() {
                             )}
                         </button>
                     ) : null}
+
+                    <Link
+                        href="/user/orders"
+                        className="inline-flex w-full items-center justify-center gap-2 rounded-2xl border border-surface-border bg-surface-bg px-4 py-3.5 text-sm font-bold text-text-main transition hover:border-primary/40 hover:text-primary"
+                    >
+                        <ClipboardList className="h-4 w-4" />
+                        Xem lịch sử đơn hàng
+                    </Link>
 
                     <Link
                         href="/"
