@@ -1,8 +1,9 @@
-from datetime import datetime
+from datetime import UTC, datetime
 from decimal import Decimal
+
 from sqlalchemy.orm import Session
 
-from scripts.seed_users import CUSTOMER_USER_ID, ADMIN_USER_ID
+from scripts.seed_users import ADMIN_USER_ID, CUSTOMER_USER_ID
 from src.app.modules.orders.model import Order, OrderDetail, OrderLog
 
 
@@ -12,31 +13,43 @@ def seed_orders(db: Session) -> None:
         {
             "order_id": "ORD202609230001",
             "user_id": CUSTOMER_USER_ID,
-            "order_date": datetime.utcnow(),
+            "address_id": 1,
+            "order_date": datetime.now(UTC),
             "status": "COMPLETED",
             "total": Decimal("24990000.00"),
-            "shipping_address": "123 Nguyễn Huệ, Phường Bến Nghé, Quận 1, TP. Hồ Chí Minh",
-            "receiver_name": "Nguyễn Văn Khách Hàng",
+            "shipping_recipient_name": "Nguyễn Văn Khách Hàng",
             "shipping_phone": "0987654321",
+            "shipping_province_code": "56",
+            "shipping_province_name": "Hồ Chí Minh",
+            "shipping_ward_code": "22333",
+            "shipping_ward_name": "Phường Bến Nghé",
+            "shipping_address_line": "123 Nguyễn Huệ, Phường Bến Nghé, Quận 1, TP. Hồ Chí Minh",
             "payment_method": "VNPAY",
             "payment_status": "PAID",
-            "payment_date": datetime.utcnow(),
-            "delivery_date": datetime.utcnow(),
+            "payment_date": datetime.now(UTC),
+            "estimated_delivery_date": datetime.now(UTC),
+            "delivered_at": datetime.now(UTC),
             "return_period_day": 7,
         },
         {
             "order_id": "ORD202609230002",
             "user_id": CUSTOMER_USER_ID,
-            "order_date": datetime.utcnow(),
+            "address_id": 2,
+            "order_date": datetime.now(UTC),
             "status": "PENDING",
             "total": Decimal("15500000.00"),
-            "shipping_address": "Tầng 5, Tòa nhà Landmark 81, Bình Thạnh, TP. Hồ Chí Minh",
-            "receiver_name": "Nguyễn Văn Khách Hàng",
+            "shipping_recipient_name": "Nguyễn Văn Khách Hàng",
             "shipping_phone": "0987654321",
+            "shipping_province_code": "56",
+            "shipping_province_name": "Hồ Chí Minh",
+            "shipping_ward_code": "22333",
+            "shipping_ward_name": "Phường Bến Nghé",
+            "shipping_address_line": "Tầng 5, Tòa nhà Landmark 81, Phường Bến Nghé, Quận 1, TP. Hồ Chí Minh",
             "payment_method": "COD",
             "payment_status": "PENDING",
             "payment_date": None,
-            "delivery_date": None,
+            "estimated_delivery_date": None,
+            "delivered_at": None,
             "return_period_day": 7,
         },
     ]
@@ -73,7 +86,7 @@ def seed_orders(db: Session) -> None:
             "status": "PENDING",
             "description": "Don hang duoc tao boi khach hang",
             "user_id": CUSTOMER_USER_ID,
-            "log_date": datetime.utcnow(),
+            "log_date": datetime.now(UTC),
         },
         {
             "id": 2,
@@ -81,7 +94,7 @@ def seed_orders(db: Session) -> None:
             "status": "PAID",
             "description": "Thanh toan truc tuyen VNPAY thanh cong",
             "user_id": CUSTOMER_USER_ID,
-            "log_date": datetime.utcnow(),
+            "log_date": datetime.now(UTC),
         },
         {
             "id": 3,
@@ -89,7 +102,7 @@ def seed_orders(db: Session) -> None:
             "status": "COMPLETED",
             "description": "Giao hang thanh cong va hoan tat don hang",
             "user_id": ADMIN_USER_ID,
-            "log_date": datetime.utcnow(),
+            "log_date": datetime.now(UTC),
         },
         {
             "id": 4,
@@ -97,7 +110,7 @@ def seed_orders(db: Session) -> None:
             "status": "PENDING",
             "description": "Don hang moi dang cho xac nhan",
             "user_id": CUSTOMER_USER_ID,
-            "log_date": datetime.utcnow(),
+            "log_date": datetime.now(UTC),
         },
     ]
 

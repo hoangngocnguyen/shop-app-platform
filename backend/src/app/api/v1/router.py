@@ -6,6 +6,11 @@ from src.app.modules.categories.admin_router import admin_category_router
 from src.app.modules.categories.router import router as categories_router
 from src.app.modules.locations.router import router as locations_router
 from src.app.modules.media import media_router
+from src.app.modules.orders.routers.admin_order_router import admin_order_router
+from src.app.modules.orders.routers.checkout_router import router as checkout_router
+from src.app.modules.orders.routers.order_router import router as order_router
+from src.app.modules.payments.router import router as payments_router
+from src.app.modules.payments.vnpay.router import router as vnpay_router
 from src.app.modules.products.admin_router import admin_product_router
 from src.app.modules.products.router import router as products_router
 from src.app.modules.shipping_addresses.router import (
@@ -27,3 +32,8 @@ api_v1_router.include_router(locations_router)
 api_v1_router.include_router(users_router)
 api_v1_router.include_router(shipping_addresses_router)
 api_v1_router.include_router(cart_router)
+api_v1_router.include_router(checkout_router)
+api_v1_router.include_router(order_router)
+api_v1_router.include_router(admin_order_router)
+api_v1_router.include_router(payments_router)
+api_v1_router.include_router(vnpay_router)
