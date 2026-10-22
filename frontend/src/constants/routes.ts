@@ -19,4 +19,11 @@ export const ROUTES = {
   },
   CART: '/user/cart',
   STORES: '/stores',
+  ADMIN: {
+    DASHBOARD: '/admin',
+    PRODUCTS: '/admin/product',
+    CATEGORIES: '/admin/category',
+    ORDERS: '/admin/orders',
+    USERS: '/admin/users',
+  },
 } as const;
