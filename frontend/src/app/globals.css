@@ -119,3 +119,14 @@
     font-feature-settings: "cv02", "cv03", "cv04", "cv11";
   }
 }
+/* 4. UTILITIES */
+@layer utilities {
+  .line-clamp-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    word-break: break-word;
+  }
+}
