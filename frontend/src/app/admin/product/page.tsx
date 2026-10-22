@@ -6,6 +6,7 @@ import {
   Plus,
   CheckCircle2,
   Trash2,
+  Package,
 } from "lucide-react";
 import { useProductStore } from "@/features/admin/product/stores";
 import {
@@ -196,36 +197,37 @@ export default function ProductManagementPage() {
     }
   };
 
-  const totalCount = adminProducts?.total || 0;
-
   return (
-    <div className="min-h-screen bg-surface-bg text-text-main pb-24">
-      {/* Centered layout with generous left/right margins matching category page */}
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 space-y-5">
-        {/* Top Header matching Example layout */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div>
-            <h1 className="text-xl sm:text-2xl font-bold text-text-main tracking-tight">
-              Quản lý sản phẩm
-            </h1>
-            <p className="text-xs sm:text-sm text-text-sub mt-1">
-              {totalCount} sản phẩm. Quản lý danh mục hàng hóa, giá niêm yết và kiểm soát tồn kho theo thời gian thực.
-            </p>
+    <div className="min-h-screen bg-gradient-to-b from-[var(--color-surface-bg,#f8fafc)] via-white to-[var(--color-surface-bg,#f8fafc)] text-text-main antialiased pb-24">
+      <main className="max-w-[1240px] mx-auto px-4 pt-2 pb-8 md:pt-3 md:pb-10 space-y-6">
+        {/* Action Header Bar */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white/90 backdrop-blur-md p-4 sm:p-5 rounded-2xl border border-[var(--color-surface-border,#e2e8f0)] shadow-md">
+          <div className="group/iconbox flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-emerald-50 text-[var(--color-primary,#0f766e)] flex items-center justify-center shadow-inner transition-all duration-300 group-hover/iconbox:-translate-y-1 group-hover/iconbox:scale-105 group-hover/iconbox:bg-primary group-hover/iconbox:text-white group-hover/iconbox:shadow-md">
+              <Package className="w-5 h-5 transition-transform duration-300 group-hover/iconbox:rotate-6" />
+            </div>
+            <div>
+              <h2 className="font-extrabold text-base text-[var(--color-text-main,#0f172a)] transition-colors group-hover/iconbox:text-primary">
+                Danh sách sản phẩm
+              </h2>
+              <p className="text-xs text-[var(--color-text-muted,#94a3b8)]">
+                Tìm kiếm, cập nhật thông tin và quản lý tồn kho
+              </p>
+            </div>
           </div>
 
-          {/* Quick Header Actions: Refresh & Add Product */}
-          <div className="flex items-center gap-2.5 self-start sm:self-center shrink-0">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5">
             <button
               type="button"
               onClick={() => loadProducts()}
               disabled={isLoading}
-              className="p-2 sm:px-3 sm:py-2 text-xs font-semibold bg-surface-card border border-surface-border rounded-xl text-text-sub hover:text-primary hover:border-primary/40 hover:bg-surface-hover shadow-2xs transition-all cursor-pointer disabled:opacity-50 flex items-center gap-1.5"
+              className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-surface-border bg-surface-card px-4 py-2.5 text-sm font-semibold text-text-sub shadow-xs transition-all hover:border-primary/40 hover:bg-surface-hover hover:text-primary disabled:opacity-50 cursor-pointer"
               title="Làm mới danh sách"
             >
               <RefreshCw
-                className={`w-3.5 h-3.5 ${isLoading ? "animate-spin text-primary" : ""}`}
+                className={`w-4 h-4 ${isLoading ? "animate-spin text-primary" : ""}`}
               />
-              <span className="hidden sm:inline">Làm mới</span>
+              <span>Làm mới</span>
             </button>
 
             <button
@@ -234,10 +236,10 @@ export default function ProductManagementPage() {
                 setProductToEdit(null);
                 setIsModalOpen(true);
               }}
-              className="flex items-center gap-1.5 px-4 py-2 text-xs sm:text-sm font-semibold bg-primary text-primary-contrast rounded-xl hover:bg-primary-hover shadow-brand-sm hover:shadow-brand-md transition-all cursor-pointer"
+              className="group/btn relative inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-5 py-2.5 text-sm font-bold text-primary-contrast shadow-lg transition-all duration-300 hover:-translate-y-0.5 hover:bg-primary-hover hover:shadow-xl active:translate-y-0 cursor-pointer"
             >
-              <Plus className="w-4 h-4" />
-              <span>Thêm sản phẩm</span>
+              <Plus className="size-4 transition-transform duration-300 group-hover/btn:scale-125 group-hover/btn:rotate-90" />
+              <span>Thêm sản phẩm mới</span>
             </button>
           </div>
         </div>
@@ -354,7 +356,7 @@ export default function ProductManagementPage() {
                     onPageSizeChange={handlePageSizeChange}
                     isLoading={isLoading}
                   />
-                </div>
+                  </div>
               )}
             </div>
           )}
@@ -440,7 +442,7 @@ export default function ProductManagementPage() {
           }
           product={isBulkDelete ? null : productToDelete}
         />
-      </div>
+      </main>
     </div>
   );
 }
