@@ -26,4 +26,11 @@ export const ROUTES = {
   PAYMENT: '/payment',
   PAYMENT_RESULT: '/payment/result',
   STORES: '/stores',
+  ADMIN: {
+    DASHBOARD: '/admin',
+    PRODUCTS: '/admin/product',
+    CATEGORIES: '/admin/category',
+    ORDERS: '/admin/orders',
+    USERS: '/admin/users',
+  },
 } as const;
