@@ -7,6 +7,7 @@ export const ROUTES = {
   USER: {
     PROFILE: '/user/profile',
     ADDRESS: '/user/shipping-address',
+    ORDERS: '/user/orders',
   },
   ABOUT: {
     FAQ: '/about/faq',
@@ -18,6 +19,12 @@ export const ROUTES = {
     DETAIL: (id: number | string) => `/products/${id}`,
   },
   CART: '/user/cart',
+  CHECKOUT: '/checkout',
+  CHECKOUT_TEST: '/checkout/test',
+  CHECKOUT_SUCCESS: '/checkout/success',
+  PRODUCT_DETAIL: '/products/6',
+  PAYMENT: '/payment',
+  PAYMENT_RESULT: '/payment/result',
   STORES: '/stores',
   ADMIN: {
     DASHBOARD: '/admin',
