@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
-import { useForm } from "react-hook-form";
+import React, { useState } from "react";
+import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
   X,
@@ -33,73 +33,53 @@ interface ProductModalProps {
 
 export const ProductModal: React.FC<ProductModalProps> = ({
   isOpen,
+  ...props
+}) => {
+  if (!isOpen) return null;
+
+  const key = props.productToEdit
+    ? `edit-${props.productToEdit.product_id}`
+    : "create";
+
+  return <ProductModalForm key={key} {...props} />;
+};
+
+type ProductModalFormProps = Omit<ProductModalProps, "isOpen">;
+
+const ProductModalForm: React.FC<ProductModalFormProps> = ({
   onClose,
   onSubmit,
   productToEdit,
   categories,
 }) => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [imagePreview, setImagePreview] = useState<string>("");
+  const [imagePreview, setImagePreview] = useState<string>(
+    productToEdit?.image_src ?? ""
+  );
   const [activeTab, setActiveTab] = useState<"info" | "media">("info");
 
   const {
     register,
     handleSubmit,
-    reset,
-    watch,
+    control,
     formState: { errors, isSubmitting },
   } = useForm({
     resolver: zodResolver(productSchema),
     defaultValues: {
-      product_name: "",
-      category_id: categories[0]?.category_id || 1,
-      price: 0,
-      sale_price: null,
-      quantity: 1,
-      brand: "",
-      origin: "",
-      description: "",
+      product_name: productToEdit?.product_name ?? "",
+      category_id:
+        productToEdit?.category_id || categories[0]?.category_id || 1,
+      price: productToEdit?.price ?? 0,
+      sale_price: productToEdit?.sale_price ?? null,
+      quantity: productToEdit?.quantity ?? 1,
+      brand: productToEdit?.brand ?? "",
+      origin: productToEdit?.origin ?? "",
+      description: productToEdit?.description ?? "",
     },
   });
 
-  const watchedPrice = watch("price");
-  const watchedSalePrice = watch("sale_price");
-
-  // Reset form when modal opens or productToEdit changes
-  useEffect(() => {
-    if (!isOpen) {
-      setSelectedFile(null);
-      setImagePreview("");
-      return;
-    }
-
-    if (productToEdit) {
-      reset({
-        product_name: productToEdit.product_name,
-        category_id: productToEdit.category_id || categories[0]?.category_id || 1,
-        price: productToEdit.price,
-        sale_price: productToEdit.sale_price ?? null,
-        quantity: productToEdit.quantity,
-        brand: productToEdit.brand ?? "",
-        origin: productToEdit.origin ?? "",
-        description: productToEdit.description ?? "",
-      });
-      setImagePreview(productToEdit.image_src ?? "");
-    } else {
-      reset({
-        product_name: "",
-        category_id: categories[0]?.category_id || 1,
-        price: 0,
-        sale_price: null,
-        quantity: 1,
-        brand: "",
-        origin: "",
-        description: "",
-      });
-      setImagePreview("");
-    }
-    setSelectedFile(null);
-  }, [productToEdit, reset, isOpen, categories]);
+  const watchedPrice = useWatch({ control, name: "price" });
+  const watchedSalePrice = useWatch({ control, name: "sale_price" });
 
   // File upload handler
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -119,8 +99,6 @@ export const ProductModal: React.FC<ProductModalProps> = ({
   const onFormSubmit = async (data: unknown) => {
     await onSubmit(data as ProductCreate | ProductUpdate, selectedFile);
   };
-
-  if (!isOpen) return null;
 
   // Tính discount preview
   const numPrice = Number(watchedPrice) || 0;
