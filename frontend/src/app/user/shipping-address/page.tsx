@@ -2,25 +2,16 @@
 
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
-import { 
-  MapPin, 
-  Plus, 
-  Pencil, 
-  Trash2, 
-  Home, 
-  Check, 
-  Loader2, 
-  AlertCircle
-} from "lucide-react";
+import { MapPin, Plus, Pencil, Trash2, Home, Check, Loader2, AlertCircle } from "lucide-react";
 import { useShippingAddressStore } from "@/features/shipping-address/stores";
 import { ShippingAddressCreate, ShippingAddressResponse, ShippingAddressUpdate } from "@/features/shipping-address/types";
 import AddressFormModal from "@/features/shipping-address/components/AddressFormModal";
 import { toast } from "@/common/stores/useToastStore";
 import { confirm } from "@/common/stores/useConfirmStore";
 import { parseErrorMessage } from "@/lib/axios/parseError";
+import { Skeleton, EmptyState, Button } from "@/components/ui";
 
 export default function ShippingAddressPage() {
-    // GIỮ NGUYÊN 100% STORE HOOKS & STATES
     const {
         addresses,
         isLoading,
@@ -40,7 +31,6 @@ export default function ShippingAddressPage() {
         fetchUserAddresses();
     }, [fetchUserAddresses]);
 
-    // GIỮ NGUYÊN 100% HÀM XỬ LÝ EVENT
     const handleOpenCreateModal = () => {
         setEditingAddress(null);
         setIsModalOpen(true);
@@ -131,7 +121,7 @@ export default function ShippingAddressPage() {
                     </Link>
                 </div>
 
-                {/* DANH SÁCH ĐỊA CHỈ */}
+                {/* DANH SÁCH ĐỊA CHỈ CARD */}
                 <div className="group relative bg-surface-card rounded-3xl border border-surface-border shadow-brand-md p-6 sm:p-8 space-y-6 transition-all duration-300 hover:shadow-brand-md hover:border-primary/40">
                     <div className="relative flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 border-b border-surface-border">
                         <div>
@@ -149,27 +139,57 @@ export default function ShippingAddressPage() {
                         </button>
                     </div>
 
+                    {/* Trạng thái Lỗi kèm nút Thử lại */}
                     {error && (
-                        <div className="flex items-center gap-3 p-4 rounded-2xl bg-status-error-bg border border-status-error/30 text-status-error text-sm shadow-sm animate-shake">
-                            <AlertCircle className="w-5 h-5 shrink-0" />
-                            <span>{error}</span>
+                        <div className="flex items-center justify-between gap-3 p-4 rounded-2xl bg-status-error-bg border border-status-error/30 text-status-error text-sm shadow-sm">
+                            <div className="flex items-center gap-2">
+                                <AlertCircle className="w-5 h-5 shrink-0" />
+                                <span>{error}</span>
+                            </div>
+                            <button
+                                onClick={() => fetchUserAddresses()}
+                                className="px-3.5 py-1.5 rounded-xl bg-status-error text-white font-medium hover:opacity-90 transition-opacity shrink-0 cursor-pointer text-xs"
+                            >
+                                Thử lại
+                            </button>
                         </div>
                     )}
 
+                    {/* Trạng thái Loading với Skeleton */}
                     {isLoading && addresses.length === 0 ? (
-                        <div className="flex flex-col items-center justify-center py-12 text-text-muted">
-                            <Loader2 className="w-8 h-8 animate-spin text-primary mb-2" />
-                            <p className="text-sm font-medium">Đang tải danh sách địa chỉ...</p>
+                        <div className="grid grid-cols-1 gap-4">
+                            {[1, 2, 3].map((item) => (
+                                <div
+                                    key={item}
+                                    className="p-4 sm:p-5 rounded-2xl border border-surface-border/80 bg-surface-bg space-y-3"
+                                >
+                                    <div className="flex items-center gap-3">
+                                        <Skeleton className="h-5 w-36" />
+                                        <Skeleton className="h-4 w-28" />
+                                    </div>
+                                    <Skeleton className="h-4 w-3/4" />
+                                    <Skeleton className="h-3 w-1/2" />
+                                </div>
+                            ))}
                         </div>
                     ) : addresses.length === 0 ? (
-                        <div className="text-center py-12 space-y-3">
-                            <MapPin className="w-12 h-12 text-primary/60 mx-auto animate-bounce" />
-                            <p className="text-text-sub font-bold text-base">Chưa có địa chỉ giao hàng nào</p>
-                            <p className="text-xs text-text-muted max-w-sm mx-auto leading-relaxed">
-                                Hãy thêm địa chỉ giao hàng để quá trình mua sắm và thanh toán diễn ra nhanh chóng hơn.
-                            </p>
-                        </div>
+                        /* Trạng thái Rỗng với EmptyState */
+                        <EmptyState
+                            icon={MapPin}
+                            title="Chưa có địa chỉ giao hàng nào"
+                            description="Hãy thêm địa chỉ giao hàng để quá trình mua sắm và thanh toán diễn ra nhanh chóng hơn."
+                            action={
+                                <Button
+                                    onClick={handleOpenCreateModal}
+                                    size="sm"
+                                    className="shadow-brand-sm"
+                                >
+                                    Thêm địa chỉ ngay
+                                </Button>
+                            }
+                        />
                     ) : (
+                        /* Danh sách địa chỉ thành công */
                         <div className="grid grid-cols-1 gap-4">
                             {addresses.map((item) => (
                                 <div

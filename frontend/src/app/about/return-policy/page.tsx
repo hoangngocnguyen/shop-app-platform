@@ -1,5 +1,4 @@
-"use client";
-
+// Trang Chính sách đổi trả tĩnh: Render trên Server (RSC) để tối ưu SEO và giảm kích thước bundle
 import React from "react";
 import Link from "next/link";
 import { ROUTES } from "@/constants/routes";
