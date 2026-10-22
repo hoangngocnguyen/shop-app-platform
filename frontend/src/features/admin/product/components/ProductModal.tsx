@@ -497,9 +497,6 @@ export const ProductModal: React.FC<ProductModalProps> = ({
               <FileText className="w-3.5 h-3.5 text-text-sub" />
               <span>Mô tả sản phẩm</span>
             </div>
-            <p className="text-xs text-text-muted">
-              Hỗ trợ Markdown: tiêu đề, in đậm, danh sách, liên kết và bảng.
-            </p>
             <textarea
               rows={8}
               {...register("description")}
