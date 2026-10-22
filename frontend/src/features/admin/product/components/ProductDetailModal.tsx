@@ -12,6 +12,8 @@ import {
 } from "lucide-react";
 import { CategoryResponse, ProductResponse } from "../types";
 import { formatPrice } from "../utils/formatPrice";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 
 interface ProductDetailModalProps {
   isOpen: boolean;
@@ -211,9 +213,13 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
               <h4 className="text-xs font-bold text-text-sub uppercase tracking-wider">
                 Mô tả chi tiết
               </h4>
-              <p className="text-xs sm:text-sm text-text-sub leading-relaxed whitespace-pre-line bg-surface-bg/40 p-4 rounded-xl border border-surface-border/60">
-                {product.description}
-              </p>
+              <div className="overflow-x-auto bg-surface-bg/40 p-4 rounded-xl border border-surface-border/60">
+                <div className="space-y-3 break-words text-xs sm:text-sm leading-relaxed text-text-sub [&_a]:text-primary [&_a]:underline [&_blockquote]:border-l-2 [&_blockquote]:border-primary/40 [&_blockquote]:pl-3 [&_blockquote]:italic [&_code]:rounded [&_code]:bg-surface-bg [&_code]:px-1 [&_code]:py-0.5 [&_h1]:text-lg [&_h1]:font-bold [&_h2]:text-base [&_h2]:font-bold [&_h3]:text-sm [&_h3]:font-bold [&_li]:ml-5 [&_ol]:list-decimal [&_pre]:overflow-x-auto [&_pre]:rounded-lg [&_pre]:bg-surface-bg [&_pre]:p-3 [&_table]:w-full [&_table]:border-collapse [&_td]:border [&_td]:border-surface-border [&_td]:px-2 [&_td]:py-1 [&_th]:border [&_th]:border-surface-border [&_th]:bg-surface-bg [&_th]:px-2 [&_th]:py-1 [&_th]:text-left [&_ul]:list-disc">
+                  <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                    {product.description}
+                  </ReactMarkdown>
+                </div>
+              </div>
             </div>
           )}
         </div>

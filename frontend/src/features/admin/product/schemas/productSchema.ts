@@ -23,12 +23,6 @@ export const productSchema = z
       .min(0, "Số lượng không được âm"),
     brand: z.string().max(100, "Tên thương hiệu tối đa 100 ký tự").nullable().optional(),
     origin: z.string().max(100, "Xuất xứ tối đa 100 ký tự").nullable().optional(),
-    image_src: z
-      .string()
-      .url("Đường dẫn ảnh không hợp lệ")
-      .nullable()
-      .optional()
-      .or(z.literal("")),
     description: z
       .string()
       .max(3000, "Mô tả tối đa 3.000 ký tự")
@@ -56,4 +50,3 @@ export const productSchema = z
 export type ProductFormInput = z.input<typeof productSchema>;
 export type ProductFormOutput = z.output<typeof productSchema>;
 export type ProductFormValues = ProductFormOutput;
-

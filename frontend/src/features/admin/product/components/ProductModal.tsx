@@ -47,7 +47,6 @@ export const ProductModal: React.FC<ProductModalProps> = ({
     handleSubmit,
     reset,
     watch,
-    setValue,
     formState: { errors, isSubmitting },
   } = useForm({
     resolver: zodResolver(productSchema),
@@ -59,14 +58,12 @@ export const ProductModal: React.FC<ProductModalProps> = ({
       quantity: 1,
       brand: "",
       origin: "",
-      image_src: "",
       description: "",
     },
   });
 
   const watchedPrice = watch("price");
   const watchedSalePrice = watch("sale_price");
-  const watchedImageSrc = watch("image_src");
 
   // Reset form when modal opens or productToEdit changes
   useEffect(() => {
@@ -85,7 +82,6 @@ export const ProductModal: React.FC<ProductModalProps> = ({
         quantity: productToEdit.quantity,
         brand: productToEdit.brand ?? "",
         origin: productToEdit.origin ?? "",
-        image_src: productToEdit.image_src ?? "",
         description: productToEdit.description ?? "",
       });
       setImagePreview(productToEdit.image_src ?? "");
@@ -98,20 +94,12 @@ export const ProductModal: React.FC<ProductModalProps> = ({
         quantity: 1,
         brand: "",
         origin: "",
-        image_src: "",
         description: "",
       });
       setImagePreview("");
     }
     setSelectedFile(null);
   }, [productToEdit, reset, isOpen, categories]);
-
-  // Handle URL change preview if no file selected
-  useEffect(() => {
-    if (!selectedFile && watchedImageSrc) {
-      setImagePreview(watchedImageSrc);
-    }
-  }, [watchedImageSrc, selectedFile]);
 
   // File upload handler
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -120,14 +108,12 @@ export const ProductModal: React.FC<ProductModalProps> = ({
       setSelectedFile(file);
       const objectUrl = URL.createObjectURL(file);
       setImagePreview(objectUrl);
-      setValue("image_src", ""); // Clear URL if file selected
     }
   };
 
   const handleClearImage = () => {
     setSelectedFile(null);
     setImagePreview("");
-    setValue("image_src", "");
   };
 
   const onFormSubmit = async (data: unknown) => {
@@ -156,7 +142,7 @@ export const ProductModal: React.FC<ProductModalProps> = ({
       onClick={onClose}
     >
       <div
-        className="relative bg-surface-card border border-surface-border w-full max-w-4xl rounded-3xl shadow-brand-md overflow-hidden my-auto animate-in zoom-in-95 duration-200"
+        className="relative bg-surface-card border border-surface-border w-full max-w-5xl rounded-3xl shadow-brand-md overflow-hidden my-auto animate-in zoom-in-95 duration-200"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Modal Header */}
@@ -424,7 +410,7 @@ export const ProductModal: React.FC<ProductModalProps> = ({
               </div>
             </div>
 
-            {/* Right Column: Image & Description (5 cols) */}
+            {/* Right Column: Image (5 cols) */}
             <div
               className={`lg:col-span-5 space-y-5 ${
                 activeTab === "info" ? "hidden sm:block" : "block"
@@ -497,41 +483,35 @@ export const ProductModal: React.FC<ProductModalProps> = ({
                   </label>
                 )}
 
-                {/* Option to paste image URL */}
-                <div className="pt-2 border-t border-surface-border/60">
-                  <label className="block text-[11px] font-semibold text-text-muted uppercase tracking-wider mb-1">
-                    Hoặc nhập URL hình ảnh
-                  </label>
-                  <input
-                    type="url"
-                    {...register("image_src")}
-                    placeholder="https://example.com/product.jpg"
-                    className="w-full px-3 py-2 text-xs bg-surface-card border border-surface-border rounded-xl text-text-main outline-none transition-all placeholder:text-text-muted hover:border-primary/50 focus:border-primary focus:ring-4 focus:ring-ring-brand/15"
-                  />
-                  {errors.image_src && (
-                    <p className="mt-1 text-xs text-status-error flex items-center gap-1 font-medium">
-                      <AlertCircle className="w-3 h-3" />
-                      {errors.image_src.message}
-                    </p>
-                  )}
-                </div>
-              </div>
-
-              {/* Card Mô tả */}
-              <div className="bg-surface-bg/50 border border-surface-border rounded-2xl p-4.5 space-y-3">
-                <div className="flex items-center gap-2 text-xs font-bold text-text-sub uppercase tracking-wider">
-                  <FileText className="w-3.5 h-3.5 text-text-sub" />
-                  <span>Mô tả sản phẩm</span>
-                </div>
-
-                <textarea
-                  rows={4}
-                  {...register("description")}
-                  placeholder="Nhập chi tiết các đặc điểm nổi bật, thông số kỹ thuật của sản phẩm..."
-                  className="w-full px-3.5 py-2.5 text-sm bg-surface-card border border-surface-border rounded-xl text-text-main outline-none transition-all placeholder:text-text-muted hover:border-primary/50 focus:border-primary focus:ring-4 focus:ring-ring-brand/15 resize-none"
-                />
               </div>
             </div>
+          </div>
+
+          {/* Product description */}
+          <div
+            className={`bg-surface-bg/50 border border-surface-border rounded-2xl p-4.5 space-y-3 ${
+              activeTab === "info" ? "hidden sm:block" : "block"
+            }`}
+          >
+            <div className="flex items-center gap-2 text-xs font-bold text-text-sub uppercase tracking-wider">
+              <FileText className="w-3.5 h-3.5 text-text-sub" />
+              <span>Mô tả sản phẩm</span>
+            </div>
+            <p className="text-xs text-text-muted">
+              Hỗ trợ Markdown: tiêu đề, in đậm, danh sách, liên kết và bảng.
+            </p>
+            <textarea
+              rows={8}
+              {...register("description")}
+              placeholder="Nhập chi tiết đặc điểm nổi bật, thông số kỹ thuật của sản phẩm..."
+              className="w-full px-3.5 py-3 text-sm bg-surface-card border border-surface-border rounded-xl text-text-main outline-none transition-all placeholder:text-text-muted hover:border-primary/50 focus:border-primary focus:ring-4 focus:ring-ring-brand/15 resize-y"
+            />
+            {errors.description && (
+              <p className="text-xs text-status-error flex items-center gap-1 font-medium">
+                <AlertCircle className="w-3.5 h-3.5" />
+                {errors.description.message}
+              </p>
+            )}
           </div>
 
           {/* Modal Actions Footer */}
