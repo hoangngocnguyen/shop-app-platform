@@ -1,6 +1,6 @@
 import React from "react";
 import { ArrowRight } from "lucide-react";
-import { formatPrice } from "../utils/formatPrice";
+import { formatPrice } from "@/lib/formatPrice";
 
 interface CartBottomBarProps {
     totalPrice: number;
@@ -41,4 +41,3 @@ export default function CartBottomBar({
         </div>
     );
 }
-
