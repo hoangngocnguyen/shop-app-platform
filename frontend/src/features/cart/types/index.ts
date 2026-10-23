@@ -22,16 +22,18 @@ export interface SyncCartRequest {
 }
 
 // 3. Response Schemas
+export type CartMoney = number | string;
+
 export interface CartItemResponse {
     cart_item_id: number;
     product_id: number;
     product_name: string;
     product_image?: string | null;
-    price: number;
+    price: CartMoney;
     discount_percent?: number | null;
-    unit_price: number;
+    unit_price: CartMoney;
     quantity: number;
-    subtotal: number;
+    subtotal: CartMoney;
     stock_quantity: number;
 }
 
@@ -39,5 +41,5 @@ export interface CartResponse {
     cart_id: number;
     items: CartItemResponse[];
     total_quantity: number;
-    total_price: number;          
+    total_price: CartMoney;
 }

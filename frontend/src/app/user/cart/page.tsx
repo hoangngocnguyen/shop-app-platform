@@ -119,7 +119,17 @@ export default function CartPage() {
         if (!cart?.items) return 0;
         return cart.items
             .filter((item) => selectedItemIds.includes(item.cart_item_id))
-            .reduce((acc, cur) => acc + cur.subtotal, 0);
+            .reduce((total, item) => {
+                const subtotal = Number(item.subtotal);
+                const unitPrice = Number(item.unit_price);
+                const itemTotal = Number.isFinite(subtotal)
+                    ? subtotal
+                    : Number.isFinite(unitPrice)
+                        ? unitPrice * item.quantity
+                        : 0;
+
+                return total + itemTotal;
+            }, 0);
     }, [cart, selectedItemIds]);
 
     const handleCheckout = () => {

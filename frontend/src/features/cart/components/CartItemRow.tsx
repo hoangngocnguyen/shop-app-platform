@@ -1,7 +1,7 @@
 import React from "react";
 import { Minus, Plus, Edit3, Trash2, ShoppingBag } from "lucide-react";
 import { CartItemResponse } from "../types";
-import { formatPrice } from "../utils/formatPrice";
+import { formatPrice } from "@/lib/formatPrice";
 
 interface CartItemRowProps {
     item: CartItemResponse;
@@ -20,11 +20,16 @@ export default function CartItemRow({
     onOpenEditModal,
     onDelete,
 }: CartItemRowProps) {
+    const price = Number(item.price);
+    const unitPrice = Number(item.unit_price);
     const discountPercent =
         item.discount_percent && item.discount_percent > 0
             ? Math.round(item.discount_percent)
-            : item.price > item.unit_price && item.price > 0
-                ? Math.round(((item.price - item.unit_price) / item.price) * 100)
+            : Number.isFinite(price) &&
+                Number.isFinite(unitPrice) &&
+                price > unitPrice &&
+                price > 0
+                ? Math.round(((price - unitPrice) / price) * 100)
                 : null;
 
     return (
@@ -68,11 +73,13 @@ export default function CartItemRow({
                         <span className="text-sm font-semibold text-text-sub">
                             {formatPrice(item.unit_price)}
                         </span>
-                        {item.price > item.unit_price && (
-                            <span className="text-xs text-text-muted line-through">
-                                {formatPrice(item.price)}
-                            </span>
-                        )}
+                        {Number.isFinite(price) &&
+                            Number.isFinite(unitPrice) &&
+                            price > unitPrice && (
+                                <span className="text-xs text-text-muted line-through">
+                                    {formatPrice(item.price)}
+                                </span>
+                            )}
                         {discountPercent ? (
                             <span className="text-[11px] font-semibold text-status-error bg-status-error-bg px-1.5 py-0.5 rounded-md">
                                 -{discountPercent}%
@@ -132,4 +139,3 @@ export default function CartItemRow({
         </div>
     );
 }
-
