@@ -28,7 +28,7 @@ export const ProductPagination: React.FC<ProductPaginationProps> = ({
   const endRecord = Math.min(currentPage * pageSize, totalItems);
 
   return (
-    <div className="flex items-center justify-between py-3.5 px-4 select-none text-xs text-text-sub border-t border-surface-border bg-surface-card rounded-b-2xl">
+    <div className="flex items-center justify-between py-3.5 px-4 select-none text-xs text-text-sub border-t border-surface-border bg-surface-card">
       {/* Left: 1-10 / 22 | 10 dòng */}
       <div className="flex items-center gap-3">
         <span className="font-medium text-text-main">

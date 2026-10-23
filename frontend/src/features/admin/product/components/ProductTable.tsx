@@ -54,7 +54,7 @@ export const ProductTable: React.FC<ProductTableProps> = ({
   };
 
   return (
-    <div className="bg-surface-card border border-surface-border rounded-2xl shadow-xs overflow-hidden transition-all">
+    <div className="bg-surface-card border border-surface-border shadow-xs overflow-hidden transition-all">
       <div className="overflow-x-auto">
         <table className="w-full text-left border-collapse table-auto">
           <thead>
@@ -242,7 +242,7 @@ export const ProductTable: React.FC<ProductTableProps> = ({
                           <button
                             type="button"
                             onClick={() => onViewDetail(product)}
-                            className="text-left font-semibold text-sm text-text-main hover:text-primary transition-colors line-clamp-1 cursor-pointer block"
+                            className="w-full text-left font-semibold text-sm text-text-main hover:text-primary transition-colors line-clamp-3 [overflow-wrap:anywhere] cursor-pointer"
                             title={product.product_name}
                           >
                             {product.product_name}

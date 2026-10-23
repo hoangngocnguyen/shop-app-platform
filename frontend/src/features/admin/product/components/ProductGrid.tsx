@@ -207,7 +207,7 @@ export const ProductGrid: React.FC<ProductGridProps> = ({
 
                 <h4
                   onClick={() => onViewDetail(product)}
-                  className="font-semibold text-sm text-text-main line-clamp-2 hover:text-primary transition-colors cursor-pointer"
+                  className="font-semibold text-sm text-text-main line-clamp-3 [overflow-wrap:anywhere] hover:text-primary transition-colors cursor-pointer"
                   title={product.product_name}
                 >
                   {product.product_name}
@@ -282,4 +282,3 @@ export const ProductGrid: React.FC<ProductGridProps> = ({
     </div>
   );
 };
-

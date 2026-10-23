@@ -199,7 +199,7 @@ export default function ProductManagementPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-[var(--color-surface-bg,#f8fafc)] via-white to-[var(--color-surface-bg,#f8fafc)] text-text-main antialiased pb-24">
-      <main className="max-w-[1240px] mx-auto px-4 pt-2 pb-8 md:pt-3 md:pb-10 space-y-6">
+      <main className="mx-auto px-4 pt-2 pb-8 md:pt-3 md:pb-10 space-y-6">
         {/* Action Header Bar */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white/90 backdrop-blur-md p-4 sm:p-5 rounded-2xl border border-[var(--color-surface-border,#e2e8f0)] shadow-md">
           <div className="group/iconbox flex items-center gap-3">
