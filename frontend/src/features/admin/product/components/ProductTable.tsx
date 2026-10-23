@@ -54,7 +54,7 @@ export const ProductTable: React.FC<ProductTableProps> = ({
   };
 
   return (
-    <div className="bg-surface-card border border-surface-border shadow-xs overflow-hidden transition-all">
+    <div className="bg-surface-card shadow-xs overflow-hidden transition-all">
       <div className="overflow-x-auto">
         <table className="w-full text-left border-collapse table-auto">
           <thead>
@@ -186,19 +186,18 @@ export const ProductTable: React.FC<ProductTableProps> = ({
                 // Lọc brand hợp lệ (bỏ qua nếu brand chỉ là số rác hoặc chuỗi trống)
                 const validBrand =
                   product.brand &&
-                  product.brand.trim() !== "" &&
-                  isNaN(Number(product.brand))
+                    product.brand.trim() !== "" &&
+                    isNaN(Number(product.brand))
                     ? product.brand.trim()
                     : null;
 
                 return (
                   <tr
                     key={product.product_id}
-                    className={`transition-colors group ${
-                      isSelected
-                        ? "bg-primary-light/40"
-                        : "hover:bg-surface-hover/70"
-                    }`}
+                    className={`transition-colors group ${isSelected
+                      ? "bg-primary-light/40"
+                      : "hover:bg-surface-hover/70"
+                      }`}
                   >
                     {/* Checkbox */}
                     <td className="py-3 px-3 text-center">
@@ -302,28 +301,26 @@ export const ProductTable: React.FC<ProductTableProps> = ({
                     {/* Stock Status */}
                     <td className="py-3 px-4 text-center">
                       <span
-                        className={`inline-flex items-center gap-1 px-2.5 py-0.5 text-xs font-semibold rounded-full border ${
-                          isOutOfStock
-                            ? "bg-status-error-bg text-status-error border-status-error/20"
-                            : isLowStock
+                        className={`inline-flex items-center gap-1 px-2.5 py-0.5 text-xs font-semibold rounded-full border ${isOutOfStock
+                          ? "bg-status-error-bg text-status-error border-status-error/20"
+                          : isLowStock
                             ? "bg-status-warning-bg text-status-warning border-status-warning/20"
                             : "bg-status-success-bg text-status-success border-status-success/20"
-                        }`}
+                          }`}
                       >
                         <span
-                          className={`w-1.5 h-1.5 rounded-full ${
-                            isOutOfStock
-                              ? "bg-status-error"
-                              : isLowStock
+                          className={`w-1.5 h-1.5 rounded-full ${isOutOfStock
+                            ? "bg-status-error"
+                            : isLowStock
                               ? "bg-status-warning"
                               : "bg-status-success"
-                          }`}
+                            }`}
                         />
                         {isOutOfStock
                           ? "Hết hàng"
                           : isLowStock
-                          ? `Sắp hết (${product.quantity})`
-                          : `Còn (${product.quantity})`}
+                            ? `Sắp hết (${product.quantity})`
+                            : `Còn (${product.quantity})`}
                       </span>
                     </td>
 
