@@ -9,6 +9,10 @@
     "accentHover": "#D97706",
     "accentLight": "#FEF3C7",
 
+    "price": "#DC2626",
+    "priceHover": "#B91C1C",
+    "priceLight": "#FEF2F2",
+
     "surfaceBg": "#F8FAFC",
     "surfaceCard": "#FFFFFF",
     "surfaceBorder": "#E2E8F0",
