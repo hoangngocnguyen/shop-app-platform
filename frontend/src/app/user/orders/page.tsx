@@ -4,11 +4,11 @@ import { useCallback, useEffect, useState } from "react";
 import { AlertCircle, ArrowLeft, Loader2, PackageSearch, ShoppingBag } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { confirm } from "@/common/stores/useConfirmStore";
 import { toast } from "@/common/stores/useToastStore";
 import { orderApi } from "@/features/orders/api";
 import { OrderHistoryCard } from "@/features/orders/components/OrderHistoryCard";
 import { OrderDetailModal } from "@/features/orders/components/OrderDetailModal";
+import { CancelOrderModal } from "@/features/orders/components/CancelOrderModal";
 import { OrderHistoryTabs } from "@/features/orders/components/OrderHistoryTabs";
 import { LoadMoreButton } from "@/features/orders/components/LoadMoreButton";
 import { useOrderHistory } from "@/features/orders/hooks/useOrderHistory";
@@ -24,6 +24,10 @@ export default function UserOrdersPage() {
     const [isDetailLoading, setIsDetailLoading] = useState(false);
     const [isCompleting, setIsCompleting] = useState<string | null>(null);
     const [isCancelling, setIsCancelling] = useState<string | null>(null);
+
+    // --- Cancel modal state ---
+    const [cancelOrderId, setCancelOrderId] = useState<string | null>(null);
+    const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
 
     useEffect(() => {
         if (!selectedOrderId) {
@@ -68,16 +72,6 @@ export default function UserOrdersPage() {
     }, []);
 
     const handleCompleteOrder = useCallback(async (orderId: string) => {
-        const confirmed = await confirm({
-            title: "Xác nhận đã nhận hàng",
-            message: "Bạn xác nhận đã nhận đủ hàng và muốn hoàn tất đơn này?",
-            confirmText: "Xác nhận",
-            cancelText: "Hủy",
-            variant: "info",
-        });
-
-        if (!confirmed) return;
-
         setIsCompleting(orderId);
         try {
             const result = await orderApi.completeOrder(orderId);
@@ -91,38 +85,40 @@ export default function UserOrdersPage() {
         }
     }, [router]);
 
-    const handleCancelOrder = useCallback(async (orderId: string) => {
-        const confirmed = await confirm({
-            title: "Hủy đơn hàng",
-            message: "Bạn muốn hủy đơn này? Vui lòng chọn lý do hủy để tiếp tục.",
-            confirmText: "Tiếp tục",
-            cancelText: "Hủy",
-            variant: "danger",
-        });
+    // Mở modal chọn lý do hủy
+    const handleCancelOrder = useCallback((orderId: string) => {
+        setCancelOrderId(orderId);
+        setIsCancelModalOpen(true);
+    }, []);
 
-        if (!confirmed) return;
-
-        setIsCancelling(orderId);
-        try {
-            const cancellationReasons = await orderApi.getCancellationReasons();
-            const reason = cancellationReasons.items?.[0];
-            if (!reason) {
-                toast.error("Không có lý do hủy phù hợp.");
-                return;
+    // Gọi API hủy sau khi user chọn lý do
+    const handleConfirmCancel = useCallback(
+        async (orderId: string, reasonCode: CustomerCancelReason, customReason?: string) => {
+            setIsCancelling(orderId);
+            try {
+                await orderApi.cancelOrder(orderId, {
+                    reason_code: reasonCode,
+                    custom_reason: customReason ?? null,
+                });
+                toast.success("Đã hủy đơn hàng thành công.");
+                setIsCancelModalOpen(false);
+                setCancelOrderId(null);
+                setSelectedOrderId((prev) => (prev === orderId ? null : prev));
+                router.refresh();
+            } catch (err) {
+                toast.error(parseErrorMessage(err, "Không thể hủy đơn hàng."));
+            } finally {
+                setIsCancelling(null);
             }
+        },
+        [router]
+    );
 
-            await orderApi.cancelOrder(orderId, {
-                reason_code: reason.value as CustomerCancelReason,
-            });
-            toast.success("Đã hủy đơn hàng thành công.");
-            setSelectedOrderId((prev) => (prev === orderId ? null : prev));
-            router.refresh();
-        } catch (err) {
-            toast.error(parseErrorMessage(err, "Không thể hủy đơn hàng."));
-        } finally {
-            setIsCancelling(null);
-        }
-    }, [router]);
+    const handleCloseCancelModal = useCallback(() => {
+        if (isCancelling) return; // Đang submit thì không cho đóng
+        setIsCancelModalOpen(false);
+        setCancelOrderId(null);
+    }, [isCancelling]);
 
     const statusOrder: OrderStatus[] = [
         "PENDING",
@@ -210,6 +206,15 @@ export default function UserOrdersPage() {
                 onClose={() => setSelectedOrderId(null)}
                 order={selectedOrder}
                 loading={isDetailLoading}
+            />
+
+            {/* Modal chọn lý do hủy đơn */}
+            <CancelOrderModal
+                isOpen={isCancelModalOpen}
+                orderId={cancelOrderId}
+                onClose={handleCloseCancelModal}
+                onConfirm={handleConfirmCancel}
+                isSubmitting={isCancelling === cancelOrderId}
             />
         </div>
     );
