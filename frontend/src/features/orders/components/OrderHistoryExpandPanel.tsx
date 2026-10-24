@@ -1,8 +1,8 @@
 "use client";
 
 import Image from "next/image";
-import { MapPin, Package2, Truck, CalendarClock } from "lucide-react";
-import type { OrderDetailResponse } from "@/features/orders/types";
+import { CalendarClock, MapPin, Package2, Truck, XCircle } from "lucide-react";
+import { ORDER_STATUS, type OrderDetailResponse } from "@/features/orders/types";
 import { formatDateTime, formatMoney, getPaymentStatusClass, getStatusLabel } from "@/features/orders/utils/orderStatus";
 
 interface OrderHistoryExpandPanelProps {
@@ -12,6 +12,8 @@ interface OrderHistoryExpandPanelProps {
 
 export function OrderHistoryExpandPanel({ order, loading = false }: OrderHistoryExpandPanelProps) {
     if (!order) return null;
+
+    const isCancelled = order.status === "CANCELLED";
 
     return (
         <div className="bg-surface-card">
@@ -69,6 +71,17 @@ export function OrderHistoryExpandPanel({ order, loading = false }: OrderHistory
                         </div>
                     </div>
 
+                    {/* Lý do hủy đơn — chỉ hiện khi CANCELLED, lấy từ cancel_reason (chuỗi sạch, không có mã kỹ thuật) */}
+                    {isCancelled && order.cancel_reason && (
+                        <div className="flex items-start gap-3 rounded-2xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700">
+                            <XCircle className="mt-0.5 h-4 w-4 shrink-0" />
+                            <div>
+                                <p className="font-semibold">Lý do hủy đơn</p>
+                                <p className="mt-0.5 text-rose-600">{order.cancel_reason}</p>
+                            </div>
+                        </div>
+                    )}
+
                     <div className="rounded-2xl border border-surface-border bg-surface-bg p-4">
                         <div className="mb-3 flex items-center gap-2 text-sm font-semibold text-text-main">
                             <Package2 className="h-4 w-4 text-[var(--color-primary,#0f766e)]" />
@@ -118,7 +131,8 @@ export function OrderHistoryExpandPanel({ order, loading = false }: OrderHistory
                                             <span className="font-medium text-text-main">{getStatusLabel(log.status)}</span>
                                             <span className="text-xs text-text-muted">{formatDateTime(log.timestamp)}</span>
                                         </div>
-                                        {log.note && <p className="mt-1 text-text-sub">{log.note}</p>}
+                                        {
+                                            log.note && <p className="mt-1 text-text-sub"> {log.status === ORDER_STATUS.CANCELLED ? order.cancel_reason : log.note}</p>}
                                     </div>
                                 ))}
                             </div>

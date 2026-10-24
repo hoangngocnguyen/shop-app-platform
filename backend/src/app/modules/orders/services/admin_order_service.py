@@ -52,13 +52,14 @@ class AdminOrderService:
                     message="Vui lòng nhập ghi chú chi tiết khi chọn lý do OTHER.",
                     error_code="INVALID_REASON",
                 )
-            formatted_reason = f"[{reason_code_str}] Lý do khác: {custom_reason}"
+            display_reason = f"Lý do khác: {custom_reason}"
+            log_reason = f"[{reason_code_str}] Lý do khác: {custom_reason}"
         elif custom_reason:
-            formatted_reason = (
-                f"[{reason_code_str}] {reason_label} (Ghi chú: {custom_reason})"
-            )
+            display_reason = f"{reason_label} (Ghi chú: {custom_reason})"
+            log_reason = f"[{reason_code_str}] {reason_label} (Ghi chú: {custom_reason})"
         else:
-            formatted_reason = f"[{reason_code_str}] {reason_label}"
+            display_reason = reason_label
+            log_reason = f"[{reason_code_str}] {reason_label}"
 
         self.repository.restore_inventory(order=order)
 
@@ -67,12 +68,12 @@ class AdminOrderService:
             "Quản trị viên" if role_type == CancelledByType.ADMIN else "Chủ cửa hàng"
         )
         log_desc = (
-            f"{actor_name} (ID: {admin_id}) hủy đơn hàng. Lý do: {formatted_reason}."
+            f"{actor_name} (ID: {admin_id}) hủy đơn hàng. Lý do: {log_reason}."
         )
 
         updated_order = self.repository.cancel_order_record(
             order=order,
-            cancel_reason=formatted_reason,
+            cancel_reason=display_reason,
             cancelled_by_type=role_type.value,
             cancelled_by_id=admin_id,
             cancelled_at=cancelled_now,
