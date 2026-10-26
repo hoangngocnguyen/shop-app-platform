@@ -177,6 +177,11 @@ class TestPaymentService(unittest.TestCase):
             self.assertEqual(ret_res["status"], "Success")
             self.assertEqual(self.mock_order.payment_status, PaymentStatus.PAID.value)
             self.assertEqual(self.service.order_repo.add_order_log.call_count, 1)
+            call_kwargs = self.service.order_repo.add_order_log.call_args.kwargs
+            self.assertEqual(call_kwargs["description"], "Thanh toán thành công qua VNPAY (Mã GD: 12345678)")
+            self.assertEqual(call_kwargs["extra_data"]["gateway"], "VNPAY")
+            self.assertEqual(call_kwargs["extra_data"]["source"], "Return URL")
+            self.assertEqual(call_kwargs["extra_data"]["transaction_no"], "12345678")
 
             # 2. IPN đến sau
             ipn_res = self.service.handle_vnpay_ipn(params)
@@ -209,6 +214,28 @@ class TestPaymentService(unittest.TestCase):
             self.assertEqual(ret_res["status"], "Success")
             # add_order_log vẫn chỉ giữ đúng 1 lần từ IPN
             self.assertEqual(self.service.order_repo.add_order_log.call_count, 1)
+
+    def test_vnpay_ipn_failure(self):
+        self.service.order_repo.get_order_by_id = MagicMock(return_value=self.mock_order)
+        self.service.order_repo.add_order_log = MagicMock()
+        params = {
+            "vnp_TxnRef": "OD123456_12345",
+            "vnp_Amount": "25000000",
+            "vnp_ResponseCode": "07",
+            "vnp_TransactionNo": "12345678",
+        }
+        with patch("src.app.modules.payments.vnpay.service.VNPayService.validate_response", return_value=True):
+            res = self.service.handle_vnpay_ipn(params)
+
+        self.assertEqual(res["RspCode"], "00")
+        self.assertEqual(self.mock_order.payment_status, PaymentStatus.FAILED.value)
+        self.service.order_repo.add_order_log.assert_called_once()
+        call_kwargs = self.service.order_repo.add_order_log.call_args.kwargs
+        self.assertEqual(call_kwargs["description"], "Thanh toán qua VNPAY không thành công")
+        self.assertEqual(call_kwargs["extra_data"]["gateway"], "VNPAY")
+        self.assertEqual(call_kwargs["extra_data"]["source"], "IPN")
+        self.assertEqual(call_kwargs["extra_data"]["response_code"], "07")
+
 
     def test_vnpay_return_invalid_amount(self):
         """Return URL với số tiền không khớp tổng đơn hàng không được cập nhật trạng thái PAID."""

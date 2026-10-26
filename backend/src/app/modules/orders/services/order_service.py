@@ -351,9 +351,11 @@ class OrderService:
 
         logs_response: list[OrderLogResponse] = []
         for log in sorted(order.order_logs, key=lambda l: l.log_date):
-            log_status = OrderStatus.PENDING
+            log_status: OrderStatus | str = OrderStatus.PENDING
             if log.status and log.status in OrderStatus._value2member_map_:
                 log_status = OrderStatus(log.status)
+            elif log.status:
+                log_status = log.status
 
             logs_response.append(
                 OrderLogResponse(

@@ -1,6 +1,7 @@
 import math
 from collections.abc import Sequence
 from datetime import UTC, datetime
+from typing import Any
 from uuid import UUID
 
 from sqlalchemy import desc, func, or_, select
@@ -106,6 +107,7 @@ class OrderRepository:
         order: Order,
         items: list[OrderDetail],
         log_description: str = "Đơn hàng đã được tạo thành công",
+        log_extra_data: dict[str, Any] | None = None,
     ) -> Order:
         """
         Tạo đơn hàng mới, danh sách chi tiết đơn hàng và bản ghi log ban đầu
@@ -123,6 +125,7 @@ class OrderRepository:
             status=order.status,
             description=log_description,
             user_id=order.user_id,
+            extra_data=log_extra_data,
             log_date=datetime.now(UTC),
         )
         self.db.add(initial_log)
@@ -137,6 +140,7 @@ class OrderRepository:
         status: str,
         description: str,
         user_id: UUID | None = None,
+        extra_data: dict[str, Any] | None = None,
     ) -> OrderLog:
         """Ghi thêm một bản ghi vào lịch sử trạng thái đơn hàng (order_logs)."""
         log_entry = OrderLog(
@@ -144,6 +148,7 @@ class OrderRepository:
             status=status,
             description=description,
             user_id=user_id,
+            extra_data=extra_data,
             log_date=datetime.now(UTC),
         )
         self.db.add(log_entry)

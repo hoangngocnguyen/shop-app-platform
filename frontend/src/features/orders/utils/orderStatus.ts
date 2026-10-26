@@ -29,6 +29,9 @@ export const PAYMENT_STATUS_STYLES: Record<PaymentStatus, string> = {
 
 export function getStatusLabel(status?: string | null): string {
     if (!status) return "Không xác định";
+    if (status in PAYMENT_STATUS_LABELS) {
+        return PAYMENT_STATUS_LABELS[status as PaymentStatus];
+    }
     return ORDER_STATUS_LABELS[status as OrderStatus] ?? status;
 }
 
@@ -39,6 +42,9 @@ export function getPaymentStatusLabel(status?: string | null): string {
 
 export function getOrderStatusClass(status?: string | null): string {
     if (!status) return "border border-slate-200 bg-slate-100 text-slate-700";
+    if (status in PAYMENT_STATUS_STYLES) {
+        return PAYMENT_STATUS_STYLES[status as PaymentStatus];
+    }
     return STATUS_STYLES[status as OrderStatus] ?? "border border-slate-200 bg-slate-100 text-slate-700";
 }
 
