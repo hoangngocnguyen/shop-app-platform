@@ -3,7 +3,7 @@
 import Image from "next/image";
 import { CalendarClock, MapPin, Package2, Truck, XCircle } from "lucide-react";
 import { ORDER_STATUS, type OrderDetailResponse } from "@/features/orders/types";
-import { formatDateTime, formatMoney, getPaymentStatusClass, getStatusLabel } from "@/features/orders/utils/orderStatus";
+import { formatDateTime, formatMoney, getPaymentStatusClass, getPaymentStatusLabel, getStatusLabel } from "@/features/orders/utils/orderStatus";
 
 interface OrderHistoryExpandPanelProps {
     order: OrderDetailResponse | null;
@@ -54,7 +54,7 @@ export function OrderHistoryExpandPanel({ order, loading = false }: OrderHistory
                                 <div className="flex items-center justify-between gap-3 rounded-xl bg-white px-3 py-2">
                                     <span>Thanh toán</span>
                                     <span className={`rounded-full px-2 py-1 text-xs font-semibold ${getPaymentStatusClass(order.payment_status)}`}>
-                                        {order.payment_status}
+                                        {getPaymentStatusLabel(order.payment_status)}
                                     </span>
                                 </div>
                                 <div className="flex items-center justify-between gap-3 rounded-xl bg-white px-3 py-2">
@@ -125,16 +125,31 @@ export function OrderHistoryExpandPanel({ order, loading = false }: OrderHistory
                                 Nhật ký trạng thái
                             </div>
                             <div className="space-y-3">
-                                {order.order_logs.map((log, index) => (
-                                    <div key={`${log.timestamp}-${index}`} className="rounded-xl border border-surface-border bg-white p-3 text-sm">
-                                        <div className="flex items-center justify-between gap-2">
-                                            <span className="font-medium text-text-main">{getStatusLabel(log.status)}</span>
-                                            <span className="text-xs text-text-muted">{formatDateTime(log.timestamp)}</span>
+                                {order.order_logs.map((log, index) => {
+                                    const isPaymentSuccess = log.note?.includes("Thanh toán thành công");
+                                    const isPaymentFailed = log.note?.includes("Thanh toán") && log.note?.includes("không thành công");
+                                    const displayLabel = isPaymentSuccess
+                                        ? "Thanh toán thành công"
+                                        : isPaymentFailed
+                                        ? "Thanh toán thất bại"
+                                        : getStatusLabel(log.status);
+
+                                    return (
+                                        <div key={`${log.timestamp}-${index}`} className="rounded-xl border border-surface-border bg-white p-3 text-sm">
+                                            <div className="flex items-center justify-between gap-2">
+                                                <span className={`font-medium ${isPaymentSuccess ? "text-emerald-700 font-semibold" : isPaymentFailed ? "text-rose-700 font-semibold" : "text-text-main"}`}>
+                                                    {displayLabel}
+                                                </span>
+                                                <span className="text-xs text-text-muted">{formatDateTime(log.timestamp)}</span>
+                                            </div>
+                                            {log.note && (
+                                                <p className="mt-1 text-text-sub">
+                                                    {log.status === ORDER_STATUS.CANCELLED ? order.cancel_reason : log.note}
+                                                </p>
+                                            )}
                                         </div>
-                                        {
-                                            log.note && <p className="mt-1 text-text-sub"> {log.status === ORDER_STATUS.CANCELLED ? order.cancel_reason : log.note}</p>}
-                                    </div>
-                                ))}
+                                    );
+                                })}
                             </div>
                         </div>
                     )}
