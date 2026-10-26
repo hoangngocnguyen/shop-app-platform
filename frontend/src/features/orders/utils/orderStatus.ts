@@ -114,8 +114,9 @@ export function canPayOrder(
         ORDER_STATUS.CANCELLED,
         ORDER_STATUS.COMPLETED,
         ORDER_STATUS.RETURNED,
+        ORDER_STATUS.DELIVERED,
         ORDER_STATUS.SHIPPING,
-        ORDER_STATUS.PROCESSING
+        ORDER_STATUS.PROCESSING,
     ];
 
     const isBlockedStatus = BLOCKED_ORDER_STATUSES.includes(orderStatus.toUpperCase());
