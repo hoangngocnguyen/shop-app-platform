@@ -1,6 +1,7 @@
 import {
     ORDER_STATUS,
     ORDER_STATUS_LABELS,
+    PAYMENT_METHOD,
     PAYMENT_STATUS,
     PAYMENT_STATUS_LABELS,
     type OrderStatus,
@@ -91,4 +92,33 @@ export function canCompleteOrder(status?: string | null): boolean {
     return ([ORDER_STATUS.SHIPPING, ORDER_STATUS.DELIVERED] as OrderStatus[]).includes(
         status as OrderStatus,
     );
+}
+
+export function canPayOrder(
+    paymentMethod?: string | null,
+    paymentStatus?: string | null,
+    orderStatus?: string | null
+): boolean {
+    if (!paymentMethod || !orderStatus) return false;
+
+    // 1. Chỉ các phương thức thanh toán Online mới cho phép thanh toán lại (tránh COD)
+    const ONLINE_PAYMENT_METHODS = [PAYMENT_METHOD.VNPAY]; // Sau này có thể thêm MOMO, ZALOPAY...
+    const isOnlinePayment = ONLINE_PAYMENT_METHODS.includes(paymentMethod.toUpperCase() as any);
+
+    // 2. Kiểm tra trạng thái thanh toán (Chưa trả tiền và Chưa bị hoàn tiền)
+    const isPaid = paymentStatus?.toUpperCase() === PAYMENT_STATUS.PAID;
+    const isRefunded = paymentStatus?.toUpperCase() === PAYMENT_STATUS.REFUNDED;
+
+    // 3. Các trạng thái đơn hàng KHÔNG ĐƯỢC PHÉP thanh toán lại nữa
+    const BLOCKED_ORDER_STATUSES: string[] = [
+        ORDER_STATUS.CANCELLED,
+        ORDER_STATUS.COMPLETED,
+        ORDER_STATUS.RETURNED,
+        ORDER_STATUS.SHIPPING,
+        ORDER_STATUS.PROCESSING
+    ];
+
+    const isBlockedStatus = BLOCKED_ORDER_STATUSES.includes(orderStatus.toUpperCase());
+
+    return isOnlinePayment && !isPaid && !isRefunded && !isBlockedStatus;
 }

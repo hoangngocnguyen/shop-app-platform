@@ -1,10 +1,10 @@
 "use client";
 
 import Image from "next/image";
-import { ChevronDown, ChevronUp, Package2, CheckCircle2, XCircle, RotateCcw } from "lucide-react";
+import { ChevronDown, ChevronUp, Package2, CheckCircle2, XCircle, RotateCcw, CreditCard, Loader2 } from "lucide-react";
 import type { OrderSummaryResponse } from "@/features/orders/types";
 import { OrderStatusBadge, PaymentStatusBadge } from "@/features/orders/components/OrderStatusBadge";
-import { canCancelOrder, canCompleteOrder, formatDateTime, formatMoney } from "@/features/orders/utils/orderStatus";
+import { canCancelOrder, canCompleteOrder, canPayOrder, formatDateTime, formatMoney } from "@/features/orders/utils/orderStatus";
 
 interface OrderHistoryCardProps {
     order: OrderSummaryResponse;
@@ -12,8 +12,10 @@ interface OrderHistoryCardProps {
     onToggle: (orderId: string) => void;
     onComplete: (orderId: string) => void;
     onCancel: (orderId: string) => void;
+    onPay?: (orderId: string) => void;
     isCompleting: boolean;
     isCancelling: boolean;
+    isPaying?: boolean;
 }
 
 export function OrderHistoryCard({
@@ -22,12 +24,15 @@ export function OrderHistoryCard({
     onToggle,
     onComplete,
     onCancel,
+    onPay,
     isCompleting,
     isCancelling,
+    isPaying = false,
 }: OrderHistoryCardProps) {
     const firstItem = order.items?.[0];
     const canUserCancel = canCancelOrder(order.status);
     const canUserComplete = canCompleteOrder(order.status);
+    const canUserPay = canPayOrder(order.payment_method, order.payment_status, order.status);
 
     const extraItemsCount = Math.max((order.items?.length ?? 0) - 1, 0);
 
@@ -110,6 +115,22 @@ export function OrderHistoryCard({
 
                 <div className="mt-3.5 flex justify-end">
                     <div className="flex flex-wrap justify-end gap-2">
+                        {canUserPay && onPay && (
+                            <button
+                                type="button"
+                                onClick={() => onPay(order.order_id)}
+                                disabled={isPaying}
+                                className="inline-flex items-center gap-1.5 rounded-lg bg-primary hover:bg-primary-hover px-3 py-1.5 text-xs sm:text-sm font-medium text-primary-contrast shadow-xs transition-colors disabled:opacity-50"
+                            >
+                                {isPaying ? (
+                                    <Loader2 className="h-4 w-4 animate-spin" />
+                                ) : (
+                                    <CreditCard className="h-4 w-4" />
+                                )}
+                                {isPaying ? "Đang xử lý..." : "Thanh toán ngay"}
+                            </button>
+                        )}
+
                         {canUserComplete && (
                             <button
                                 type="button"

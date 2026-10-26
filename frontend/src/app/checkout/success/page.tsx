@@ -158,9 +158,9 @@ function OrderSuccessContent() {
 
                 <div className="mt-5 rounded-xl border border-surface-border bg-surface-bg/50 p-4 sm:p-5">
                     <div className="grid gap-3.5 sm:grid-cols-2">
-                        <div>
+                        <div className="col-span-2">
                             <p className="text-xs font-medium text-text-muted">Mã đơn hàng</p>
-                            <p className="mt-0.5 font-mono text-sm sm:text-base font-semibold text-text-main">#{renderState.order_id}</p>
+                            <p className="mt-0.5 font-mono text-sm sm:text-base  text-text-main">{renderState.order_id}</p>
                         </div>
                         <div>
                             <p className="text-xs font-medium text-text-muted">Tổng thanh toán</p>

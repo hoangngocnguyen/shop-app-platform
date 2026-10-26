@@ -66,6 +66,16 @@ export function OrderHistoryExpandPanel({ order, loading = false }: OrderHistory
                                     </span>
                                 </div>
                                 <div className="flex items-center justify-between gap-2 rounded-lg border border-surface-border/50 bg-surface-card px-3 py-1.5">
+                                    <span className="text-text-muted">Phương thức</span>
+                                    <span className="font-medium text-text-main">
+                                        {order.payment_method === "VNPAY"
+                                            ? "Cổng VNPAY"
+                                            : order.payment_method === "COD"
+                                                ? "Thanh toán khi nhận hàng (COD)"
+                                                : order.payment_method}
+                                    </span>
+                                </div>
+                                <div className="flex items-center justify-between gap-2 rounded-lg border border-surface-border/50 bg-surface-card px-3 py-1.5">
                                     <span className="text-text-muted">Thanh toán</span>
                                     <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${getPaymentStatusClass(order.payment_status)}`}>
                                         {getPaymentStatusLabel(order.payment_status)}
