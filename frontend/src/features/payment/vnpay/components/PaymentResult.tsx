@@ -49,33 +49,33 @@ const formatMoney = (value?: number | string) => {
  */
 export function PaymentResultSkeleton() {
     return (
-        <div className="flex flex-col items-center space-y-6 text-center animate-pulse">
-            <Skeleton variant="circular" className="h-16 w-16" />
-            <div className="space-y-2 w-full flex flex-col items-center">
-                <Skeleton className="h-7 w-56" />
-                <Skeleton className="h-4 w-72" />
+        <div className="flex flex-col items-center space-y-5 text-center animate-pulse">
+            <Skeleton variant="circular" className="h-14 w-14" />
+            <div className="space-y-1.5 w-full flex flex-col items-center">
+                <Skeleton className="h-6 w-48" />
+                <Skeleton className="h-4 w-64" />
             </div>
-            <div className="w-full rounded-2xl border border-surface-border bg-surface-bg p-5 space-y-3.5">
-                <div className="flex justify-between items-center">
-                    <Skeleton className="h-4 w-24" />
-                    <Skeleton className="h-4 w-32" />
-                </div>
+            <div className="w-full rounded-xl border border-surface-border bg-surface-bg/50 p-4 space-y-3">
                 <div className="flex justify-between items-center">
                     <Skeleton className="h-4 w-20" />
-                    <Skeleton className="h-5 w-28" />
+                    <Skeleton className="h-4 w-28" />
+                </div>
+                <div className="flex justify-between items-center">
+                    <Skeleton className="h-4 w-24" />
+                    <Skeleton className="h-5 w-24" />
+                </div>
+                <div className="flex justify-between items-center">
+                    <Skeleton className="h-4 w-24" />
+                    <Skeleton className="h-4 w-16" />
                 </div>
                 <div className="flex justify-between items-center">
                     <Skeleton className="h-4 w-28" />
                     <Skeleton className="h-4 w-20" />
                 </div>
-                <div className="flex justify-between items-center">
-                    <Skeleton className="h-4 w-32" />
-                    <Skeleton className="h-4 w-24" />
-                </div>
             </div>
-            <div className="w-full space-y-2.5 pt-2">
-                <Skeleton className="h-11 w-full rounded-xl" />
-                <Skeleton className="h-11 w-full rounded-xl" />
+            <div className="w-full space-y-2 pt-1">
+                <Skeleton className="h-10 w-full rounded-lg" />
+                <Skeleton className="h-10 w-full rounded-lg" />
             </div>
         </div>
     );
@@ -158,21 +158,21 @@ export function PaymentResultSection() {
     // 3. Trạng thái Error: Lỗi mạng hoặc Checksum không hợp lệ
     if (errorMessage) {
         return (
-            <div className="flex flex-col items-center text-center space-y-6">
-                <div className="flex h-16 w-16 items-center justify-center rounded-full bg-status-error-bg text-status-error shadow-brand-sm">
-                    <AlertCircle className="h-9 w-9" />
+            <div className="flex flex-col items-center text-center space-y-5">
+                <div className="flex h-14 w-14 items-center justify-center rounded-full bg-status-error-bg text-status-error">
+                    <AlertCircle className="h-8 w-8" />
                 </div>
 
-                <div className="space-y-1.5">
-                    <h2 className="text-2xl font-bold tracking-tight text-text-main">
+                <div className="space-y-1">
+                    <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-text-main">
                         Xác minh giao dịch thất bại
                     </h2>
-                    <p className="text-sm text-text-sub max-w-sm mx-auto">
+                    <p className="text-xs sm:text-sm text-text-sub max-w-sm mx-auto">
                         {errorMessage}
                     </p>
                 </div>
 
-                <div className="w-full space-y-2.5 pt-2">
+                <div className="w-full space-y-2 pt-2">
                     <Button
                         type="button"
                         variant="primary"
@@ -210,34 +210,34 @@ export function PaymentResultSection() {
         'Giao dịch không thành công hoặc đã bị hủy bỏ.';
 
     return (
-        <div className="flex flex-col items-center text-center space-y-6">
+        <div className="flex flex-col items-center text-center space-y-5">
             {/* Icon & Huy hiệu trạng thái */}
-            <div className="flex flex-col items-center gap-3">
-                <span className="inline-flex items-center justify-center rounded-full bg-primary-light px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-primary">
+            <div className="flex flex-col items-center gap-2.5">
+                <span className="inline-flex items-center justify-center rounded-full bg-primary-light px-2.5 py-0.5 text-xs font-medium text-primary">
                     Cổng thanh toán VNPAY
                 </span>
 
                 <div
-                    className={`flex h-16 w-16 items-center justify-center rounded-full shadow-brand-sm ${
+                    className={`flex h-14 w-14 items-center justify-center rounded-full ${
                         isSuccess
                             ? 'bg-status-success-bg text-status-success'
                             : 'bg-status-error-bg text-status-error'
                     }`}
                 >
                     {isSuccess ? (
-                        <CheckCircle2 className="h-9 w-9" />
+                        <CheckCircle2 className="h-8 w-8" />
                     ) : (
-                        <XCircle className="h-9 w-9" />
+                        <XCircle className="h-8 w-8" />
                     )}
                 </div>
             </div>
 
             {/* Tiêu đề & Diễn giải */}
-            <div className="space-y-1.5">
-                <h1 className="text-2xl font-black tracking-tight text-text-main sm:text-3xl">
-                    {isSuccess ? 'Thanh toán thành công!' : 'Thanh toán không thành công'}
+            <div className="space-y-1">
+                <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-text-main">
+                    {isSuccess ? 'Thanh toán thành công' : 'Thanh toán không thành công'}
                 </h1>
-                <p className="text-sm text-text-sub max-w-md mx-auto">
+                <p className="text-xs sm:text-sm text-text-sub max-w-md mx-auto leading-relaxed">
                     {isSuccess
                         ? 'Cảm ơn bạn! Đơn hàng đã được xác nhận thanh toán thành công và đang được chuẩn bị.'
                         : failureReason}
@@ -245,16 +245,16 @@ export function PaymentResultSection() {
             </div>
 
             {/* Thẻ Chi tiết biên lai (Receipt Card) */}
-            <div className="w-full rounded-2xl border border-surface-border bg-surface-bg p-5 text-left text-sm space-y-3">
-                <div className="flex items-center justify-between gap-3 border-b border-surface-border/60 pb-3">
-                    <span className="text-xs font-semibold uppercase tracking-wide text-text-muted">
+            <div className="w-full rounded-xl border border-surface-border bg-surface-bg/50 p-4 sm:p-5 text-left text-xs sm:text-sm space-y-2.5">
+                <div className="flex items-center justify-between gap-3 border-b border-surface-border/60 pb-2.5">
+                    <span className="font-medium text-text-muted">
                         Mã đơn hàng
                     </span>
-                    <span className="font-bold text-text-main">#{orderId}</span>
+                    <span className="font-mono font-semibold text-text-main">#{orderId}</span>
                 </div>
 
-                <div className="flex items-center justify-between gap-3 border-b border-surface-border/60 pb-3">
-                    <span className="text-xs font-semibold uppercase tracking-wide text-text-muted">
+                <div className="flex items-center justify-between gap-3 border-b border-surface-border/60 pb-2.5">
+                    <span className="font-medium text-text-muted">
                         Số tiền thanh toán
                     </span>
                     <span className="text-base font-bold text-price">
@@ -263,8 +263,8 @@ export function PaymentResultSection() {
                 </div>
 
                 {bankCode && (
-                    <div className="flex items-center justify-between gap-3 border-b border-surface-border/60 pb-3">
-                        <span className="text-xs font-semibold uppercase tracking-wide text-text-muted">
+                    <div className="flex items-center justify-between gap-3 border-b border-surface-border/60 pb-2.5">
+                        <span className="font-medium text-text-muted">
                             Ngân hàng / Ví
                         </span>
                         <span className="font-semibold text-text-main uppercase">{bankCode}</span>
@@ -272,8 +272,8 @@ export function PaymentResultSection() {
                 )}
 
                 {transactionNo && transactionNo !== '0' && (
-                    <div className="flex items-center justify-between gap-3 border-b border-surface-border/60 pb-3">
-                        <span className="text-xs font-semibold uppercase tracking-wide text-text-muted">
+                    <div className="flex items-center justify-between gap-3 border-b border-surface-border/60 pb-2.5">
+                        <span className="font-medium text-text-muted">
                             Mã giao dịch VNPay
                         </span>
                         <span className="font-mono text-xs text-text-sub">{transactionNo}</span>
@@ -281,14 +281,14 @@ export function PaymentResultSection() {
                 )}
 
                 <div className="flex items-center justify-between gap-3 pt-0.5">
-                    <span className="text-xs font-semibold uppercase tracking-wide text-text-muted">
+                    <span className="font-medium text-text-muted">
                         Trạng thái thanh toán
                     </span>
                     <span
-                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold ${
+                        className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
                             isSuccess
-                                ? 'bg-status-success-bg text-status-success'
-                                : 'bg-status-error-bg text-status-error'
+                                ? 'border border-status-success/25 bg-status-success-bg text-status-success'
+                                : 'border border-status-error/25 bg-status-error-bg text-status-error'
                         }`}
                     >
                         {isSuccess ? 'Đã thanh toán' : 'Chưa hoàn tất'}
@@ -297,25 +297,25 @@ export function PaymentResultSection() {
             </div>
 
             {/* Bộ nút CTA hành động */}
-            <div className="w-full space-y-2.5 pt-1">
+            <div className="w-full space-y-2 pt-1">
                 {isSuccess ? (
                     <>
                         <Button
                             type="button"
                             variant="primary"
                             onClick={() => router.push(ROUTES.USER.ORDERS)}
-                            className="w-full py-3 text-sm font-bold"
+                            className="w-full"
                         >
-                            <ClipboardList className="w-4 h-4 mr-2" />
+                            <ClipboardList className="w-4 h-4 mr-1.5" />
                             Xem lịch sử đơn hàng
                         </Button>
                         <Button
                             type="button"
                             variant="outline"
                             onClick={() => router.push(ROUTES.HOME)}
-                            className="w-full py-3 text-sm font-semibold"
+                            className="w-full"
                         >
-                            <ShoppingBag className="w-4 h-4 mr-2" />
+                            <ShoppingBag className="w-4 h-4 mr-1.5" />
                             Tiếp tục mua sắm
                         </Button>
                     </>
@@ -325,18 +325,18 @@ export function PaymentResultSection() {
                             type="button"
                             variant="primary"
                             onClick={() => router.push(ROUTES.USER.ORDERS)}
-                            className="w-full py-3 text-sm font-bold"
+                            className="w-full"
                         >
-                            <CreditCard className="w-4 h-4 mr-2" />
+                            <CreditCard className="w-4 h-4 mr-1.5" />
                             Vào đơn hàng để thanh toán lại
                         </Button>
                         <Button
                             type="button"
                             variant="outline"
                             onClick={() => router.push(ROUTES.HOME)}
-                            className="w-full py-3 text-sm font-semibold"
+                            className="w-full"
                         >
-                            <ShoppingBag className="w-4 h-4 mr-2" />
+                            <ShoppingBag className="w-4 h-4 mr-1.5" />
                             Về trang chủ
                         </Button>
                     </>

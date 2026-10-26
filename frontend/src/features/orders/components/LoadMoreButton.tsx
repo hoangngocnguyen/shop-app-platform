@@ -10,20 +10,20 @@ export function LoadMoreButton({ hasMore, isLoading, onLoadMore }: LoadMoreButto
     if (!hasMore) return null;
 
     return (
-        <div className="flex justify-center pt-4">
+        <div className="flex justify-center pt-3">
             <button
                 type="button"
                 onClick={onLoadMore}
                 disabled={isLoading}
-                className="inline-flex items-center gap-2 rounded-xl border border-surface-border bg-surface-card px-4 py-2.5 text-sm font-semibold text-text-main shadow-sm transition hover:bg-surface-bg disabled:cursor-not-allowed disabled:opacity-60"
+                className="inline-flex items-center gap-2 rounded-lg border border-surface-border bg-surface-card px-4 py-2 text-xs sm:text-sm font-medium text-text-main shadow-xs transition-colors hover:bg-surface-hover disabled:cursor-not-allowed disabled:opacity-50"
             >
                 {isLoading ? (
                     <>
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                        Đang tải...
+                        <Loader2 className="h-4 w-4 animate-spin text-primary" />
+                        <span>Đang tải thêm...</span>
                     </>
                 ) : (
-                    "Xem thêm"
+                    <span>Xem thêm đơn hàng</span>
                 )}
             </button>
         </div>

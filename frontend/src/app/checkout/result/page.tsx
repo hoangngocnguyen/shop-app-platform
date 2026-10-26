@@ -1,10 +1,13 @@
-import { PaymentResultSection } from '@/features/payment/vnpay/components/PaymentResult';
+import { Suspense } from 'react';
+import { PaymentResultSection, PaymentResultSkeleton } from '@/features/payment/vnpay';
 
 export default function CheckoutResultPage() {
     return (
-        <main className="checkout-shell">
-            <div className="checkout-card checkout-card--result">
-                <PaymentResultSection />
+        <main className="flex min-h-[80vh] items-center justify-center bg-surface-bg px-4 py-8 sm:px-6">
+            <div className="w-full max-w-md rounded-xl border border-surface-border bg-surface-card p-5 sm:p-6 shadow-xs">
+                <Suspense fallback={<PaymentResultSkeleton />}>
+                    <PaymentResultSection />
+                </Suspense>
             </div>
         </main>
     );

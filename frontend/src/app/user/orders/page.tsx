@@ -115,7 +115,7 @@ export default function UserOrdersPage() {
     );
 
     const handleCloseCancelModal = useCallback(() => {
-        if (isCancelling) return; // Đang submit thì không cho đóng
+        if (isCancelling) return;
         setIsCancelModalOpen(false);
         setCancelOrderId(null);
     }, [isCancelling]);
@@ -136,53 +136,63 @@ export default function UserOrdersPage() {
     };
 
     return (
-        <div className="min-h-screen bg-surface-bg px-4 py-8 sm:px-6 lg:px-8">
-            <div className="mx-auto max-w-5xl space-y-6">
-                <div className="flex items-center justify-between gap-3 rounded-3xl border border-surface-border bg-surface-card p-5 shadow-brand-sm">
+        <div className="min-h-screen bg-surface-bg px-4 py-6 sm:px-6 lg:px-8">
+            <div className="mx-auto max-w-4xl space-y-4 sm:space-y-5">
+                {/* Header Banner */}
+                <div className="flex items-center justify-between gap-3 rounded-xl border border-surface-border bg-surface-card p-4 sm:p-5 shadow-xs">
                     <div className="flex items-center gap-3">
-                        <Link href={ROUTES.HOME} className="rounded-xl border border-surface-border bg-surface-bg p-2 text-text-sub transition hover:text-primary">
+                        <Link
+                            href={ROUTES.HOME}
+                            className="rounded-lg border border-surface-border bg-surface-bg p-2 text-text-sub transition-colors hover:bg-surface-hover hover:text-text-main"
+                            title="Về trang chủ"
+                        >
                             <ArrowLeft className="h-4 w-4" />
                         </Link>
                         <div>
-                            <h1 className="text-2xl font-black text-text-main">Lịch sử đơn hàng</h1>
-                            <p className="text-sm text-text-sub">Theo dõi đơn hàng, trạng thái giao nhận và các thao tác cần thiết</p>
+                            <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-text-main">Lịch sử đơn hàng</h1>
+                            <p className="mt-0.5 text-xs sm:text-sm text-text-sub">Theo dõi đơn hàng, trạng thái giao nhận và quản lý thao tác</p>
                         </div>
                     </div>
 
-                    <div className="hidden items-center gap-2 rounded-xl border border-surface-border bg-surface-bg px-3 py-2 text-sm text-text-sub sm:flex">
+                    <div className="hidden items-center gap-2 rounded-lg border border-surface-border bg-surface-bg px-2.5 py-1.5 text-xs font-medium text-text-sub sm:flex">
                         <ShoppingBag className="h-4 w-4 text-primary" />
-                        {totalItems} đơn hàng
+                        <span>{totalItems} đơn hàng</span>
                     </div>
                 </div>
 
+                {/* Status Tabs */}
                 <OrderHistoryTabs
                     activeStatus={activeStatus}
                     onChange={(status) => setActiveStatus(status)}
                     counts={tabCounts}
                 />
 
+                {/* Error Banner */}
                 {error && (
-                    <div className="flex items-center gap-3 rounded-2xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700">
-                        <AlertCircle className="h-5 w-5" />
+                    <div className="flex items-center gap-2.5 rounded-lg border border-status-error/25 bg-status-error-bg p-3.5 text-xs sm:text-sm text-status-error">
+                        <AlertCircle className="h-4 w-4 shrink-0" />
                         <span>{error}</span>
                     </div>
                 )}
 
+                {/* List state */}
                 {isLoading && orders.length === 0 ? (
-                    <div className="flex min-h-[240px] items-center justify-center rounded-2xl border border-surface-border bg-surface-card">
-                        <div className="flex items-center gap-3 text-text-sub">
-                            <Loader2 className="h-5 w-5 animate-spin text-primary" />
+                    <div className="flex min-h-[220px] items-center justify-center rounded-xl border border-surface-border bg-surface-card p-8">
+                        <div className="flex items-center gap-2.5 text-xs sm:text-sm text-text-sub">
+                            <Loader2 className="h-4 w-4 animate-spin text-primary" />
                             <span>Đang tải lịch sử đơn hàng...</span>
                         </div>
                     </div>
                 ) : orders.length === 0 ? (
-                    <div className="flex min-h-[240px] flex-col items-center justify-center rounded-2xl border border-dashed border-surface-border bg-surface-card px-6 text-center">
-                        <PackageSearch className="mb-3 h-10 w-10 text-text-muted" />
-                        <h2 className="text-lg font-bold text-text-main">Chưa có đơn hàng nào</h2>
-                        <p className="mt-2 max-w-md text-sm text-text-sub">Các đơn hàng bạn đặt sẽ xuất hiện ở đây để bạn theo dõi và quản lý thuận tiện.</p>
+                    <div className="flex min-h-[220px] flex-col items-center justify-center rounded-xl border border-dashed border-surface-border bg-surface-card p-8 text-center">
+                        <PackageSearch className="mb-2.5 h-9 w-9 text-text-muted" />
+                        <h2 className="text-base font-semibold text-text-main">Chưa có đơn hàng nào</h2>
+                        <p className="mt-1 max-w-sm text-xs sm:text-sm text-text-sub">
+                            Các đơn hàng của bạn sẽ xuất hiện ở đây để bạn theo dõi và quản lý.
+                        </p>
                     </div>
                 ) : (
-                    <div className="space-y-4">
+                    <div className="space-y-3.5">
                         {orders.map((order) => (
                             <OrderHistoryCard
                                 key={order.order_id}

@@ -11,7 +11,7 @@ export function OrderStatusBadge({ status, className = "" }: OrderStatusBadgePro
 
     return (
         <span
-            className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold ${resolvedClassName} ${className}`.trim()}
+            className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${resolvedClassName} ${className}`.trim()}
         >
             {getStatusLabel(status)}
         </span>
@@ -28,7 +28,7 @@ export function PaymentStatusBadge({ status, className = "" }: PaymentStatusBadg
 
     return (
         <span
-            className={`inline-flex items-center rounded-full px-2.5 py-1 text-[11px] font-semibold ${resolvedClassName} ${className}`.trim()}
+            className={`inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-medium ${resolvedClassName} ${className}`.trim()}
         >
             {getPaymentStatusLabel(status)}
         </span>
