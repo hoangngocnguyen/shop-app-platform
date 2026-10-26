@@ -1,5 +1,6 @@
-import { CheckoutForm } from '@/features/payment/vnpay';
+import { redirect } from 'next/navigation';
+import { ROUTES } from '@/constants/routes';
 
-export default function CheckoutPage() {
-    return <CheckoutForm />;
+export default function PaymentPage() {
+    redirect(ROUTES.CHECKOUT);
 }

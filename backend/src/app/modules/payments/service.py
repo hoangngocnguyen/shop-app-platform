@@ -121,6 +121,27 @@ class PaymentService:
             message="Khởi tạo link thanh toán VNPAY thành công",
         )
 
+    def _mark_payment_success(
+        self, order: Any, transaction_no: str, source: str
+    ) -> bool:
+        """
+        Cập nhật trạng thái thanh toán đơn hàng thành công một cách an toàn và idempotent.
+        Trả về True nếu trạng thái được cập nhật mới, False nếu đã thanh toán trước đó.
+        """
+        if order.payment_status == PaymentStatus.PAID.value:
+            return False
+
+        order.payment_status = PaymentStatus.PAID.value
+        order.payment_date = datetime.now(UTC)
+        self.order_repo.add_order_log(
+            order_id=order.order_id,
+            status=order.status,
+            description=f"Thanh toán VNPAY thành công qua {source} (Mã GD: {transaction_no})",
+            user_id=order.user_id,
+        )
+        self.db.commit()
+        return True
+
     def handle_vnpay_ipn(self, params: dict[str, str]) -> dict[str, str]:
         """
         Xử lý Server-to-Server Webhook thông báo kết quả giao dịch từ VNPAY.
@@ -133,7 +154,8 @@ class PaymentService:
         txn_ref = params.get("vnp_TxnRef", "")
         order_id = txn_ref.split("_")[0] if "_" in txn_ref else txn_ref
 
-        order = self.order_repo.get_order_by_id(order_id)
+        # Sử dụng for_update=True để lock bản ghi đơn hàng, ngăn ngừa race condition
+        order = self.order_repo.get_order_by_id(order_id, for_update=True)
         if not order:
             return {"RspCode": "01", "Message": "Order not found"}
 
@@ -149,14 +171,7 @@ class PaymentService:
         transaction_no = params.get("vnp_TransactionNo", "N/A")
 
         if response_code == "00":
-            order.payment_status = PaymentStatus.PAID.value
-            order.payment_date = datetime.now(UTC)
-            self.order_repo.add_order_log(
-                order_id=order.order_id,
-                status=order.status,
-                description=f"Thanh toán VNPAY thành công qua IPN (Mã GD: {transaction_no})",
-                user_id=order.user_id,
-            )
+            self._mark_payment_success(order, transaction_no, source="IPN")
         else:
             order.payment_status = PaymentStatus.FAILED.value
             self.order_repo.add_order_log(
@@ -165,8 +180,8 @@ class PaymentService:
                 description=f"Thanh toán VNPAY thất bại qua IPN (Mã lỗi: {response_code})",
                 user_id=order.user_id,
             )
+            self.db.commit()
 
-        self.db.commit()
         return {"RspCode": "00", "Message": "Confirm Success"}
 
     def handle_vnpay_return(self, params: dict[str, str]) -> dict[str, Any]:
@@ -187,21 +202,15 @@ class PaymentService:
         amount = float(int(params.get("vnp_Amount", "0")) / 100)
         transaction_no = params.get("vnp_TransactionNo", "N/A")
 
-        order = self.order_repo.get_order_by_id(order_id)
-        if (
-            order
-            and response_code == "00"
-            and order.payment_status != PaymentStatus.PAID.value
-        ):
-            order.payment_status = PaymentStatus.PAID.value
-            order.payment_date = datetime.now(UTC)
-            self.order_repo.add_order_log(
-                order_id=order.order_id,
-                status=order.status,
-                description=f"Xác nhận thanh toán VNPAY thành công qua Return URL (Mã GD: {transaction_no})",
-                user_id=order.user_id,
-            )
-            self.db.commit()
+        # Sử dụng for_update=True để an toàn lock dòng với IPN song song
+        order = self.order_repo.get_order_by_id(order_id, for_update=True)
+        if order and response_code == "00":
+            # Kiểm tra tính toàn vẹn số tiền
+            vnp_amount = Decimal(int(params.get("vnp_Amount", "0")) / 100)
+            if vnp_amount == order.total:
+                self._mark_payment_success(
+                    order, transaction_no, source="Return URL"
+                )
 
         payload: dict[str, Any] = {
             "status": "Success" if response_code == "00" else "Failed",
