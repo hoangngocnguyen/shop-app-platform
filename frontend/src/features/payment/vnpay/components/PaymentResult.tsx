@@ -1,126 +1,347 @@
 'use client';
 
-import { Suspense, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import {
+    AlertCircle,
+    CheckCircle2,
+    ClipboardList,
+    CreditCard,
+    FileQuestion,
+    RotateCcw,
+    ShoppingBag,
+    XCircle,
+} from 'lucide-react';
 import { ROUTES } from '@/constants/routes';
+import { Button } from '@/components/ui/Button';
+import { EmptyState } from '@/components/ui/EmptyState';
+import { Skeleton } from '@/components/ui/Skeleton';
 import { verifyVNPayReturn } from '../api';
 import type { VerifyReturnResponse } from '../types';
 
-function PaymentResultContent() {
-    const searchParams = useSearchParams();
-    const router = useRouter();
+/**
+ * Bảng ánh xạ thông điệp phản hồi từ cổng VNPay thân thiện với người dùng
+ */
+const VNPAY_RESPONSE_MESSAGES: Record<string, string> = {
+    '00': 'Giao dịch thành công.',
+    '07': 'Trừ tiền thành công. Giao dịch bị nghi ngờ gian lận.',
+    '09': 'Thẻ/Tài khoản chưa đăng ký dịch vụ Internet Banking.',
+    '10': 'Xác thực OTP không thành công hoặc quá số lần quy định.',
+    '11': 'Đã hết thời gian chờ thanh toán. Vui lòng thử lại.',
+    '12': 'Thẻ hoặc tài khoản ngân hàng của bạn đang bị khóa.',
+    '13': 'Nhập sai mật khẩu xác thực quá số lần quy định.',
+    '24': 'Giao dịch đã được hủy theo yêu cầu của bạn.',
+    '51': 'Tài khoản không đủ số dư để thực hiện thanh toán.',
+    '65': 'Tài khoản đã vượt quá hạn mức giao dịch trong ngày.',
+    '75': 'Ngân hàng thanh toán đang trong thời gian bảo trì.',
+    '99': 'Lỗi không xác định từ hệ thống cổng thanh toán VNPay.',
+};
 
-    const [loading, setLoading] = useState(true);
-    const [result, setResult] = useState<VerifyReturnResponse | null>(null);
-    const [errorMsg, setErrorMsg] = useState<string | null>(null);
+const formatMoney = (value?: number | string) => {
+    if (value === undefined || value === null) return '—';
+    const num = typeof value === 'number' ? value : Number(value);
+    if (Number.isNaN(num)) return '—';
+    return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(num);
+};
 
-    useEffect(() => {
-        const verifyPayment = async () => {
-            try {
-                const params: Record<string, string> = {};
-                searchParams.forEach((value, key) => {
-                    params[key] = value;
-                });
-
-                if (Object.keys(params).length === 0) {
-                    setErrorMsg('Không tìm thấy tham số phản hồi từ VNPay.');
-                    setLoading(false);
-                    return;
-                }
-
-                const data = await verifyVNPayReturn(params);
-                setResult(data);
-            } catch (error: any) {
-                console.error('Lỗi xác minh thanh toán:', error);
-                setErrorMsg(error.response?.data?.detail || 'Chữ ký không hợp lệ hoặc có lỗi hệ thống.');
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        verifyPayment();
-    }, [searchParams]);
-
-    if (loading) {
-        return (
-            <div className="flex flex-col items-center gap-3 text-center text-text-sub">
-                <div className="h-12 w-12 animate-spin rounded-full border-4 border-surface-border border-t-primary" />
-                <p className="font-medium">Đang xác minh kết quả thanh toán từ VNPay...</p>
-            </div>
-        );
-    }
-
-    if (errorMsg) {
-        return (
-            <div className="flex flex-col items-center gap-4 text-center">
-                <div className="flex h-20 w-20 items-center justify-center rounded-full bg-red-50 text-5xl text-red-500">⚠️</div>
-                <h2 className="text-xl font-bold text-text-main">Giao dịch thất bại</h2>
-                <p className="text-sm text-red-600">{errorMsg}</p>
-                <div className="flex w-full flex-col gap-2 sm:flex-row">
-                    <button
-                        type="button"
-                        onClick={() => router.push(ROUTES.USER.ORDERS)}
-                        className="flex-1 rounded-lg bg-text-main px-6 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800"
-                    >
-                        Xem đơn hàng
-                    </button>
-                    <button
-                        type="button"
-                        onClick={() => router.push(ROUTES.HOME)}
-                        className="flex-1 rounded-lg border border-surface-border bg-white px-6 py-2.5 text-sm font-semibold text-text-main transition hover:bg-surface-bg"
-                    >
-                        Về trang chủ
-                    </button>
-                </div>
-            </div>
-        );
-    }
-
-    const isSuccess = result?.status === 'Success';
-
+/**
+ * 1. LOADING STATE - Skeleton mô phỏng toàn bộ thẻ Receipt
+ */
+export function PaymentResultSkeleton() {
     return (
-        <div className="flex flex-col items-center gap-5 text-center">
-            <div className={`flex h-20 w-20 items-center justify-center rounded-full text-5xl font-extrabold ${isSuccess ? 'bg-emerald-50 text-emerald-500' : 'bg-red-50 text-red-500'}`}>
-                {isSuccess ? '✓' : '✕'}
+        <div className="flex flex-col items-center space-y-6 text-center animate-pulse">
+            <Skeleton variant="circular" className="h-16 w-16" />
+            <div className="space-y-2 w-full flex flex-col items-center">
+                <Skeleton className="h-7 w-56" />
+                <Skeleton className="h-4 w-72" />
             </div>
-            <h2 className="text-2xl font-bold text-text-main">{isSuccess ? 'Thanh toán thành công!' : 'Thanh toán không thành công'}</h2>
-
-            {isSuccess ? (
-                <div className="w-full space-y-2 rounded-2xl border border-surface-border bg-surface-bg p-4 text-left text-sm text-text-sub">
-                    <p className="flex justify-between gap-3"><span className="font-semibold text-text-main">Mã đơn hàng:</span> <span>{result?.order_id || '—'}</span></p>
-                    <p className="flex justify-between gap-3"><span className="font-semibold text-text-main">Số tiền:</span> <span>{result?.amount?.toLocaleString('vi-VN') ?? '—'} VND</span></p>
-                    <p className="flex justify-between gap-3"><span className="font-semibold text-text-main">Mã phản hồi:</span> <span>{result?.response_code || '—'}</span></p>
+            <div className="w-full rounded-2xl border border-surface-border bg-surface-bg p-5 space-y-3.5">
+                <div className="flex justify-between items-center">
+                    <Skeleton className="h-4 w-24" />
+                    <Skeleton className="h-4 w-32" />
                 </div>
-            ) : (
-                <p className="text-text-sub">
-                    {result?.code ? `Mã lỗi phản hồi: ${result.code}` : result?.message || 'Đã xảy ra lỗi khi xử lý giao dịch.'}
-                </p>
-            )}
-
-            <div className="flex w-full flex-col gap-2 sm:flex-row">
-                <button
-                    type="button"
-                    onClick={() => router.push(ROUTES.HOME)}
-                    className="flex-1 rounded-xl bg-primary px-4 py-3 text-sm font-semibold text-primary-contrast shadow-md transition hover:bg-primary-hover"
-                >
-                    Tiếp tục mua sắm
-                </button>
-                <button
-                    type="button"
-                    onClick={() => router.push(ROUTES.USER.ORDERS)}
-                    className="flex-1 rounded-xl border border-surface-border bg-white px-4 py-3 text-sm font-semibold text-text-main transition hover:bg-surface-bg"
-                >
-                    Xem đơn hàng
-                </button>
+                <div className="flex justify-between items-center">
+                    <Skeleton className="h-4 w-20" />
+                    <Skeleton className="h-5 w-28" />
+                </div>
+                <div className="flex justify-between items-center">
+                    <Skeleton className="h-4 w-28" />
+                    <Skeleton className="h-4 w-20" />
+                </div>
+                <div className="flex justify-between items-center">
+                    <Skeleton className="h-4 w-32" />
+                    <Skeleton className="h-4 w-24" />
+                </div>
+            </div>
+            <div className="w-full space-y-2.5 pt-2">
+                <Skeleton className="h-11 w-full rounded-xl" />
+                <Skeleton className="h-11 w-full rounded-xl" />
             </div>
         </div>
     );
 }
 
+/**
+ * Component chính xử lý hiển thị kết quả VNPay Return
+ */
 export function PaymentResultSection() {
+    const searchParams = useSearchParams();
+    const router = useRouter();
+
+    const [isLoading, setIsLoading] = useState(true);
+    const [isRetrying, setIsRetrying] = useState(false);
+    const [result, setResult] = useState<VerifyReturnResponse | null>(null);
+    const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+    // Chuyển toàn bộ searchParams thành record
+    const queryParams = useMemo(() => {
+        const params: Record<string, string> = {};
+        searchParams.forEach((val, key) => {
+            params[key] = val;
+        });
+        return params;
+    }, [searchParams]);
+
+    const hasParams = useMemo(() => Object.keys(queryParams).length > 0, [queryParams]);
+
+    const handleVerify = useCallback(async () => {
+        if (!hasParams) {
+            setIsLoading(false);
+            return;
+        }
+
+        try {
+            setErrorMessage(null);
+            const data = await verifyVNPayReturn(queryParams);
+            setResult(data);
+        } catch (error: any) {
+            const apiMsg =
+                error?.response?.data?.message ||
+                error?.response?.data?.detail ||
+                'Chữ ký bảo mật không hợp lệ hoặc lỗi kết nối với máy chủ.';
+            setErrorMessage(apiMsg);
+        } finally {
+            setIsLoading(false);
+            setIsRetrying(false);
+        }
+    }, [hasParams, queryParams]);
+
+    useEffect(() => {
+        handleVerify();
+    }, [handleVerify]);
+
+    const handleRetry = () => {
+        setIsRetrying(true);
+        handleVerify();
+    };
+
+    // 1. Trạng thái Loading
+    if (isLoading) {
+        return <PaymentResultSkeleton />;
+    }
+
+    // 2. Trạng thái Empty: Người dùng vào thẳng trang mà không có tham số VNPay
+    if (!hasParams) {
+        return (
+            <EmptyState
+                icon={FileQuestion}
+                title="Không tìm thấy thông tin giao dịch"
+                description="Đường dẫn không chứa thông tin phản hồi từ cổng VNPay hoặc phiên giao dịch đã hết hạn."
+                action={{
+                    label: 'Xem đơn hàng của bạn',
+                    onClick: () => router.push(ROUTES.USER.ORDERS),
+                }}
+            />
+        );
+    }
+
+    // 3. Trạng thái Error: Lỗi mạng hoặc Checksum không hợp lệ
+    if (errorMessage) {
+        return (
+            <div className="flex flex-col items-center text-center space-y-6">
+                <div className="flex h-16 w-16 items-center justify-center rounded-full bg-status-error-bg text-status-error shadow-brand-sm">
+                    <AlertCircle className="h-9 w-9" />
+                </div>
+
+                <div className="space-y-1.5">
+                    <h2 className="text-2xl font-bold tracking-tight text-text-main">
+                        Xác minh giao dịch thất bại
+                    </h2>
+                    <p className="text-sm text-text-sub max-w-sm mx-auto">
+                        {errorMessage}
+                    </p>
+                </div>
+
+                <div className="w-full space-y-2.5 pt-2">
+                    <Button
+                        type="button"
+                        variant="primary"
+                        onClick={handleRetry}
+                        isLoading={isRetrying}
+                        className="w-full"
+                    >
+                        <RotateCcw className="w-4 h-4 mr-1.5" />
+                        Thử xác minh lại
+                    </Button>
+                    <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => router.push(ROUTES.USER.ORDERS)}
+                        className="w-full"
+                    >
+                        <ClipboardList className="w-4 h-4 mr-1.5" />
+                        Xem danh sách đơn hàng
+                    </Button>
+                </div>
+            </div>
+        );
+    }
+
+    // 4. Trạng thái Kết quả: Thành công hoặc Thất bại từ cổng VNPay
+    const responseCode = result?.response_code || queryParams.vnp_ResponseCode || '';
+    const isSuccess = result?.status === 'Success' || responseCode === '00';
+    const orderId = result?.order_id || queryParams.vnp_TxnRef?.split('_')[0] || '—';
+    const amount = result?.amount ?? (Number(queryParams.vnp_Amount || 0) / 100);
+    const transactionNo = queryParams.vnp_TransactionNo;
+    const bankCode = queryParams.vnp_BankCode;
+    const failureReason =
+        VNPAY_RESPONSE_MESSAGES[responseCode] ||
+        result?.message ||
+        'Giao dịch không thành công hoặc đã bị hủy bỏ.';
+
     return (
-        <Suspense fallback={<div className="flex items-center justify-center p-4 text-sm font-medium text-text-sub">Đang tải...</div>}>
-            <PaymentResultContent />
-        </Suspense>
+        <div className="flex flex-col items-center text-center space-y-6">
+            {/* Icon & Huy hiệu trạng thái */}
+            <div className="flex flex-col items-center gap-3">
+                <span className="inline-flex items-center justify-center rounded-full bg-primary-light px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-primary">
+                    Cổng thanh toán VNPAY
+                </span>
+
+                <div
+                    className={`flex h-16 w-16 items-center justify-center rounded-full shadow-brand-sm ${
+                        isSuccess
+                            ? 'bg-status-success-bg text-status-success'
+                            : 'bg-status-error-bg text-status-error'
+                    }`}
+                >
+                    {isSuccess ? (
+                        <CheckCircle2 className="h-9 w-9" />
+                    ) : (
+                        <XCircle className="h-9 w-9" />
+                    )}
+                </div>
+            </div>
+
+            {/* Tiêu đề & Diễn giải */}
+            <div className="space-y-1.5">
+                <h1 className="text-2xl font-black tracking-tight text-text-main sm:text-3xl">
+                    {isSuccess ? 'Thanh toán thành công!' : 'Thanh toán không thành công'}
+                </h1>
+                <p className="text-sm text-text-sub max-w-md mx-auto">
+                    {isSuccess
+                        ? 'Cảm ơn bạn! Đơn hàng đã được xác nhận thanh toán thành công và đang được chuẩn bị.'
+                        : failureReason}
+                </p>
+            </div>
+
+            {/* Thẻ Chi tiết biên lai (Receipt Card) */}
+            <div className="w-full rounded-2xl border border-surface-border bg-surface-bg p-5 text-left text-sm space-y-3">
+                <div className="flex items-center justify-between gap-3 border-b border-surface-border/60 pb-3">
+                    <span className="text-xs font-semibold uppercase tracking-wide text-text-muted">
+                        Mã đơn hàng
+                    </span>
+                    <span className="font-bold text-text-main">#{orderId}</span>
+                </div>
+
+                <div className="flex items-center justify-between gap-3 border-b border-surface-border/60 pb-3">
+                    <span className="text-xs font-semibold uppercase tracking-wide text-text-muted">
+                        Số tiền thanh toán
+                    </span>
+                    <span className="text-base font-bold text-price">
+                        {formatMoney(amount)}
+                    </span>
+                </div>
+
+                {bankCode && (
+                    <div className="flex items-center justify-between gap-3 border-b border-surface-border/60 pb-3">
+                        <span className="text-xs font-semibold uppercase tracking-wide text-text-muted">
+                            Ngân hàng / Ví
+                        </span>
+                        <span className="font-semibold text-text-main uppercase">{bankCode}</span>
+                    </div>
+                )}
+
+                {transactionNo && transactionNo !== '0' && (
+                    <div className="flex items-center justify-between gap-3 border-b border-surface-border/60 pb-3">
+                        <span className="text-xs font-semibold uppercase tracking-wide text-text-muted">
+                            Mã giao dịch VNPay
+                        </span>
+                        <span className="font-mono text-xs text-text-sub">{transactionNo}</span>
+                    </div>
+                )}
+
+                <div className="flex items-center justify-between gap-3 pt-0.5">
+                    <span className="text-xs font-semibold uppercase tracking-wide text-text-muted">
+                        Trạng thái thanh toán
+                    </span>
+                    <span
+                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold ${
+                            isSuccess
+                                ? 'bg-status-success-bg text-status-success'
+                                : 'bg-status-error-bg text-status-error'
+                        }`}
+                    >
+                        {isSuccess ? 'Đã thanh toán' : 'Chưa hoàn tất'}
+                    </span>
+                </div>
+            </div>
+
+            {/* Bộ nút CTA hành động */}
+            <div className="w-full space-y-2.5 pt-1">
+                {isSuccess ? (
+                    <>
+                        <Button
+                            type="button"
+                            variant="primary"
+                            onClick={() => router.push(ROUTES.USER.ORDERS)}
+                            className="w-full py-3 text-sm font-bold"
+                        >
+                            <ClipboardList className="w-4 h-4 mr-2" />
+                            Xem lịch sử đơn hàng
+                        </Button>
+                        <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() => router.push(ROUTES.HOME)}
+                            className="w-full py-3 text-sm font-semibold"
+                        >
+                            <ShoppingBag className="w-4 h-4 mr-2" />
+                            Tiếp tục mua sắm
+                        </Button>
+                    </>
+                ) : (
+                    <>
+                        <Button
+                            type="button"
+                            variant="primary"
+                            onClick={() => router.push(ROUTES.USER.ORDERS)}
+                            className="w-full py-3 text-sm font-bold"
+                        >
+                            <CreditCard className="w-4 h-4 mr-2" />
+                            Vào đơn hàng để thanh toán lại
+                        </Button>
+                        <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() => router.push(ROUTES.HOME)}
+                            className="w-full py-3 text-sm font-semibold"
+                        >
+                            <ShoppingBag className="w-4 h-4 mr-2" />
+                            Về trang chủ
+                        </Button>
+                    </>
+                )}
+            </div>
+        </div>
     );
 }
