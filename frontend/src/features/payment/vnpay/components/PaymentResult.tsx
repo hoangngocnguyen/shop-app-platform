@@ -88,11 +88,6 @@ export function PaymentResultSection() {
     const searchParams = useSearchParams();
     const router = useRouter();
 
-    const [isLoading, setIsLoading] = useState(true);
-    const [isRetrying, setIsRetrying] = useState(false);
-    const [result, setResult] = useState<VerifyReturnResponse | null>(null);
-    const [errorMessage, setErrorMessage] = useState<string | null>(null);
-
     // Chuyển toàn bộ searchParams thành record
     const queryParams = useMemo(() => {
         const params: Record<string, string> = {};
@@ -104,35 +99,48 @@ export function PaymentResultSection() {
 
     const hasParams = useMemo(() => Object.keys(queryParams).length > 0, [queryParams]);
 
-    const handleVerify = useCallback(async () => {
-        if (!hasParams) {
-            setIsLoading(false);
-            return;
-        }
-
-        try {
-            setErrorMessage(null);
-            const data = await verifyVNPayReturn(queryParams);
-            setResult(data);
-        } catch (error: any) {
-            const apiMsg =
-                error?.response?.data?.message ||
-                error?.response?.data?.detail ||
-                'Chữ ký bảo mật không hợp lệ hoặc lỗi kết nối với máy chủ.';
-            setErrorMessage(apiMsg);
-        } finally {
-            setIsLoading(false);
-            setIsRetrying(false);
-        }
-    }, [hasParams, queryParams]);
+    const [isLoading, setIsLoading] = useState(() => hasParams);
+    const [isRetrying, setIsRetrying] = useState(false);
+    const [result, setResult] = useState<VerifyReturnResponse | null>(null);
+    const [errorMessage, setErrorMessage] = useState<string | null>(null);
+    const [reloadKey, setReloadKey] = useState(0);
 
     useEffect(() => {
-        handleVerify();
-    }, [handleVerify]);
+        if (!hasParams) return;
+
+        let isCancelled = false;
+
+        verifyVNPayReturn(queryParams)
+            .then((data) => {
+                if (!isCancelled) {
+                    setResult(data);
+                    setErrorMessage(null);
+                    setIsLoading(false);
+                    setIsRetrying(false);
+                }
+            })
+            .catch((error: any) => {
+                if (!isCancelled) {
+                    const apiMsg =
+                        error?.response?.data?.message ||
+                        error?.response?.data?.detail ||
+                        'Chữ ký bảo mật không hợp lệ hoặc lỗi kết nối với máy chủ.';
+                    setErrorMessage(apiMsg);
+                    setIsLoading(false);
+                    setIsRetrying(false);
+                }
+            });
+
+        return () => {
+            isCancelled = true;
+        };
+    }, [hasParams, queryParams, reloadKey]);
 
     const handleRetry = () => {
         setIsRetrying(true);
-        handleVerify();
+        setIsLoading(true);
+        setErrorMessage(null);
+        setReloadKey((prev) => prev + 1);
     };
 
     // 1. Trạng thái Loading
@@ -218,11 +226,10 @@ export function PaymentResultSection() {
                 </span>
 
                 <div
-                    className={`flex h-14 w-14 items-center justify-center rounded-full ${
-                        isSuccess
-                            ? 'bg-status-success-bg text-status-success'
-                            : 'bg-status-error-bg text-status-error'
-                    }`}
+                    className={`flex h-14 w-14 items-center justify-center rounded-full ${isSuccess
+                        ? 'bg-status-success-bg text-status-success'
+                        : 'bg-status-error-bg text-status-error'
+                        }`}
                 >
                     {isSuccess ? (
                         <CheckCircle2 className="h-8 w-8" />
@@ -250,7 +257,7 @@ export function PaymentResultSection() {
                     <span className="font-medium text-text-muted">
                         Mã đơn hàng
                     </span>
-                    <span className="font-mono font-semibold text-text-main">#{orderId}</span>
+                    <span className="font-mono font-semibold text-text-main">{orderId}</span>
                 </div>
 
                 <div className="flex items-center justify-between gap-3 border-b border-surface-border/60 pb-2.5">
@@ -285,11 +292,10 @@ export function PaymentResultSection() {
                         Trạng thái thanh toán
                     </span>
                     <span
-                        className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
-                            isSuccess
-                                ? 'border border-status-success/25 bg-status-success-bg text-status-success'
-                                : 'border border-status-error/25 bg-status-error-bg text-status-error'
-                        }`}
+                        className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${isSuccess
+                            ? 'border border-status-success/25 bg-status-success-bg text-status-success'
+                            : 'border border-status-error/25 bg-status-error-bg text-status-error'
+                            }`}
                     >
                         {isSuccess ? 'Đã thanh toán' : 'Chưa hoàn tất'}
                     </span>

@@ -15,6 +15,7 @@ import { useOrderHistory } from "@/features/orders/hooks/useOrderHistory";
 import type { CustomerCancelReason, OrderDetailResponse, OrderStatus } from "@/features/orders/types";
 import { ROUTES } from "@/constants/routes";
 import { parseErrorMessage } from "@/lib/axios/parseError";
+import { paymentApi } from "@/features/payment/api";
 
 export default function UserOrdersPage() {
     const router = useRouter();
@@ -24,6 +25,7 @@ export default function UserOrdersPage() {
     const [isDetailLoading, setIsDetailLoading] = useState(false);
     const [isCompleting, setIsCompleting] = useState<string | null>(null);
     const [isCancelling, setIsCancelling] = useState<string | null>(null);
+    const [isPaying, setIsPaying] = useState<string | null>(null);
 
     // --- Cancel modal state ---
     const [cancelOrderId, setCancelOrderId] = useState<string | null>(null);
@@ -69,6 +71,22 @@ export default function UserOrdersPage() {
             }
             return nextValue;
         });
+    }, []);
+
+    const handlePayOrder = useCallback(async (orderId: string) => {
+        setIsPaying(orderId);
+        try {
+            const result = await paymentApi.createPayment({ order_id: orderId });
+            if (!result?.payment_url) {
+                toast.error("Không thể tạo liên kết thanh toán. Vui lòng thử lại.");
+                return;
+            }
+            window.location.href = result.payment_url;
+        } catch (err) {
+            toast.error(parseErrorMessage(err, "Có lỗi xảy ra khi tạo liên kết thanh toán."));
+        } finally {
+            setIsPaying(null);
+        }
     }, []);
 
     const handleCompleteOrder = useCallback(async (orderId: string) => {
@@ -201,8 +219,10 @@ export default function UserOrdersPage() {
                                 onToggle={handleToggleOrder}
                                 onComplete={handleCompleteOrder}
                                 onCancel={handleCancelOrder}
+                                onPay={handlePayOrder}
                                 isCompleting={isCompleting === order.order_id}
                                 isCancelling={isCancelling === order.order_id}
+                                isPaying={isPaying === order.order_id}
                             />
                         ))}
 
@@ -216,6 +236,8 @@ export default function UserOrdersPage() {
                 onClose={() => setSelectedOrderId(null)}
                 order={selectedOrder}
                 loading={isDetailLoading}
+                onPay={handlePayOrder}
+                isPaying={isPaying === selectedOrder?.order_id}
             />
 
             {/* Modal chọn lý do hủy đơn */}
