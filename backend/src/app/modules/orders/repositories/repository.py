@@ -154,7 +154,10 @@ class OrderRepository:
     # ==========================================================================
 
     def get_order_by_id(
-        self, order_id: str, user_id: UUID | None = None
+        self,
+        order_id: str,
+        user_id: UUID | None = None,
+        for_update: bool = False,
     ) -> Order | None:
         """
         Lấy thông tin chi tiết một đơn hàng kèm theo order_details, sản phẩm
@@ -170,6 +173,9 @@ class OrderRepository:
         )
         if user_id is not None:
             stmt = stmt.where(Order.user_id == user_id)
+
+        if for_update:
+            stmt = stmt.with_for_update()
 
         return self.db.scalar(stmt)
 

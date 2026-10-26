@@ -56,13 +56,22 @@ function PaymentResultContent() {
                 <div className="flex h-20 w-20 items-center justify-center rounded-full bg-red-50 text-5xl text-red-500">⚠️</div>
                 <h2 className="text-xl font-bold text-text-main">Giao dịch thất bại</h2>
                 <p className="text-sm text-red-600">{errorMsg}</p>
-                <button
-                    type="button"
-                    onClick={() => router.push(ROUTES.PAYMENT)}
-                    className="rounded-lg bg-text-main px-6 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800"
-                >
-                    Quay lại trang Payment
-                </button>
+                <div className="flex w-full flex-col gap-2 sm:flex-row">
+                    <button
+                        type="button"
+                        onClick={() => router.push(ROUTES.USER.ORDERS)}
+                        className="flex-1 rounded-lg bg-text-main px-6 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800"
+                    >
+                        Xem đơn hàng
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => router.push(ROUTES.HOME)}
+                        className="flex-1 rounded-lg border border-surface-border bg-white px-6 py-2.5 text-sm font-semibold text-text-main transition hover:bg-surface-bg"
+                    >
+                        Về trang chủ
+                    </button>
+                </div>
             </div>
         );
     }
@@ -88,13 +97,22 @@ function PaymentResultContent() {
                 </p>
             )}
 
-            <button
-                type="button"
-                onClick={() => router.push(ROUTES.PAYMENT)}
-                className="w-full rounded-xl bg-primary px-4 py-3 text-sm font-semibold text-primary-contrast shadow-md transition hover:bg-primary-hover"
-            >
-                Tiếp tục mua sắm
-            </button>
+            <div className="flex w-full flex-col gap-2 sm:flex-row">
+                <button
+                    type="button"
+                    onClick={() => router.push(ROUTES.HOME)}
+                    className="flex-1 rounded-xl bg-primary px-4 py-3 text-sm font-semibold text-primary-contrast shadow-md transition hover:bg-primary-hover"
+                >
+                    Tiếp tục mua sắm
+                </button>
+                <button
+                    type="button"
+                    onClick={() => router.push(ROUTES.USER.ORDERS)}
+                    className="flex-1 rounded-xl border border-surface-border bg-white px-4 py-3 text-sm font-semibold text-text-main transition hover:bg-surface-bg"
+                >
+                    Xem đơn hàng
+                </button>
+            </div>
         </div>
     );
 }

@@ -158,5 +158,77 @@ class TestPaymentService(unittest.TestCase):
         self.assertEqual(res["amount"], 250000.0)
 
 
+    def test_vnpay_idempotency_return_then_ipn(self):
+        """Return URL cập nhật trước, IPN gọi sau phải trả RspCode 02 (Already confirmed) và không ghi đè log."""
+        self.service.order_repo.get_order_by_id = MagicMock(return_value=self.mock_order)
+        self.service.order_repo.add_order_log = MagicMock()
+        self.mock_db.commit = MagicMock()
+
+        params = {
+            "vnp_TxnRef": "OD123456_12345",
+            "vnp_Amount": "25000000",
+            "vnp_ResponseCode": "00",
+            "vnp_TransactionNo": "12345678",
+        }
+
+        with patch("src.app.modules.payments.vnpay.service.VNPayService.validate_response", return_value=True):
+            # 1. Return URL đến trước
+            ret_res = self.service.handle_vnpay_return(params)
+            self.assertEqual(ret_res["status"], "Success")
+            self.assertEqual(self.mock_order.payment_status, PaymentStatus.PAID.value)
+            self.assertEqual(self.service.order_repo.add_order_log.call_count, 1)
+
+            # 2. IPN đến sau
+            ipn_res = self.service.handle_vnpay_ipn(params)
+            self.assertEqual(ipn_res["RspCode"], "02")
+            # add_order_log không được gọi thêm lần nào nữa (chỉ 1 lần duy nhất từ Return URL)
+            self.assertEqual(self.service.order_repo.add_order_log.call_count, 1)
+
+    def test_vnpay_idempotency_ipn_then_return(self):
+        """IPN cập nhật trước, Return URL redirect đến sau vẫn hiển thị Success nhưng không duplicate log."""
+        self.service.order_repo.get_order_by_id = MagicMock(return_value=self.mock_order)
+        self.service.order_repo.add_order_log = MagicMock()
+        self.mock_db.commit = MagicMock()
+
+        params = {
+            "vnp_TxnRef": "OD123456_12345",
+            "vnp_Amount": "25000000",
+            "vnp_ResponseCode": "00",
+            "vnp_TransactionNo": "12345678",
+        }
+
+        with patch("src.app.modules.payments.vnpay.service.VNPayService.validate_response", return_value=True):
+            # 1. IPN đến trước
+            ipn_res = self.service.handle_vnpay_ipn(params)
+            self.assertEqual(ipn_res["RspCode"], "00")
+            self.assertEqual(self.mock_order.payment_status, PaymentStatus.PAID.value)
+            self.assertEqual(self.service.order_repo.add_order_log.call_count, 1)
+
+            # 2. Return URL đến sau
+            ret_res = self.service.handle_vnpay_return(params)
+            self.assertEqual(ret_res["status"], "Success")
+            # add_order_log vẫn chỉ giữ đúng 1 lần từ IPN
+            self.assertEqual(self.service.order_repo.add_order_log.call_count, 1)
+
+    def test_vnpay_return_invalid_amount(self):
+        """Return URL với số tiền không khớp tổng đơn hàng không được cập nhật trạng thái PAID."""
+        self.service.order_repo.get_order_by_id = MagicMock(return_value=self.mock_order)
+        self.service.order_repo.add_order_log = MagicMock()
+
+        params = {
+            "vnp_TxnRef": "OD123456_12345",
+            "vnp_Amount": "10000000",  # 100,000 VND != 250,000 VND
+            "vnp_ResponseCode": "00",
+            "vnp_TransactionNo": "12345678",
+        }
+
+        with patch("src.app.modules.payments.vnpay.service.VNPayService.validate_response", return_value=True):
+            ret_res = self.service.handle_vnpay_return(params)
+
+        self.assertEqual(ret_res["status"], "Success")
+        self.assertEqual(self.mock_order.payment_status, "PENDING")
+        self.service.order_repo.add_order_log.assert_not_called()
+
+
 if __name__ == "__main__":
     unittest.main()
