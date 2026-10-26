@@ -1,3 +1,4 @@
+from datetime import UTC, datetime, timedelta
 import unittest
 import uuid
 from decimal import Decimal
@@ -28,6 +29,7 @@ class TestPaymentService(unittest.TestCase):
         self.mock_order.status = "PENDING"
         self.mock_order.payment_status = "PENDING"
         self.mock_order.payment_method = "COD"
+        self.mock_order.order_date = datetime.now(UTC)
 
     def test_payment_cod(self):
         self.service.order_repo.get_order_by_id = MagicMock(
@@ -90,6 +92,75 @@ class TestPaymentService(unittest.TestCase):
         with self.assertRaises(BadRequestException) as ctx:
             self.service.create_payment(user_id=self.user_id, request=req)
         self.assertEqual(ctx.exception.error_code, "ORDER_CANCELLED")
+
+    def test_payment_completed_order(self):
+        self.mock_order.status = "COMPLETED"
+        self.service.order_repo.get_order_by_id = MagicMock(
+            return_value=self.mock_order
+        )
+
+        req = CreatePaymentRequest(order_id="OD123456")
+
+        with self.assertRaises(BadRequestException) as ctx:
+            self.service.create_payment(user_id=self.user_id, request=req)
+        self.assertEqual(ctx.exception.error_code, "ORDER_COMPLETED")
+
+    def test_payment_invalid_status(self):
+        self.mock_order.status = "SHIPPING"
+        self.service.order_repo.get_order_by_id = MagicMock(
+            return_value=self.mock_order
+        )
+
+        req = CreatePaymentRequest(order_id="OD123456")
+
+        with self.assertRaises(BadRequestException) as ctx:
+            self.service.create_payment(user_id=self.user_id, request=req)
+        self.assertEqual(ctx.exception.error_code, "INVALID_ORDER_STATUS_FOR_PAYMENT")
+
+    def test_payment_refunded_order(self):
+        self.mock_order.payment_status = PaymentStatus.REFUNDED.value
+        self.service.order_repo.get_order_by_id = MagicMock(
+            return_value=self.mock_order
+        )
+
+        req = CreatePaymentRequest(order_id="OD123456")
+
+        with self.assertRaises(BadRequestException) as ctx:
+            self.service.create_payment(user_id=self.user_id, request=req)
+        self.assertEqual(ctx.exception.error_code, "ORDER_REFUNDED")
+
+    def test_payment_vnpay_timeout_cancels_and_restores_inventory(self):
+        self.mock_order.payment_method = "VNPAY"
+        self.mock_order.order_date = datetime.now(UTC) - timedelta(hours=25)
+        self.service.order_repo.get_order_by_id = MagicMock(
+            return_value=self.mock_order
+        )
+        self.service.order_repo.restore_inventory = MagicMock()
+        self.service.order_repo.cancel_order_record = MagicMock()
+
+        req = CreatePaymentRequest(order_id="OD123456")
+
+        with self.assertRaises(BadRequestException) as ctx:
+            self.service.create_payment(user_id=self.user_id, request=req)
+
+        self.assertEqual(ctx.exception.error_code, "PAYMENT_EXPIRED")
+        self.service.order_repo.restore_inventory.assert_called_once_with(order=self.mock_order)
+        self.service.order_repo.cancel_order_record.assert_called_once()
+        kwargs = self.service.order_repo.cancel_order_record.call_args.kwargs
+        self.assertEqual(kwargs["cancelled_by_type"], "SYSTEM")
+
+    def test_payment_cod_not_expired_after_24h(self):
+        self.mock_order.payment_method = "COD"
+        self.mock_order.order_date = datetime.now(UTC) - timedelta(hours=30)
+        self.service.order_repo.get_order_by_id = MagicMock(
+            return_value=self.mock_order
+        )
+
+        req = CreatePaymentRequest(order_id="OD123456")
+        res = self.service.create_payment(user_id=self.user_id, request=req)
+
+        self.assertEqual(res.payment_method, PaymentMethod.COD)
+        self.assertIn("COD", res.message)
 
     def test_payment_not_found(self):
         self.service.order_repo.get_order_by_id = MagicMock(return_value=None)
