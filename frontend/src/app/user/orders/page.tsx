@@ -4,17 +4,18 @@ import { useCallback, useEffect, useState } from "react";
 import { AlertCircle, ArrowLeft, Loader2, PackageSearch, ShoppingBag } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { confirm } from "@/common/stores/useConfirmStore";
 import { toast } from "@/common/stores/useToastStore";
 import { orderApi } from "@/features/orders/api";
 import { OrderHistoryCard } from "@/features/orders/components/OrderHistoryCard";
 import { OrderDetailModal } from "@/features/orders/components/OrderDetailModal";
+import { CancelOrderModal } from "@/features/orders/components/CancelOrderModal";
 import { OrderHistoryTabs } from "@/features/orders/components/OrderHistoryTabs";
 import { LoadMoreButton } from "@/features/orders/components/LoadMoreButton";
 import { useOrderHistory } from "@/features/orders/hooks/useOrderHistory";
 import type { CustomerCancelReason, OrderDetailResponse, OrderStatus } from "@/features/orders/types";
 import { ROUTES } from "@/constants/routes";
 import { parseErrorMessage } from "@/lib/axios/parseError";
+import { paymentApi } from "@/features/payment/api";
 
 export default function UserOrdersPage() {
     const router = useRouter();
@@ -24,6 +25,11 @@ export default function UserOrdersPage() {
     const [isDetailLoading, setIsDetailLoading] = useState(false);
     const [isCompleting, setIsCompleting] = useState<string | null>(null);
     const [isCancelling, setIsCancelling] = useState<string | null>(null);
+    const [isPaying, setIsPaying] = useState<string | null>(null);
+
+    // --- Cancel modal state ---
+    const [cancelOrderId, setCancelOrderId] = useState<string | null>(null);
+    const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
 
     useEffect(() => {
         if (!selectedOrderId) {
@@ -67,17 +73,23 @@ export default function UserOrdersPage() {
         });
     }, []);
 
+    const handlePayOrder = useCallback(async (orderId: string) => {
+        setIsPaying(orderId);
+        try {
+            const result = await paymentApi.createPayment({ order_id: orderId });
+            if (!result?.payment_url) {
+                toast.error("Không thể tạo liên kết thanh toán. Vui lòng thử lại.");
+                return;
+            }
+            window.location.href = result.payment_url;
+        } catch (err) {
+            toast.error(parseErrorMessage(err, "Có lỗi xảy ra khi tạo liên kết thanh toán."));
+        } finally {
+            setIsPaying(null);
+        }
+    }, []);
+
     const handleCompleteOrder = useCallback(async (orderId: string) => {
-        const confirmed = await confirm({
-            title: "Xác nhận đã nhận hàng",
-            message: "Bạn xác nhận đã nhận đủ hàng và muốn hoàn tất đơn này?",
-            confirmText: "Xác nhận",
-            cancelText: "Hủy",
-            variant: "info",
-        });
-
-        if (!confirmed) return;
-
         setIsCompleting(orderId);
         try {
             const result = await orderApi.completeOrder(orderId);
@@ -91,38 +103,40 @@ export default function UserOrdersPage() {
         }
     }, [router]);
 
-    const handleCancelOrder = useCallback(async (orderId: string) => {
-        const confirmed = await confirm({
-            title: "Hủy đơn hàng",
-            message: "Bạn muốn hủy đơn này? Vui lòng chọn lý do hủy để tiếp tục.",
-            confirmText: "Tiếp tục",
-            cancelText: "Hủy",
-            variant: "danger",
-        });
+    // Mở modal chọn lý do hủy
+    const handleCancelOrder = useCallback((orderId: string) => {
+        setCancelOrderId(orderId);
+        setIsCancelModalOpen(true);
+    }, []);
 
-        if (!confirmed) return;
-
-        setIsCancelling(orderId);
-        try {
-            const cancellationReasons = await orderApi.getCancellationReasons();
-            const reason = cancellationReasons.items?.[0];
-            if (!reason) {
-                toast.error("Không có lý do hủy phù hợp.");
-                return;
+    // Gọi API hủy sau khi user chọn lý do
+    const handleConfirmCancel = useCallback(
+        async (orderId: string, reasonCode: CustomerCancelReason, customReason?: string) => {
+            setIsCancelling(orderId);
+            try {
+                await orderApi.cancelOrder(orderId, {
+                    reason_code: reasonCode,
+                    custom_reason: customReason ?? null,
+                });
+                toast.success("Đã hủy đơn hàng thành công.");
+                setIsCancelModalOpen(false);
+                setCancelOrderId(null);
+                setSelectedOrderId((prev) => (prev === orderId ? null : prev));
+                router.refresh();
+            } catch (err) {
+                toast.error(parseErrorMessage(err, "Không thể hủy đơn hàng."));
+            } finally {
+                setIsCancelling(null);
             }
+        },
+        [router]
+    );
 
-            await orderApi.cancelOrder(orderId, {
-                reason_code: reason.value as CustomerCancelReason,
-            });
-            toast.success("Đã hủy đơn hàng thành công.");
-            setSelectedOrderId((prev) => (prev === orderId ? null : prev));
-            router.refresh();
-        } catch (err) {
-            toast.error(parseErrorMessage(err, "Không thể hủy đơn hàng."));
-        } finally {
-            setIsCancelling(null);
-        }
-    }, [router]);
+    const handleCloseCancelModal = useCallback(() => {
+        if (isCancelling) return;
+        setIsCancelModalOpen(false);
+        setCancelOrderId(null);
+    }, [isCancelling]);
 
     const statusOrder: OrderStatus[] = [
         "PENDING",
@@ -140,53 +154,63 @@ export default function UserOrdersPage() {
     };
 
     return (
-        <div className="min-h-screen bg-surface-bg px-4 py-8 sm:px-6 lg:px-8">
-            <div className="mx-auto max-w-5xl space-y-6">
-                <div className="flex items-center justify-between gap-3 rounded-3xl border border-surface-border bg-surface-card p-5 shadow-brand-sm">
+        <div className="min-h-screen bg-surface-bg px-4 py-6 sm:px-6 lg:px-8">
+            <div className="mx-auto max-w-4xl space-y-4 sm:space-y-5">
+                {/* Header Banner */}
+                <div className="flex items-center justify-between gap-3 rounded-xl border border-surface-border bg-surface-card p-4 sm:p-5 shadow-xs">
                     <div className="flex items-center gap-3">
-                        <Link href={ROUTES.HOME} className="rounded-xl border border-surface-border bg-surface-bg p-2 text-text-sub transition hover:text-primary">
+                        <Link
+                            href={ROUTES.HOME}
+                            className="rounded-lg border border-surface-border bg-surface-bg p-2 text-text-sub transition-colors hover:bg-surface-hover hover:text-text-main"
+                            title="Về trang chủ"
+                        >
                             <ArrowLeft className="h-4 w-4" />
                         </Link>
                         <div>
-                            <h1 className="text-2xl font-black text-text-main">Lịch sử đơn hàng</h1>
-                            <p className="text-sm text-text-sub">Theo dõi đơn hàng, trạng thái giao nhận và các thao tác cần thiết</p>
+                            <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-text-main">Lịch sử đơn hàng</h1>
+                            <p className="mt-0.5 text-xs sm:text-sm text-text-sub">Theo dõi đơn hàng, trạng thái giao nhận và quản lý thao tác</p>
                         </div>
                     </div>
 
-                    <div className="hidden items-center gap-2 rounded-xl border border-surface-border bg-surface-bg px-3 py-2 text-sm text-text-sub sm:flex">
+                    <div className="hidden items-center gap-2 rounded-lg border border-surface-border bg-surface-bg px-2.5 py-1.5 text-xs font-medium text-text-sub sm:flex">
                         <ShoppingBag className="h-4 w-4 text-primary" />
-                        {totalItems} đơn hàng
+                        <span>{totalItems} đơn hàng</span>
                     </div>
                 </div>
 
+                {/* Status Tabs */}
                 <OrderHistoryTabs
                     activeStatus={activeStatus}
                     onChange={(status) => setActiveStatus(status)}
                     counts={tabCounts}
                 />
 
+                {/* Error Banner */}
                 {error && (
-                    <div className="flex items-center gap-3 rounded-2xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700">
-                        <AlertCircle className="h-5 w-5" />
+                    <div className="flex items-center gap-2.5 rounded-lg border border-status-error/25 bg-status-error-bg p-3.5 text-xs sm:text-sm text-status-error">
+                        <AlertCircle className="h-4 w-4 shrink-0" />
                         <span>{error}</span>
                     </div>
                 )}
 
+                {/* List state */}
                 {isLoading && orders.length === 0 ? (
-                    <div className="flex min-h-[240px] items-center justify-center rounded-2xl border border-surface-border bg-surface-card">
-                        <div className="flex items-center gap-3 text-text-sub">
-                            <Loader2 className="h-5 w-5 animate-spin text-primary" />
+                    <div className="flex min-h-[220px] items-center justify-center rounded-xl border border-surface-border bg-surface-card p-8">
+                        <div className="flex items-center gap-2.5 text-xs sm:text-sm text-text-sub">
+                            <Loader2 className="h-4 w-4 animate-spin text-primary" />
                             <span>Đang tải lịch sử đơn hàng...</span>
                         </div>
                     </div>
                 ) : orders.length === 0 ? (
-                    <div className="flex min-h-[240px] flex-col items-center justify-center rounded-2xl border border-dashed border-surface-border bg-surface-card px-6 text-center">
-                        <PackageSearch className="mb-3 h-10 w-10 text-text-muted" />
-                        <h2 className="text-lg font-bold text-text-main">Chưa có đơn hàng nào</h2>
-                        <p className="mt-2 max-w-md text-sm text-text-sub">Các đơn hàng bạn đặt sẽ xuất hiện ở đây để bạn theo dõi và quản lý thuận tiện.</p>
+                    <div className="flex min-h-[220px] flex-col items-center justify-center rounded-xl border border-dashed border-surface-border bg-surface-card p-8 text-center">
+                        <PackageSearch className="mb-2.5 h-9 w-9 text-text-muted" />
+                        <h2 className="text-base font-semibold text-text-main">Chưa có đơn hàng nào</h2>
+                        <p className="mt-1 max-w-sm text-xs sm:text-sm text-text-sub">
+                            Các đơn hàng của bạn sẽ xuất hiện ở đây để bạn theo dõi và quản lý.
+                        </p>
                     </div>
                 ) : (
-                    <div className="space-y-4">
+                    <div className="space-y-3.5">
                         {orders.map((order) => (
                             <OrderHistoryCard
                                 key={order.order_id}
@@ -195,8 +219,10 @@ export default function UserOrdersPage() {
                                 onToggle={handleToggleOrder}
                                 onComplete={handleCompleteOrder}
                                 onCancel={handleCancelOrder}
+                                onPay={handlePayOrder}
                                 isCompleting={isCompleting === order.order_id}
                                 isCancelling={isCancelling === order.order_id}
+                                isPaying={isPaying === order.order_id}
                             />
                         ))}
 
@@ -210,6 +236,17 @@ export default function UserOrdersPage() {
                 onClose={() => setSelectedOrderId(null)}
                 order={selectedOrder}
                 loading={isDetailLoading}
+                onPay={handlePayOrder}
+                isPaying={isPaying === selectedOrder?.order_id}
+            />
+
+            {/* Modal chọn lý do hủy đơn */}
+            <CancelOrderModal
+                isOpen={isCancelModalOpen}
+                orderId={cancelOrderId}
+                onClose={handleCloseCancelModal}
+                onConfirm={handleConfirmCancel}
+                isSubmitting={isCancelling === cancelOrderId}
             />
         </div>
     );

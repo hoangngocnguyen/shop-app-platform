@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Search, ShoppingCart, User as UserIcon, LogOut, MapPin, ChevronDown } from "lucide-react";
+import { Search, ShoppingCart, ShoppingBag, User as UserIcon, LogOut, MapPin, ChevronDown } from "lucide-react";
 import { ROUTES } from "@/constants/routes";
 import { useAuthStore } from "@/features/auth/stores/useAuthStore";
 import { useCartStore } from "@/features/cart/stores";
@@ -57,7 +57,7 @@ export default function Header() {
     return (
         <header className="border-b border-surface-border bg-surface-card sticky top-0 z-50 shadow-xs">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 sm:h-20 flex items-center justify-between gap-3 sm:gap-6">
-                
+
                 {/* BRAND LOGO */}
                 <Link
                     href={ROUTES.HOME}
@@ -89,7 +89,7 @@ export default function Header() {
 
                 {/* ACTIONS: CART & USER */}
                 <div className="flex items-center gap-2 sm:gap-4 shrink-0">
-                    
+
                     {/* CART BUTTON */}
                     <Link
                         href={ROUTES.CART}
@@ -148,6 +148,14 @@ export default function Header() {
                                     >
                                         <MapPin className="w-4 h-4 text-primary" />
                                         <span>Địa chỉ giao hàng</span>
+                                    </Link>
+                                    <Link
+                                        href={ROUTES.USER.ORDERS}
+                                        onClick={() => setIsUserMenuOpen(false)}
+                                        className="flex items-center gap-2.5 px-4 py-2.5 text-xs text-text-sub hover:text-text-main hover:bg-surface-hover transition-colors"
+                                    >
+                                        <ShoppingBag className="w-4 h-4 text-primary" />
+                                        <span>Đơn hàng của bạn</span>
                                     </Link>
                                     <button
                                         onClick={handleLogout}
