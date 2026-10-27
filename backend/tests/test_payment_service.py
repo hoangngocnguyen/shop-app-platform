@@ -1,3 +1,4 @@
+from datetime import UTC, datetime, timedelta
 import unittest
 import uuid
 from decimal import Decimal
@@ -28,6 +29,7 @@ class TestPaymentService(unittest.TestCase):
         self.mock_order.status = "PENDING"
         self.mock_order.payment_status = "PENDING"
         self.mock_order.payment_method = "COD"
+        self.mock_order.order_date = datetime.now(UTC)
 
     def test_payment_cod(self):
         self.service.order_repo.get_order_by_id = MagicMock(
@@ -90,6 +92,75 @@ class TestPaymentService(unittest.TestCase):
         with self.assertRaises(BadRequestException) as ctx:
             self.service.create_payment(user_id=self.user_id, request=req)
         self.assertEqual(ctx.exception.error_code, "ORDER_CANCELLED")
+
+    def test_payment_completed_order(self):
+        self.mock_order.status = "COMPLETED"
+        self.service.order_repo.get_order_by_id = MagicMock(
+            return_value=self.mock_order
+        )
+
+        req = CreatePaymentRequest(order_id="OD123456")
+
+        with self.assertRaises(BadRequestException) as ctx:
+            self.service.create_payment(user_id=self.user_id, request=req)
+        self.assertEqual(ctx.exception.error_code, "ORDER_COMPLETED")
+
+    def test_payment_invalid_status(self):
+        self.mock_order.status = "SHIPPING"
+        self.service.order_repo.get_order_by_id = MagicMock(
+            return_value=self.mock_order
+        )
+
+        req = CreatePaymentRequest(order_id="OD123456")
+
+        with self.assertRaises(BadRequestException) as ctx:
+            self.service.create_payment(user_id=self.user_id, request=req)
+        self.assertEqual(ctx.exception.error_code, "INVALID_ORDER_STATUS_FOR_PAYMENT")
+
+    def test_payment_refunded_order(self):
+        self.mock_order.payment_status = PaymentStatus.REFUNDED.value
+        self.service.order_repo.get_order_by_id = MagicMock(
+            return_value=self.mock_order
+        )
+
+        req = CreatePaymentRequest(order_id="OD123456")
+
+        with self.assertRaises(BadRequestException) as ctx:
+            self.service.create_payment(user_id=self.user_id, request=req)
+        self.assertEqual(ctx.exception.error_code, "ORDER_REFUNDED")
+
+    def test_payment_vnpay_timeout_cancels_and_restores_inventory(self):
+        self.mock_order.payment_method = "VNPAY"
+        self.mock_order.order_date = datetime.now(UTC) - timedelta(hours=25)
+        self.service.order_repo.get_order_by_id = MagicMock(
+            return_value=self.mock_order
+        )
+        self.service.order_repo.restore_inventory = MagicMock()
+        self.service.order_repo.cancel_order_record = MagicMock()
+
+        req = CreatePaymentRequest(order_id="OD123456")
+
+        with self.assertRaises(BadRequestException) as ctx:
+            self.service.create_payment(user_id=self.user_id, request=req)
+
+        self.assertEqual(ctx.exception.error_code, "PAYMENT_EXPIRED")
+        self.service.order_repo.restore_inventory.assert_called_once_with(order=self.mock_order)
+        self.service.order_repo.cancel_order_record.assert_called_once()
+        kwargs = self.service.order_repo.cancel_order_record.call_args.kwargs
+        self.assertEqual(kwargs["cancelled_by_type"], "SYSTEM")
+
+    def test_payment_cod_not_expired_after_24h(self):
+        self.mock_order.payment_method = "COD"
+        self.mock_order.order_date = datetime.now(UTC) - timedelta(hours=30)
+        self.service.order_repo.get_order_by_id = MagicMock(
+            return_value=self.mock_order
+        )
+
+        req = CreatePaymentRequest(order_id="OD123456")
+        res = self.service.create_payment(user_id=self.user_id, request=req)
+
+        self.assertEqual(res.payment_method, PaymentMethod.COD)
+        self.assertIn("COD", res.message)
 
     def test_payment_not_found(self):
         self.service.order_repo.get_order_by_id = MagicMock(return_value=None)
@@ -156,6 +227,105 @@ class TestPaymentService(unittest.TestCase):
         self.assertEqual(res["status"], "Success")
         self.assertEqual(res["order_id"], "OD123456")
         self.assertEqual(res["amount"], 250000.0)
+
+
+    def test_vnpay_idempotency_return_then_ipn(self):
+        """Return URL cập nhật trước, IPN gọi sau phải trả RspCode 02 (Already confirmed) và không ghi đè log."""
+        self.service.order_repo.get_order_by_id = MagicMock(return_value=self.mock_order)
+        self.service.order_repo.add_order_log = MagicMock()
+        self.mock_db.commit = MagicMock()
+
+        params = {
+            "vnp_TxnRef": "OD123456_12345",
+            "vnp_Amount": "25000000",
+            "vnp_ResponseCode": "00",
+            "vnp_TransactionNo": "12345678",
+        }
+
+        with patch("src.app.modules.payments.vnpay.service.VNPayService.validate_response", return_value=True):
+            # 1. Return URL đến trước
+            ret_res = self.service.handle_vnpay_return(params)
+            self.assertEqual(ret_res["status"], "Success")
+            self.assertEqual(self.mock_order.payment_status, PaymentStatus.PAID.value)
+            self.assertEqual(self.service.order_repo.add_order_log.call_count, 1)
+            call_kwargs = self.service.order_repo.add_order_log.call_args.kwargs
+            self.assertEqual(call_kwargs["description"], "Thanh toán thành công qua VNPAY (Mã GD: 12345678)")
+            self.assertEqual(call_kwargs["extra_data"]["gateway"], "VNPAY")
+            self.assertEqual(call_kwargs["extra_data"]["source"], "Return URL")
+            self.assertEqual(call_kwargs["extra_data"]["transaction_no"], "12345678")
+
+            # 2. IPN đến sau
+            ipn_res = self.service.handle_vnpay_ipn(params)
+            self.assertEqual(ipn_res["RspCode"], "02")
+            # add_order_log không được gọi thêm lần nào nữa (chỉ 1 lần duy nhất từ Return URL)
+            self.assertEqual(self.service.order_repo.add_order_log.call_count, 1)
+
+    def test_vnpay_idempotency_ipn_then_return(self):
+        """IPN cập nhật trước, Return URL redirect đến sau vẫn hiển thị Success nhưng không duplicate log."""
+        self.service.order_repo.get_order_by_id = MagicMock(return_value=self.mock_order)
+        self.service.order_repo.add_order_log = MagicMock()
+        self.mock_db.commit = MagicMock()
+
+        params = {
+            "vnp_TxnRef": "OD123456_12345",
+            "vnp_Amount": "25000000",
+            "vnp_ResponseCode": "00",
+            "vnp_TransactionNo": "12345678",
+        }
+
+        with patch("src.app.modules.payments.vnpay.service.VNPayService.validate_response", return_value=True):
+            # 1. IPN đến trước
+            ipn_res = self.service.handle_vnpay_ipn(params)
+            self.assertEqual(ipn_res["RspCode"], "00")
+            self.assertEqual(self.mock_order.payment_status, PaymentStatus.PAID.value)
+            self.assertEqual(self.service.order_repo.add_order_log.call_count, 1)
+
+            # 2. Return URL đến sau
+            ret_res = self.service.handle_vnpay_return(params)
+            self.assertEqual(ret_res["status"], "Success")
+            # add_order_log vẫn chỉ giữ đúng 1 lần từ IPN
+            self.assertEqual(self.service.order_repo.add_order_log.call_count, 1)
+
+    def test_vnpay_ipn_failure(self):
+        self.service.order_repo.get_order_by_id = MagicMock(return_value=self.mock_order)
+        self.service.order_repo.add_order_log = MagicMock()
+        params = {
+            "vnp_TxnRef": "OD123456_12345",
+            "vnp_Amount": "25000000",
+            "vnp_ResponseCode": "07",
+            "vnp_TransactionNo": "12345678",
+        }
+        with patch("src.app.modules.payments.vnpay.service.VNPayService.validate_response", return_value=True):
+            res = self.service.handle_vnpay_ipn(params)
+
+        self.assertEqual(res["RspCode"], "00")
+        self.assertEqual(self.mock_order.payment_status, PaymentStatus.FAILED.value)
+        self.service.order_repo.add_order_log.assert_called_once()
+        call_kwargs = self.service.order_repo.add_order_log.call_args.kwargs
+        self.assertEqual(call_kwargs["description"], "Thanh toán qua VNPAY không thành công")
+        self.assertEqual(call_kwargs["extra_data"]["gateway"], "VNPAY")
+        self.assertEqual(call_kwargs["extra_data"]["source"], "IPN")
+        self.assertEqual(call_kwargs["extra_data"]["response_code"], "07")
+
+
+    def test_vnpay_return_invalid_amount(self):
+        """Return URL với số tiền không khớp tổng đơn hàng không được cập nhật trạng thái PAID."""
+        self.service.order_repo.get_order_by_id = MagicMock(return_value=self.mock_order)
+        self.service.order_repo.add_order_log = MagicMock()
+
+        params = {
+            "vnp_TxnRef": "OD123456_12345",
+            "vnp_Amount": "10000000",  # 100,000 VND != 250,000 VND
+            "vnp_ResponseCode": "00",
+            "vnp_TransactionNo": "12345678",
+        }
+
+        with patch("src.app.modules.payments.vnpay.service.VNPayService.validate_response", return_value=True):
+            ret_res = self.service.handle_vnpay_return(params)
+
+        self.assertEqual(ret_res["status"], "Success")
+        self.assertEqual(self.mock_order.payment_status, "PENDING")
+        self.service.order_repo.add_order_log.assert_not_called()
 
 
 if __name__ == "__main__":

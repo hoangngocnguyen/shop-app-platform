@@ -1,6 +1,7 @@
 import {
     ORDER_STATUS,
     ORDER_STATUS_LABELS,
+    PAYMENT_METHOD,
     PAYMENT_STATUS,
     PAYMENT_STATUS_LABELS,
     type OrderStatus,
@@ -11,24 +12,27 @@ export const ORDER_STATUS_OPTIONS = Object.values(ORDER_STATUS) as OrderStatus[]
 export const PAYMENT_STATUS_OPTIONS = Object.values(PAYMENT_STATUS) as PaymentStatus[];
 
 export const STATUS_STYLES: Record<OrderStatus, string> = {
-    [ORDER_STATUS.PENDING]: "border border-amber-200 bg-amber-50 text-amber-700",
-    [ORDER_STATUS.PROCESSING]: "border border-sky-200 bg-sky-50 text-sky-700",
-    [ORDER_STATUS.SHIPPING]: "border border-indigo-200 bg-indigo-50 text-indigo-700",
-    [ORDER_STATUS.DELIVERED]: "border border-teal-200 bg-teal-50 text-teal-700",
-    [ORDER_STATUS.COMPLETED]: "border border-emerald-200 bg-emerald-50 text-emerald-700",
-    [ORDER_STATUS.CANCELLED]: "border border-rose-200 bg-rose-50 text-rose-700",
-    [ORDER_STATUS.RETURNED]: "border border-slate-200 bg-slate-100 text-slate-700",
+    [ORDER_STATUS.PENDING]: "border border-status-warning/25 bg-status-warning-bg text-status-warning",
+    [ORDER_STATUS.PROCESSING]: "border border-status-info/25 bg-status-info-bg text-status-info",
+    [ORDER_STATUS.SHIPPING]: "border border-status-info/35 bg-status-info-bg text-status-info",
+    [ORDER_STATUS.DELIVERED]: "border border-primary/25 bg-primary-light text-primary",
+    [ORDER_STATUS.COMPLETED]: "border border-status-success/25 bg-status-success-bg text-status-success",
+    [ORDER_STATUS.CANCELLED]: "border border-status-error/25 bg-status-error-bg text-status-error",
+    [ORDER_STATUS.RETURNED]: "border border-surface-border bg-surface-hover text-text-sub",
 };
 
 export const PAYMENT_STATUS_STYLES: Record<PaymentStatus, string> = {
-    [PAYMENT_STATUS.PENDING]: "border border-amber-200 bg-amber-50 text-amber-700",
-    [PAYMENT_STATUS.PAID]: "border border-emerald-200 bg-emerald-50 text-emerald-700",
-    [PAYMENT_STATUS.FAILED]: "border border-rose-200 bg-rose-50 text-rose-700",
-    [PAYMENT_STATUS.REFUNDED]: "border border-slate-200 bg-slate-100 text-slate-700",
+    [PAYMENT_STATUS.PENDING]: "border border-status-warning/25 bg-status-warning-bg text-status-warning",
+    [PAYMENT_STATUS.PAID]: "border border-status-success/25 bg-status-success-bg text-status-success",
+    [PAYMENT_STATUS.FAILED]: "border border-status-error/25 bg-status-error-bg text-status-error",
+    [PAYMENT_STATUS.REFUNDED]: "border border-surface-border bg-surface-hover text-text-sub",
 };
 
 export function getStatusLabel(status?: string | null): string {
     if (!status) return "Không xác định";
+    if (status in PAYMENT_STATUS_LABELS) {
+        return PAYMENT_STATUS_LABELS[status as PaymentStatus];
+    }
     return ORDER_STATUS_LABELS[status as OrderStatus] ?? status;
 }
 
@@ -38,13 +42,16 @@ export function getPaymentStatusLabel(status?: string | null): string {
 }
 
 export function getOrderStatusClass(status?: string | null): string {
-    if (!status) return "border border-slate-200 bg-slate-100 text-slate-700";
-    return STATUS_STYLES[status as OrderStatus] ?? "border border-slate-200 bg-slate-100 text-slate-700";
+    if (!status) return "border border-surface-border bg-surface-hover text-text-sub";
+    if (status in PAYMENT_STATUS_STYLES) {
+        return PAYMENT_STATUS_STYLES[status as PaymentStatus];
+    }
+    return STATUS_STYLES[status as OrderStatus] ?? "border border-surface-border bg-surface-hover text-text-sub";
 }
 
 export function getPaymentStatusClass(status?: string | null): string {
-    if (!status) return "border border-slate-200 bg-slate-100 text-slate-700";
-    return PAYMENT_STATUS_STYLES[status as PaymentStatus] ?? "border border-slate-200 bg-slate-100 text-slate-700";
+    if (!status) return "border border-surface-border bg-surface-hover text-text-sub";
+    return PAYMENT_STATUS_STYLES[status as PaymentStatus] ?? "border border-surface-border bg-surface-hover text-text-sub";
 }
 
 export function formatMoney(value: number | string | null | undefined): string {
@@ -85,4 +92,34 @@ export function canCompleteOrder(status?: string | null): boolean {
     return ([ORDER_STATUS.SHIPPING, ORDER_STATUS.DELIVERED] as OrderStatus[]).includes(
         status as OrderStatus,
     );
+}
+
+export function canPayOrder(
+    paymentMethod?: string | null,
+    paymentStatus?: string | null,
+    orderStatus?: string | null
+): boolean {
+    if (!paymentMethod || !orderStatus) return false;
+
+    // 1. Chỉ các phương thức thanh toán Online mới cho phép thanh toán lại (tránh COD)
+    const ONLINE_PAYMENT_METHODS = [PAYMENT_METHOD.VNPAY]; // Sau này có thể thêm MOMO, ZALOPAY...
+    const isOnlinePayment = ONLINE_PAYMENT_METHODS.includes(paymentMethod.toUpperCase() as any);
+
+    // 2. Kiểm tra trạng thái thanh toán (Chưa trả tiền và Chưa bị hoàn tiền)
+    const isPaid = paymentStatus?.toUpperCase() === PAYMENT_STATUS.PAID;
+    const isRefunded = paymentStatus?.toUpperCase() === PAYMENT_STATUS.REFUNDED;
+
+    // 3. Các trạng thái đơn hàng KHÔNG ĐƯỢC PHÉP thanh toán lại nữa
+    const BLOCKED_ORDER_STATUSES: string[] = [
+        ORDER_STATUS.CANCELLED,
+        ORDER_STATUS.COMPLETED,
+        ORDER_STATUS.RETURNED,
+        ORDER_STATUS.DELIVERED,
+        ORDER_STATUS.SHIPPING,
+        ORDER_STATUS.PROCESSING,
+    ];
+
+    const isBlockedStatus = BLOCKED_ORDER_STATUSES.includes(orderStatus.toUpperCase());
+
+    return isOnlinePayment && !isPaid && !isRefunded && !isBlockedStatus;
 }

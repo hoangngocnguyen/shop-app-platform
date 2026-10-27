@@ -351,9 +351,11 @@ class OrderService:
 
         logs_response: list[OrderLogResponse] = []
         for log in sorted(order.order_logs, key=lambda l: l.log_date):
-            log_status = OrderStatus.PENDING
+            log_status: OrderStatus | str = OrderStatus.PENDING
             if log.status and log.status in OrderStatus._value2member_map_:
                 log_status = OrderStatus(log.status)
+            elif log.status:
+                log_status = log.status
 
             logs_response.append(
                 OrderLogResponse(
@@ -489,7 +491,8 @@ class OrderService:
                 error_code="INVALID_ORDER_STATE",
             )
 
-        # Định dạng chuỗi lý do hủy chuẩn hóa
+        # Tách display_reason (lưu vào cancel_reason - hiển thị cho user/FE)
+        # và log_reason (đầy đủ mã + chi tiết - audit trail nội bộ)
         reason_code_str = request.reason_code.value
         reason_label = CANCEL_REASON_TEXT.get(reason_code_str, reason_code_str)
 
@@ -498,24 +501,26 @@ class OrderService:
         )
 
         if request.reason_code == CustomerCancelReason.OTHER:
-            formatted_reason = f"[{reason_code_str}] Lý do khác: {custom_reason}"
+            display_reason = f"Lý do khác: {custom_reason}" if custom_reason else "Lý do khác"
+            log_reason = f"[{reason_code_str}] Lý do khác: {custom_reason}"
         elif custom_reason:
-            formatted_reason = (
-                f"[{reason_code_str}] {reason_label} (Chi tiết: {custom_reason})"
-            )
+            display_reason = f"{reason_label} ({custom_reason})"
+            log_reason = f"[{reason_code_str}] {reason_label} (Chi tiết: {custom_reason})"
         else:
-            formatted_reason = f"[{reason_code_str}] {reason_label}"
+            display_reason = reason_label
+            log_reason = f"[{reason_code_str}] {reason_label}"
 
         # 1. Hoàn trả tồn kho cho các sản phẩm trong đơn
         self.repository.restore_inventory(order=order)
 
         # 2. Cập nhật trạng thái và thông tin hủy
+        # cancel_reason lưu display_reason sạch cho FE; log_desc đầy đủ cho audit/admin
         cancelled_now = datetime.now(UTC)
-        log_desc = f"Khách hàng hủy đơn hàng. Lý do: {formatted_reason}. Tồn kho đã được hoàn trả."
+        log_desc = f"Khách hàng hủy đơn hàng. Lý do: {log_reason}. Tồn kho đã được hoàn trả."
 
         updated_order = self.repository.cancel_order_record(
             order=order,
-            cancel_reason=formatted_reason,
+            cancel_reason=display_reason,
             cancelled_by_type=CancelledByType.CUSTOMER.value,
             cancelled_by_id=user_id,
             cancelled_at=cancelled_now,
@@ -562,19 +567,21 @@ class OrderService:
         note = request.note.strip() if request.note is not None else ""
 
         if note:
-            formatted_reason = f"[{reason_code_str}] {reason_label} ({note})"
+            display_reason = f"{reason_label} ({note})"
+            log_reason = f"[{reason_code_str}] {reason_label} ({note})"
         else:
-            formatted_reason = f"[{reason_code_str}] {reason_label}"
+            display_reason = reason_label
+            log_reason = f"[{reason_code_str}] {reason_label}"
 
         # Hoàn tồn kho
         self.repository.restore_inventory(order=order)
 
         cancelled_now = datetime.now(UTC)
-        log_desc = f"Hệ thống tự động hủy đơn hàng. Lý do: {formatted_reason}."
+        log_desc = f"Hệ thống tự động hủy đơn hàng. Lý do: {log_reason}."
 
         updated_order = self.repository.cancel_order_record(
             order=order,
-            cancel_reason=formatted_reason,
+            cancel_reason=display_reason,
             cancelled_by_type=CancelledByType.SYSTEM.value,
             cancelled_by_id=None,
             cancelled_at=cancelled_now,

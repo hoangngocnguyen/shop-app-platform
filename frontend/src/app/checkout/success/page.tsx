@@ -6,7 +6,6 @@ import Link from "next/link";
 import { CheckCircle2, ClipboardList, CreditCard, Loader2, ShoppingBag } from "lucide-react";
 import { toast } from "@/common/stores/useToastStore";
 import { useOrderStore } from "@/features/orders/stores";
-import { orderApi } from "@/features/orders/api";
 import { paymentApi } from "@/features/payment/api";
 import {
     ORDER_STATUS,
@@ -57,7 +56,7 @@ const buildFallbackOrderDetail = (orderIdValue: string, createdOrderValue?: { or
 
 export default function OrderSuccessPage() {
     return (
-        <Suspense fallback={<div className="flex min-h-screen items-center justify-center bg-surface-bg px-4 text-sm text-text-sub">Đang tải kết quả đơn hàng...</div>}>
+        <Suspense fallback={<div className="flex min-h-[80vh] items-center justify-center bg-surface-bg px-4 text-xs sm:text-sm text-text-sub">Đang tải kết quả đơn hàng...</div>}>
             <OrderSuccessContent />
         </Suspense>
     );
@@ -134,9 +133,9 @@ function OrderSuccessContent() {
 
     if (isLoading && !detail) {
         return (
-            <main className="flex min-h-screen items-center justify-center bg-surface-bg px-4">
-                <div className="flex items-center gap-3 rounded-2xl border border-surface-border bg-surface-card px-5 py-4 text-sm font-medium text-text-sub shadow-brand-sm">
-                    <Loader2 className="h-5 w-5 animate-spin text-primary" />
+            <main className="flex min-h-[80vh] items-center justify-center bg-surface-bg px-4">
+                <div className="flex items-center gap-2.5 rounded-xl border border-surface-border bg-surface-card px-4 py-3 text-xs sm:text-sm font-medium text-text-sub shadow-xs">
+                    <Loader2 className="h-4 w-4 animate-spin text-primary" />
                     Đang tải thông tin đơn hàng...
                 </div>
             </main>
@@ -144,57 +143,57 @@ function OrderSuccessContent() {
     }
 
     return (
-        <main className="flex min-h-screen items-center justify-center bg-surface-bg px-4 py-8 sm:px-6">
-            <div className="w-full max-w-2xl rounded-3xl border border-surface-border bg-surface-card p-6 shadow-brand-md sm:p-8">
-                <div className="mb-6 flex justify-center">
-                    <div className="flex h-16 w-16 items-center justify-center rounded-full bg-status-success-bg text-status-success shadow-brand-sm">
-                        <CheckCircle2 className="h-9 w-9" />
+        <main className="flex min-h-[80vh] items-center justify-center bg-surface-bg px-4 py-8 sm:px-6">
+            <div className="w-full max-w-lg rounded-xl border border-surface-border bg-surface-card p-5 sm:p-7 shadow-xs">
+                <div className="mb-4 flex justify-center">
+                    <div className="flex h-14 w-14 items-center justify-center rounded-full bg-status-success-bg text-status-success">
+                        <CheckCircle2 className="h-8 w-8" />
                     </div>
                 </div>
 
-                <div className="text-center">
-                    <h1 className="text-2xl font-black tracking-tight text-text-main sm:text-3xl">Đặt hàng thành công</h1>
-                    <p className="mt-2 text-sm text-text-sub">Đơn hàng của bạn đã được tạo và đang chờ xử lý.</p>
+                <div className="text-center space-y-1">
+                    <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-text-main">Đặt hàng thành công</h1>
+                    <p className="text-xs sm:text-sm text-text-sub">Đơn hàng của bạn đã được tạo và đang chờ xử lý.</p>
                 </div>
 
-                <div className="mt-6 rounded-2xl border border-surface-border bg-surface-bg p-5">
-                    <div className="grid gap-4 sm:grid-cols-2">
-                        <div>
-                            <p className="text-xs font-semibold uppercase tracking-wide text-text-muted">Mã đơn hàng</p>
-                            <p className="mt-1 text-base font-bold text-text-main">#{renderState.order_id}</p>
+                <div className="mt-5 rounded-xl border border-surface-border bg-surface-bg/50 p-4 sm:p-5">
+                    <div className="grid gap-3.5 sm:grid-cols-2">
+                        <div className="col-span-2">
+                            <p className="text-xs font-medium text-text-muted">Mã đơn hàng</p>
+                            <p className="mt-0.5 font-mono text-sm sm:text-base  text-text-main">{renderState.order_id}</p>
                         </div>
                         <div>
-                            <p className="text-xs font-semibold uppercase tracking-wide text-text-muted">Tổng tiền</p>
-                            <p className="mt-1 text-base font-bold text-text-main">{formatMoney(renderState.total_amount)}</p>
+                            <p className="text-xs font-medium text-text-muted">Tổng thanh toán</p>
+                            <p className="mt-0.5 text-sm sm:text-base font-bold text-price">{formatMoney(renderState.total_amount)}</p>
                         </div>
                         <div>
-                            <p className="text-xs font-semibold uppercase tracking-wide text-text-muted">Thanh toán</p>
-                            <p className="mt-1 text-base font-bold text-text-main">{paymentMethodLabel}</p>
+                            <p className="text-xs font-medium text-text-muted">Phương thức thanh toán</p>
+                            <p className="mt-0.5 text-xs sm:text-sm font-medium text-text-main">{paymentMethodLabel}</p>
                         </div>
                         <div>
-                            <p className="text-xs font-semibold uppercase tracking-wide text-text-muted">Trạng thái</p>
-                            <p className="mt-1 text-base font-bold text-text-main">{ORDER_STATUS_LABELS[renderState.status] ?? renderState.status}</p>
+                            <p className="text-xs font-medium text-text-muted">Trạng thái đơn hàng</p>
+                            <p className="mt-0.5 text-xs sm:text-sm font-medium text-text-main">{ORDER_STATUS_LABELS[renderState.status] ?? renderState.status}</p>
                         </div>
                     </div>
                 </div>
 
-                <div className="mt-6 space-y-3">
+                <div className="mt-5 space-y-2">
                     {canPayNow ? (
                         <button
                             type="button"
                             onClick={handlePayNow}
                             disabled={isPaying}
-                            className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-primary px-4 py-3.5 text-sm font-bold text-primary-contrast shadow-brand-sm transition hover:bg-primary-hover disabled:cursor-not-allowed disabled:bg-surface-border disabled:text-text-muted"
+                            className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-primary hover:bg-primary-hover px-4 py-2.5 text-sm font-semibold text-primary-contrast shadow-xs transition-colors disabled:cursor-not-allowed disabled:opacity-50"
                         >
                             {isPaying ? (
                                 <>
                                     <Loader2 className="h-4 w-4 animate-spin" />
-                                    Đang chuyển tới cổng thanh toán...
+                                    <span>Đang chuyển tới cổng thanh toán...</span>
                                 </>
                             ) : (
                                 <>
                                     <CreditCard className="h-4 w-4" />
-                                    Thanh toán ngay
+                                    <span>Thanh toán ngay</span>
                                 </>
                             )}
                         </button>
@@ -202,18 +201,18 @@ function OrderSuccessContent() {
 
                     <Link
                         href="/user/orders"
-                        className="inline-flex w-full items-center justify-center gap-2 rounded-2xl border border-surface-border bg-surface-bg px-4 py-3.5 text-sm font-bold text-text-main transition hover:border-primary/40 hover:text-primary"
+                        className="inline-flex w-full items-center justify-center gap-2 rounded-lg border border-surface-border bg-surface-card hover:bg-surface-hover px-4 py-2.5 text-sm font-medium text-text-main transition-colors"
                     >
                         <ClipboardList className="h-4 w-4" />
-                        Xem lịch sử đơn hàng
+                        <span>Xem lịch sử đơn hàng</span>
                     </Link>
 
                     <Link
                         href="/"
-                        className="inline-flex w-full items-center justify-center gap-2 rounded-2xl border border-surface-border bg-surface-bg px-4 py-3.5 text-sm font-bold text-text-main transition hover:border-primary/40 hover:text-primary"
+                        className="inline-flex w-full items-center justify-center gap-2 rounded-lg border border-surface-border bg-surface-card hover:bg-surface-hover px-4 py-2.5 text-sm font-medium text-text-main transition-colors"
                     >
                         <ShoppingBag className="h-4 w-4" />
-                        Tiếp tục mua sắm
+                        <span>Tiếp tục mua sắm</span>
                     </Link>
                 </div>
             </div>

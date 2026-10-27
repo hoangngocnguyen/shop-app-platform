@@ -1,6 +1,9 @@
+"""HTTP routes for payments management and gateway integrations."""
+
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, Request
+from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 
 from src.app.core.database import get_db
@@ -11,15 +14,12 @@ from src.app.modules.payments.schemas import (
     CreatePaymentResponse,
 )
 from src.app.modules.payments.service import PaymentService
-from src.app.modules.payments.vnpay.router import router as vnpay_router
+from src.app.modules.payments.vnpay.service import VNPayService
 
 router = APIRouter(
     prefix="/payments",
     tags=["Payment Management"],
 )
-
-# Gom các sub-router cổng thanh toán (VNPAY)
-router.include_router(vnpay_router)
 
 
 @router.post(
@@ -50,4 +50,64 @@ def create_payment(
     return success_response(
         data=result,
         message=result.message,
+    )
+
+
+# =============================================================================
+# VNPAY GATEWAY ENDPOINTS (Tập trung tại payments router)
+# =============================================================================
+
+
+@router.get(
+    "/vnpay/vnpay-return",
+    summary="Xác thực kết quả thanh toán từ VNPay sau khi redirect",
+    tags=["Cổng thanh toán VNPAY"],
+)
+@router.get(
+    "/vnpay/return",
+    summary="Xác thực kết quả thanh toán từ VNPay sau khi redirect",
+    tags=["Cổng thanh toán VNPAY"],
+    include_in_schema=False,
+)
+def vnpay_return(
+    request: Request,
+    db: Session = Depends(get_db),
+):
+    """
+    Xác thực kết quả thanh toán từ VNPay sau khi khách hàng chuyển hướng trở lại.
+    Đồng thời tự động cập nhật trạng thái đơn hàng.
+    """
+    params = dict(request.query_params)
+    vnpay_service = VNPayService(db=db)
+    payload = vnpay_service.handle_return(params)
+
+    return success_response(
+        data=payload,
+        message="Xác thực kết quả thanh toán VNPay thành công",
+    )
+
+
+@router.get(
+    "/vnpay/vnpay-ipn",
+    summary="Xử lý Server-to-Server Webhook từ VNPAY",
+    tags=["Cổng thanh toán VNPAY"],
+)
+@router.get(
+    "/vnpay/ipn",
+    summary="Xử lý Server-to-Server Webhook từ VNPAY",
+    tags=["Cổng thanh toán VNPAY"],
+    include_in_schema=False,
+)
+def vnpay_ipn(
+    request: Request,
+    db: Session = Depends(get_db),
+):
+    """Handle VNPay's server-to-server payment notification (IPN)."""
+    params = dict(request.query_params)
+    vnpay_service = VNPayService(db=db)
+    result = vnpay_service.handle_ipn(params)
+
+    return JSONResponse(
+        status_code=200,
+        content=result,
     )

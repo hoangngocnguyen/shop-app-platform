@@ -18,6 +18,11 @@ docs/
 │   ├── instruction.md                   # Cheatsheet & các lệnh khởi chạy Next.js (pnpm dev, build)
 │   └── standards.md                     # Quy chuẩn phát triển Frontend (Feature-Driven, 4 UI States, Zod)
 │
+├── modules/order/                        # 📌 TÀI LIỆU NGHIỆP VỤ ĐƠN HÀNG & THANH TOÁN
+│   ├── checkout.md                      # Luồng Stateless Preview & Reorder
+│   ├── order.md                         # Vòng đời Đơn hàng, State Machine, Hủy đơn & Audit
+│   └── payment.md                       # Điều phối Thanh toán, Tích hợp VNPAY HMAC-SHA512 & Webhook IPN
+│
 └── README.md                            # Bản đồ điều hướng tài liệu tổng quan (File này)
 ```
 

@@ -2,9 +2,10 @@ import uuid
 from datetime import UTC, datetime
 from decimal import Decimal
 from enum import Enum
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from sqlalchemy import (
+    JSON,
     DateTime,
     ForeignKey,
     Integer,
@@ -313,6 +314,13 @@ class OrderLog(Base):
         String(255),
         nullable=True,
         comment="Mô tả chi tiết hành động / diễn biến",
+    )
+
+    extra_data: Mapped[dict[str, Any] | None] = mapped_column(
+        JSON,
+        nullable=True,
+        default=None,
+        comment="Metadata kỹ thuật chi tiết của sự kiện (dạng JSON)",
     )
 
     user_id: Mapped[uuid.UUID | None] = mapped_column(
