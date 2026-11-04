@@ -49,8 +49,6 @@ const NAV_ITEMS: AdminNavItem[] = [
     label: "Đơn hàng",
     href: ROUTES.ADMIN.ORDERS,
     icon: ShoppingCart,
-    badge: "Sắp có",
-    disabled: true,
   },
   {
     id: "users",
