@@ -104,8 +104,10 @@ class AdminOrderService:
                     payment_method=PaymentMethod(order.payment_method),
                     payment_status=PaymentStatus(order.payment_status),
                     payment_date=order.payment_date,
+                    total=order.total,
                     total_amount=order.total,
                     total_items=sum(detail.quantity for detail in order.order_details) or 1,
+                    order_date=order.order_date,
                     created_at=order.order_date,
                     delivered_at=order.delivered_at,
                     cancel_reason=order.cancel_reason,
@@ -135,6 +137,7 @@ class AdminOrderService:
             OrderStatusCountDTO(
                 status="ALL",
                 label="Tất cả đơn hàng",
+                label_vi="Tất cả đơn hàng",
                 count=total_all,
             )
         ]
@@ -144,6 +147,7 @@ class AdminOrderService:
                 OrderStatusCountDTO(
                     status=s.value,
                     label=ORDER_STATUS_LABELS.get(s.value, s.value),
+                    label_vi=ORDER_STATUS_LABELS.get(s.value, s.value),
                     count=counts.get(s.value, 0),
                 )
             )

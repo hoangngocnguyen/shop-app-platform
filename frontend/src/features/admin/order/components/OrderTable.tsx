@@ -59,7 +59,8 @@ export const OrderTable: React.FC<OrderTableProps> = ({
         orders.length > 0 &&
         orders.every((order) => selectedOrderIds.includes(order.order_id));
 
-    const formatDate = (dateStr: string) => {
+    const formatDate = (dateStr?: string | null) => {
+        if (!dateStr) return "-";
         try {
             const date = new Date(dateStr);
             return new Intl.DateTimeFormat("vi-VN", {
@@ -210,10 +211,10 @@ export const OrderTable: React.FC<OrderTableProps> = ({
                                                 <Phone className="w-3 h-3 text-text-muted shrink-0" />
                                                 <span>{order.shipping_phone}</span>
                                             </div>
-                                            <div className="text-[11px] text-text-muted truncate max-w-xs mt-0.5 flex items-center gap-1" title={`${order.shipping_address_line}, ${order.shipping_ward_name}, ${order.shipping_province_name}`}>
+                                            <div className="text-[11px] text-text-muted truncate max-w-xs mt-0.5 flex items-center gap-1" title={`${order.shipping_address_line ? `${order.shipping_address_line}, ` : ""}${order.shipping_ward_name ? `${order.shipping_ward_name}, ` : ""}${order.shipping_province_name}`}>
                                                 <MapPin className="w-3 h-3 text-text-muted shrink-0" />
                                                 <span className="truncate">
-                                                    {order.shipping_ward_name}, {order.shipping_province_name}
+                                                    {order.shipping_ward_name ? `${order.shipping_ward_name}, ` : ""}{order.shipping_province_name}
                                                 </span>
                                             </div>
                                         </td>
@@ -258,14 +259,14 @@ export const OrderTable: React.FC<OrderTableProps> = ({
                                         <td className="px-4 py-3.5 text-text-sub text-xs whitespace-nowrap">
                                             <div className="flex items-center gap-1">
                                                 <Calendar className="w-3.5 h-3.5 text-text-muted shrink-0" />
-                                                <span>{formatDate(order.order_date)}</span>
+                                                <span>{formatDate(order.created_at || order.order_date)}</span>
                                             </div>
                                         </td>
 
                                         {/* Tổng tiền */}
                                         <td className="px-4 py-3.5 font-bold text-text-main whitespace-nowrap">
                                             <span className="text-rose-600 dark:text-rose-400 font-extrabold text-sm">
-                                                {formatMoney(order.total)}
+                                                {formatMoney(order.total_amount ?? order.total)}
                                             </span>
                                         </td>
 

@@ -270,6 +270,7 @@ class OrderStatusCountDTO(BaseModel):
 
     status: str = Field(..., description="Mã trạng thái đơn hàng (hoặc 'ALL' cho tất cả)")
     label: str = Field(..., description="Nhãn tiếng Việt của trạng thái")
+    label_vi: str | None = Field(default=None, description="Nhãn tiếng Việt của trạng thái")
     count: int = Field(default=0, ge=0, description="Số lượng đơn hàng thuộc trạng thái này")
 
     model_config = ConfigDict(from_attributes=True)
@@ -289,8 +290,10 @@ class AdminOrderSummaryResponse(BaseModel):
     payment_method: PaymentMethod = Field(..., description="Phương thức thanh toán")
     payment_status: PaymentStatus = Field(..., description="Trạng thái thanh toán")
     payment_date: datetime | None = Field(default=None, description="Thời điểm thanh toán thành công")
+    total: Decimal | None = Field(default=None, ge=0, description="Tổng tiền đơn hàng")
     total_amount: Decimal = Field(..., ge=0, description="Tổng tiền đơn hàng")
     total_items: int = Field(..., ge=1, description="Tổng số lượng sản phẩm")
+    order_date: datetime | None = Field(default=None, description="Thời gian tạo đơn hàng")
     created_at: datetime = Field(..., description="Thời gian tạo đơn hàng")
     delivered_at: datetime | None = Field(default=None, description="Thời gian giao hàng thành công")
     cancel_reason: str | None = Field(default=None, description="Lý do hủy đơn nếu có")
