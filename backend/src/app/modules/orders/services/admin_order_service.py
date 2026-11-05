@@ -1,5 +1,6 @@
 from datetime import UTC, datetime
 from decimal import Decimal
+from typing import Any
 from uuid import UUID
 
 from src.app.core.exceptions import AppException, NotFoundException
@@ -26,6 +27,35 @@ from src.app.modules.orders.schemas.order_responses import (
     OrderLogResponse,
     OrderStatusCountDTO,
 )
+
+
+def _safe_order_status(val: Any) -> OrderStatus:
+    if isinstance(val, OrderStatus):
+        return val
+    try:
+        return OrderStatus(str(val))
+    except (ValueError, TypeError):
+        return OrderStatus.PENDING
+
+
+def _safe_payment_method(val: Any) -> PaymentMethod:
+    if isinstance(val, PaymentMethod):
+        return val
+    try:
+        return PaymentMethod(str(val))
+    except (ValueError, TypeError):
+        return PaymentMethod.COD
+
+
+def _safe_payment_status(val: Any) -> PaymentStatus:
+    if isinstance(val, PaymentStatus):
+        return val
+    try:
+        return PaymentStatus(str(val))
+    except (ValueError, TypeError):
+        if str(val).upper() in ("CANCELLED", "CANCELED"):
+            return PaymentStatus.FAILED
+        return PaymentStatus.PENDING
 
 
 class AdminOrderService:
@@ -100,9 +130,9 @@ class AdminOrderService:
                     shipping_recipient_name=order.shipping_recipient_name,
                     shipping_phone=order.shipping_phone,
                     shipping_province_name=order.shipping_province_name,
-                    status=OrderStatus(order.status),
-                    payment_method=PaymentMethod(order.payment_method),
-                    payment_status=PaymentStatus(order.payment_status),
+                    status=_safe_order_status(order.status),
+                    payment_method=_safe_payment_method(order.payment_method),
+                    payment_status=_safe_payment_status(order.payment_status),
                     payment_date=order.payment_date,
                     total=order.total,
                     total_amount=order.total,
@@ -193,9 +223,9 @@ class AdminOrderService:
         return OrderDetailResponse(
             order_id=order.order_id,
             user_id=order.user_id,
-            payment_method=PaymentMethod(order.payment_method),
-            payment_status=PaymentStatus(order.payment_status),
-            status=OrderStatus(order.status),
+            payment_method=_safe_payment_method(order.payment_method),
+            payment_status=_safe_payment_status(order.payment_status),
+            status=_safe_order_status(order.status),
             address_id=order.address_id,
             shipping_recipient_name=order.shipping_recipient_name,
             shipping_phone=order.shipping_phone,
