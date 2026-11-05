@@ -73,6 +73,12 @@ class User(Base):
         comment="Trạng thái khóa (False: Hoạt động, True: Khóa)",
     )
 
+    block_reason: Mapped[str | None] = mapped_column(
+        String(500),
+        nullable=True,
+        comment="Lý do khóa tài khoản",
+    )
+
     avatar_url: Mapped[str | None] = mapped_column(
         String(255),
         nullable=True,
