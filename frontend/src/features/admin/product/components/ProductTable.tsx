@@ -241,7 +241,7 @@ export const ProductTable: React.FC<ProductTableProps> = ({
                           <button
                             type="button"
                             onClick={() => onViewDetail(product)}
-                            className="w-full text-left font-semibold text-sm text-text-main hover:text-primary transition-colors line-clamp-3 [overflow-wrap:anywhere] cursor-pointer"
+                            className="w-full text-left font-semibold text-sm text-text-main hover:text-primary transition-colors line-clamp-2 max-w-[280px] break-words cursor-pointer"
                             title={product.product_name}
                           >
                             {product.product_name}
@@ -301,7 +301,7 @@ export const ProductTable: React.FC<ProductTableProps> = ({
                     {/* Stock Status */}
                     <td className="py-3 px-4 text-center">
                       <span
-                        className={`inline-flex items-center gap-1 px-2.5 py-0.5 text-xs font-semibold rounded-full border ${isOutOfStock
+                        className={`inline-flex items-center gap-1 px-2.5 py-0.5 text-xs font-semibold rounded-full border whitespace-nowrap ${isOutOfStock
                           ? "bg-status-error-bg text-status-error border-status-error/20"
                           : isLowStock
                             ? "bg-status-warning-bg text-status-warning border-status-warning/20"
