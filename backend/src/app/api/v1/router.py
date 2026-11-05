@@ -1,5 +1,6 @@
 from fastapi import APIRouter
 
+from src.app.modules.admin.users.router import router as admin_users_router
 from src.app.modules.auth.router import router as auth_router
 from src.app.modules.carts.router import router as cart_router
 from src.app.modules.categories.admin_router import admin_category_router
@@ -29,6 +30,7 @@ api_v1_router.include_router(admin_category_router)
 api_v1_router.include_router(auth_router)
 api_v1_router.include_router(locations_router)
 api_v1_router.include_router(users_router)
+api_v1_router.include_router(admin_users_router)  # <-- Đã thêm router Admin Users ở đây
 api_v1_router.include_router(shipping_addresses_router)
 api_v1_router.include_router(cart_router)
 api_v1_router.include_router(checkout_router)
