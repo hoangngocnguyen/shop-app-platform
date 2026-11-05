@@ -94,28 +94,28 @@ export const OrderTable: React.FC<OrderTableProps> = ({
                                     />
                                 </div>
                             </th>
-                            <th scope="col" className="px-4 py-3.5">
+                            <th scope="col" className="w-36 px-4 py-3.5 whitespace-nowrap">
                                 Mã đơn hàng
                             </th>
-                            <th scope="col" className="px-4 py-3.5">
+                            <th scope="col" className="w-56 max-w-[220px] px-4 py-3.5 whitespace-nowrap">
                                 Khách hàng & Địa chỉ
                             </th>
-                            <th scope="col" className="px-4 py-3.5">
+                            <th scope="col" className="w-60 max-w-[240px] px-4 py-3.5 whitespace-nowrap">
                                 Sản phẩm
                             </th>
-                            <th scope="col" className="px-4 py-3.5">
+                            <th scope="col" className="w-32 px-4 py-3.5 whitespace-nowrap">
                                 Ngày đặt
                             </th>
-                            <th scope="col" className="px-4 py-3.5">
+                            <th scope="col" className="w-28 px-4 py-3.5 whitespace-nowrap">
                                 Tổng tiền
                             </th>
-                            <th scope="col" className="px-4 py-3.5">
+                            <th scope="col" className="w-32 px-4 py-3.5 whitespace-nowrap">
                                 Thanh toán
                             </th>
-                            <th scope="col" className="px-4 py-3.5">
+                            <th scope="col" className="w-32 px-4 py-3.5 whitespace-nowrap">
                                 Trạng thái
                             </th>
-                            <th scope="col" className="px-4 py-3.5 text-center">
+                            <th scope="col" className="w-28 px-4 py-3.5 text-center whitespace-nowrap">
                                 Thao tác
                             </th>
                         </tr>
@@ -202,16 +202,16 @@ export const OrderTable: React.FC<OrderTableProps> = ({
                                         </td>
 
                                         {/* Khách hàng & Địa chỉ */}
-                                        <td className="px-4 py-3.5">
-                                            <div className="font-semibold text-text-main flex items-center gap-1.5">
+                                        <td className="px-4 py-3.5 w-56 max-w-[220px]">
+                                            <div className="font-semibold text-text-main flex items-center gap-1.5 truncate" title={order.shipping_recipient_name}>
                                                 <UserIcon className="w-3.5 h-3.5 text-text-muted shrink-0" />
-                                                <span>{order.shipping_recipient_name}</span>
+                                                <span className="truncate">{order.shipping_recipient_name}</span>
                                             </div>
-                                            <div className="text-[11px] text-text-sub flex items-center gap-1 mt-0.5">
+                                            <div className="text-[11px] text-text-sub flex items-center gap-1 mt-0.5 truncate">
                                                 <Phone className="w-3 h-3 text-text-muted shrink-0" />
                                                 <span>{order.shipping_phone}</span>
                                             </div>
-                                            <div className="text-[11px] text-text-muted truncate max-w-xs mt-0.5 flex items-center gap-1" title={`${order.shipping_address_line ? `${order.shipping_address_line}, ` : ""}${order.shipping_ward_name ? `${order.shipping_ward_name}, ` : ""}${order.shipping_province_name}`}>
+                                            <div className="text-[11px] text-text-muted truncate max-w-[190px] mt-0.5 flex items-center gap-1" title={`${order.shipping_address_line ? `${order.shipping_address_line}, ` : ""}${order.shipping_ward_name ? `${order.shipping_ward_name}, ` : ""}${order.shipping_province_name}`}>
                                                 <MapPin className="w-3 h-3 text-text-muted shrink-0" />
                                                 <span className="truncate">
                                                     {order.shipping_ward_name ? `${order.shipping_ward_name}, ` : ""}{order.shipping_province_name}
@@ -220,27 +220,27 @@ export const OrderTable: React.FC<OrderTableProps> = ({
                                         </td>
 
                                         {/* Sản phẩm */}
-                                        <td className="px-4 py-3.5">
+                                        <td className="px-4 py-3.5 w-60 max-w-[240px]">
                                             {firstItem ? (
-                                                <div className="flex items-center gap-2.5 max-w-xs">
-                                                    <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded-lg border border-surface-border bg-surface-bg flex items-center justify-center">
+                                                <div className="flex items-center gap-2.5 max-w-[220px]">
+                                                    <div className="relative h-9 w-9 shrink-0 overflow-hidden rounded-lg border border-surface-border bg-surface-bg flex items-center justify-center">
                                                         {firstItem.product_image ? (
                                                             <Image
                                                                 src={firstItem.product_image}
                                                                 alt={firstItem.product_name}
                                                                 fill
-                                                                sizes="40px"
+                                                                sizes="36px"
                                                                 className="object-cover"
                                                             />
                                                         ) : (
-                                                            <Package className="w-5 h-5 text-text-muted" />
+                                                            <Package className="w-4 h-4 text-text-muted" />
                                                         )}
                                                     </div>
-                                                    <div className="truncate">
+                                                    <div className="min-w-0 flex-1 truncate">
                                                         <p className="truncate font-medium text-text-main text-xs" title={firstItem.product_name}>
                                                             {firstItem.product_name}
                                                         </p>
-                                                        <p className="text-[11px] text-text-muted">
+                                                        <p className="text-[11px] text-text-muted truncate">
                                                             {formatMoney(firstItem.price)} x {firstItem.quantity}
                                                             {order.total_items > firstItem.quantity && (
                                                                 <span className="ml-1 text-primary font-semibold">
