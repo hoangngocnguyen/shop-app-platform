@@ -1,0 +1,1 @@
+export { UserManagement as AdminUsersFeature } from "./components/UserManagement";
