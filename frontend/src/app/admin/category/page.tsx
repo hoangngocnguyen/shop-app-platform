@@ -143,55 +143,36 @@ export default function AdminCategoryPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-[var(--color-surface-bg,#f8fafc)] via-white to-[var(--color-surface-bg,#f8fafc)] text-[var(--color-text-main,#0f172a)] antialiased selection:bg-[var(--color-primary,#0f766e)] selection:text-white">
-      <main className="max-w-[1240px] mx-auto px-4 py-6 md:py-10 space-y-8">
+      <main className="max-w-[1240px] mx-auto px-4 pt-2 pb-8 md:pt-3 md:pb-10 space-y-6">
         
-        {/* Hero Header Banner */}
-        <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[var(--color-primary,#0f766e)] via-[#115e59] to-[#042f2e] p-8 md:p-12 text-white shadow-2xl shadow-[var(--color-primary,#0f766e)]/40 border border-white/20 group transition-all duration-500 hover:shadow-[var(--color-primary,#0f766e)]/50">
-          <div className="relative z-10 max-w-2xl space-y-4">
-            <h1 className="text-3xl md:text-5xl font-black tracking-tight leading-tight drop-shadow-lg flex items-center gap-3 group-hover:translate-x-1.5 transition-transform duration-300">
-              Danh mục sản phẩm
-            </h1>
-            <p className="text-emerald-100/90 text-sm md:text-base leading-relaxed font-normal">
-              Hệ thống hiện đang quản lý tổng số <strong className="text-white font-bold">{total}</strong> danh mục sản phẩm. Thêm mới, sắp xếp và kiểm soát cấu trúc phân cấp dễ dàng.
-            </p>
-          </div>
-
-          <div className="absolute -right-16 -bottom-16 w-80 h-80 bg-emerald-400/30 rounded-full blur-3xl pointer-events-none group-hover:scale-125 transition-transform duration-1000" />
-          <div className="absolute right-1/4 -top-20 w-60 h-60 bg-teal-300/30 rounded-full blur-2xl pointer-events-none group-hover:scale-110 transition-transform duration-700" />
-        </div>
-
-        {/* Action Header Bar & Nút Thêm Danh Mục */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white/90 backdrop-blur-md p-6 rounded-3xl border border-[var(--color-surface-border,#e2e8f0)] shadow-md">
-          {/* Icon danh sách phân cấp với hiệu ứng nổi khi hover */}
-          <div className="group/iconbox flex items-center gap-3.5 cursor-pointer">
-            <div className="w-12 h-12 rounded-2xl bg-emerald-50 text-[var(--color-primary,#0f766e)] flex items-center justify-center shadow-inner transition-all duration-300 group-hover/iconbox:-translate-y-1.5 group-hover/iconbox:scale-110 group-hover/iconbox:bg-primary group-hover/iconbox:text-white group-hover/iconbox:shadow-md">
-              <FolderTree className="w-6 h-6 transition-transform duration-300 group-hover/iconbox:rotate-6" />
+        {/* Header danh sách danh mục */}
+        <div className="group flex flex-col gap-4 rounded-2xl border border-[var(--color-surface-border,#e2e8f0)] bg-white px-4 py-3.5 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:border-primary/20 hover:shadow-md sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex min-w-0 items-center gap-4">
+            <div className="flex size-11 shrink-0 items-center justify-center rounded-xl border border-primary/15 bg-emerald-50 text-primary shadow-sm transition-all duration-300 group-hover:-translate-y-1 group-hover:scale-105 group-hover:border-primary group-hover:bg-primary group-hover:text-white group-hover:shadow-md">
+              <FolderTree className="size-5 transition-transform duration-300 group-hover:rotate-6" aria-hidden="true" />
             </div>
-            <div>
-              <h3 className="font-extrabold text-base text-[var(--color-text-main,#0f172a)] transition-colors group-hover/iconbox:text-primary">
-                Danh sách phân cấp
-              </h3>
-              <p className="text-xs text-[var(--color-text-muted,#94a3b8)]">
-                Thực hiện tìm kiếm, chỉnh sửa hoặc xóa danh mục
+            <div className="min-w-0">
+              <h1 className="text-lg font-extrabold leading-tight tracking-tight text-[var(--color-text-main,#0f172a)] transition-colors duration-300 group-hover:text-primary">
+                Danh mục sản phẩm
+              </h1>
+              <p className="mt-0.5 text-xs text-[var(--color-text-muted,#94a3b8)]">
+                Đang quản lý {total} danh mục. Tìm kiếm, sắp xếp và quản lý cấu trúc phân cấp
               </p>
             </div>
           </div>
-
           <button
             type="button"
             onClick={() => setFormTarget({ mode: "create" })}
-            className="group/btn relative inline-flex items-center justify-center gap-2 w-full sm:w-auto rounded-2xl bg-primary px-6 py-3 text-sm font-bold text-primary-contrast shadow-lg transition-all duration-300 hover:-translate-y-1 hover:bg-primary-hover hover:shadow-xl active:translate-y-0 cursor-pointer"
+            className="group/btn relative inline-flex w-full shrink-0 items-center justify-center gap-2 rounded-xl bg-primary px-5 py-2.5 text-sm font-bold text-primary-contrast shadow-md transition-all duration-300 hover:-translate-y-0.5 hover:bg-primary-hover hover:shadow-lg active:translate-y-0 sm:w-auto cursor-pointer"
           >
             <Plus className="size-4 transition-transform duration-300 group-hover/btn:scale-125 group-hover/btn:rotate-90" aria-hidden="true" />
             <span>Thêm danh mục mới</span>
           </button>
         </div>
 
-        {/* Bộ lọc & Tìm kiếm với hiệu ứng nổi lên mượt mà (Hover Lift) */}
-        <div className="flex flex-wrap items-center gap-3 bg-white/90 backdrop-blur-md p-4 rounded-2xl border border-[var(--color-surface-border,#e2e8f0)] shadow-sm">
-          
-          {/* Ô tìm kiếm có hiệu ứng nổi lên */}
-          <div className="relative min-w-[240px] flex-1 transition-all duration-300 hover:-translate-y-0.5">
+        {/* Bộ lọc & Tìm kiếm */}
+        <div className="flex flex-col items-stretch justify-between gap-3 sm:flex-row sm:items-center">
+          <div className="relative min-w-0 flex-1 sm:max-w-md">
             <Search
               className="pointer-events-none absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-text-muted transition-colors"
               aria-hidden="true"
@@ -202,12 +183,11 @@ export default function AdminCategoryPage() {
               onChange={(e) => setSearchInput(e.target.value)}
               placeholder="Tìm theo tên danh mục..."
               aria-label="Tìm theo tên danh mục"
-              className="w-full rounded-xl border border-surface-border bg-surface-card py-2.5 pl-10 pr-3.5 text-sm text-text-main placeholder:text-text-muted shadow-xs transition-all duration-200 hover:border-primary/50 hover:shadow-sm focus:border-ring-brand focus:outline-none focus:ring-4 focus:ring-ring-brand/15"
+              className="w-full rounded-xl border border-surface-border bg-surface-card py-2.5 pl-10 pr-3.5 text-sm text-text-main placeholder:text-text-muted shadow-2xs transition-all duration-200 hover:border-primary/50 focus:border-ring-brand focus:outline-none focus:ring-4 focus:ring-ring-brand/15"
             />
           </div>
 
-          {/* Ô sắp xếp có hiệu ứng nổi lên */}
-          <div className="relative transition-all duration-300 hover:-translate-y-0.5">
+          <div className="relative shrink-0">
             <ArrowUpDown className="pointer-events-none absolute left-3 top-1/2 size-3.5 -translate-y-1/2 text-text-muted" aria-hidden="true" />
             <select
               value={sortBy}
@@ -216,7 +196,7 @@ export default function AdminCategoryPage() {
                 setSelected(new Set());
               }}
               aria-label="Sắp xếp"
-              className="rounded-xl border border-surface-border bg-surface-card py-2.5 pl-9 pr-8 text-sm text-text-main shadow-xs transition-all duration-200 hover:border-primary/50 hover:shadow-sm focus:border-ring-brand focus:outline-none focus:ring-4 focus:ring-ring-brand/15 cursor-pointer appearance-none"
+              className="w-full appearance-none rounded-xl border border-surface-border bg-surface-card py-2.5 pl-9 pr-8 text-sm text-text-main shadow-2xs transition-all duration-200 hover:border-primary/50 focus:border-ring-brand focus:outline-none focus:ring-4 focus:ring-ring-brand/15 cursor-pointer sm:w-auto"
             >
               {SORT_OPTIONS.map((o) => (
                 <option key={o.value} value={o.value}>
@@ -225,7 +205,6 @@ export default function AdminCategoryPage() {
               ))}
             </select>
           </div>
-
         </div>
 
         {/* Thanh thao tác hàng loạt */}
