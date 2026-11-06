@@ -4,6 +4,16 @@ export enum UserRole {
   STAFF = "STAFF",
 }
 
+export const USER_ROLE_LABELS: Record<UserRole, string> = {
+  [UserRole.ADMIN]: "Quản trị viên",
+  [UserRole.CUSTOMER]: "Khách hàng",
+  [UserRole.STAFF]: "Nhân viên",
+};
+
+export function getUserRoleLabel(role: UserRole | string): string {
+  return USER_ROLE_LABELS[role as UserRole] ?? role;
+}
+
 export enum UserStatus {
   ACTIVE = "ACTIVE",
   BLOCKED = "BLOCKED",
