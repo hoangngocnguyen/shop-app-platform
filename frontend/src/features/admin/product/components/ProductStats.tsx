@@ -73,7 +73,7 @@ export const ProductStats: React.FC<ProductStatsProps> = ({
   ];
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+    <div className="grid grid-cols-1 gap-4 mb-6 sm:grid-cols-2 lg:grid-cols-4">
       {statCards.map((card) => {
         const Icon = card.icon;
         const isActive = activeStockStatus === card.id;
@@ -83,10 +83,10 @@ export const ProductStats: React.FC<ProductStatsProps> = ({
             key={card.id}
             type="button"
             onClick={() => onSelectStockStatus?.(card.id)}
-            className={`group text-left relative bg-surface-card border rounded-2xl p-4.5 transition-all duration-200 cursor-pointer overflow-hidden ${
+            className={`group relative overflow-hidden rounded-2xl border bg-surface-card p-4.5 text-left shadow-sm transition-all duration-300 cursor-pointer ${
               isActive
                 ? `${card.activeRing} bg-surface-card`
-                : "border-surface-border hover:border-primary/40 hover:bg-surface-hover/60 hover:-translate-y-0.5 hover:shadow-brand-sm"
+                : "border-surface-border hover:-translate-y-0.5 hover:border-primary/30 hover:bg-surface-hover/60 hover:shadow-brand-sm"
             }`}
           >
             {/* Background decorative glow on active */}
