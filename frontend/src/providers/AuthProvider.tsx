@@ -10,8 +10,7 @@ export default function AuthProvider({
 }: {
   children: React.ReactNode;
 }) {
-  const sync = useAuthStore((state) => state.sync);
-  const fetchUser = useAuthStore((state) => state.fetchUser); // Thêm fetchUser
+  const fetchUser = useAuthStore((state) => state.fetchUser);
   const setUser = useAuthStore((state) => state.setUser);
   const setIsLoading = useAuthStore((state) => state.setIsLoading);
 
@@ -44,8 +43,8 @@ export default function AuthProvider({
     } = supabase.auth.onAuthStateChange(
       async (event: AuthChangeEvent, session: Session | null) => {
         if (event === "SIGNED_IN" || event === "TOKEN_REFRESHED") {
-          // Khi vừa đăng nhập hoặc refresh token thì gọi sync
-          await sync();
+          // route.ts đã syncUser trước khi redirect → chỉ cần fetchUser để load store
+          await fetchUser();
         } else if (event === "SIGNED_OUT" || !session) {
           // Khi đăng xuất
           setUser(null);
@@ -57,7 +56,7 @@ export default function AuthProvider({
     return () => {
       subscription.unsubscribe();
     };
-  }, [sync, fetchUser, setUser, setIsLoading]);
+  }, [fetchUser, setUser, setIsLoading]);
 
   return <>{children}</>;
 }
