@@ -4,10 +4,6 @@ import React, { useEffect, useSyncExternalStore, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { X } from "lucide-react";
 
-const subscribeToMount = () => () => {};
-const getClientSnapshot = () => true;
-const getServerSnapshot = () => false;
-
 export interface ModalShellProps {
   title: string;
   onClose: () => void;
@@ -15,26 +11,31 @@ export interface ModalShellProps {
   children: ReactNode;
 }
 
+const emptySubscribe = () => () => {};
+
 /** Khung modal chuẩn chống xuyên thấu 100% bằng React Portal */
 export function ModalShell({ title, onClose, size = "md", children }: ModalShellProps) {
   const mounted = useSyncExternalStore(
-    subscribeToMount,
-    getClientSnapshot,
-    getServerSnapshot,
+    emptySubscribe,
+    () => true,
+    () => false
   );
 
   useEffect(() => {
+    if (!mounted) return;
+
     const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
     window.addEventListener("keydown", onKey);
-    
-    // Khóa cuộn trang khi mở Modal
+
+    // Lưu lại overflow cũ và khóa cuộn trang
+    const prevOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
-    
+
     return () => {
       window.removeEventListener("keydown", onKey);
-      document.body.style.overflow = "unset";
+      document.body.style.overflow = prevOverflow;
     };
-  }, [onClose]);
+  }, [mounted, onClose]);
 
   if (!mounted) return null;
 
@@ -54,7 +55,7 @@ export function ModalShell({ title, onClose, size = "md", children }: ModalShell
       >
         <div className="mb-5 flex items-center justify-between border-b border-slate-100 pb-4">
           <h2 className="text-xl font-black text-slate-900 tracking-tight">{title}</h2>
-          
+
           {/* NÚT ĐÓNG VỚI BOTTOM GLOW & HOVER LIFT */}
           <div className="group/closebtn relative inline-block">
             <div className="absolute -bottom-1 left-1 right-1 h-2.5 bg-emerald-500/40 rounded-full blur-xs opacity-0 group-hover/closebtn:opacity-100 transition-opacity duration-300 pointer-events-none" />
