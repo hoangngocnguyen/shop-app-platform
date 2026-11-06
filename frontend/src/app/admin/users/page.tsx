@@ -1,17 +1,17 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { Plus, Trash2, Users, CheckCircle2 } from "lucide-react";
+import { toast } from "@/common/stores/useToastStore";
 
 import { useAdminUserStore } from "@/features/admin/users/stores";
 import { UserTable } from "@/features/admin/users/components/UserTable";
-import {
-  UserFormModal,
-  type UserFormValues,
-} from "@/features/admin/users/components/UserFormModal";
+import { UserDetailsModal } from "@/features/admin/users/components/UserDetailsModal";
 import { UserBlockModal } from "@/features/admin/users/components/UserBlockModal";
+import { UserRoleModal } from "@/features/admin/users/components/UserRoleModal";
+import { UserHeroBanner } from "@/features/admin/users/components/UserHeroBanner";
+import { UserHeaderBar } from "@/features/admin/users/components/UserHeaderBar";
+import { UserBulkActionBar } from "@/features/admin/users/components/UserBulkActionBar";
 import { UserFilterBar, type UserSortBy } from "@/features/admin/users/components/UserFilterBar";
-import { toast } from "@/common/stores/useToastStore";
 import {
   SortDirection,
   UserDetailResponse,
@@ -24,13 +24,14 @@ export default function AdminUserPage() {
     users,
     total,
     totalPages,
+    stats,
     isLoading,
     isSubmitting,
     fetchUsers,
-    createUser,
-    updateUser,
-    blockUser,
+    fetchUserStats,
     deleteUser,
+    blockUser,
+    updateUserRole,
   } = useAdminUserStore();
 
   const [page, setPage] = useState(1);
@@ -40,12 +41,11 @@ export default function AdminUserPage() {
   const [roleFilter, setRoleFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
   const [searchInput, setSearchInput] = useState(search);
-  const [selected, setSelected] = useState<Set<string>>(new Set());
-  const [formTarget, setFormTarget] = useState<{
-    mode: "create" | "edit";
-    user?: UserDetailResponse;
-  } | null>(null);
+  const [viewedUser, setViewedUser] = useState<UserDetailResponse | null>(null);
   const [blockTarget, setBlockTarget] = useState<UserDetailResponse | null>(null);
+  const [roleTarget, setRoleTarget] = useState<UserDetailResponse | null>(null);
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
     const sortParams = {
@@ -76,6 +76,10 @@ export default function AdminUserPage() {
   ]);
 
   useEffect(() => {
+    void fetchUserStats();
+  }, [fetchUserStats]);
+
+  useEffect(() => {
     const timer = setTimeout(() => {
       if (searchInput.trim() !== search) {
         setSearch(searchInput.trim());
@@ -89,142 +93,96 @@ export default function AdminUserPage() {
   const safeUsers = users ?? [];
   const allSelected =
     safeUsers.length > 0 &&
-    safeUsers.every((user) => selected.has(user.userId));
-
+    safeUsers.every((user) => selected.has(String(user.userId)));
   const toggleAll = () =>
     setSelected(
-      allSelected ? new Set() : new Set(safeUsers.map((user) => user.userId)),
+      allSelected
+        ? new Set()
+        : new Set(safeUsers.map((user) => String(user.userId))),
     );
-
   const toggleOne = (id: string) =>
-    setSelected((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id); else next.add(id);
+    setSelected((previous) => {
+      const next = new Set(previous);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
       return next;
     });
 
-  const handleDelete = async (ids: string[], label: string) => {
-    if (!window.confirm(`Bạn có chắc chắn muốn xóa ${label}?`)) return;
-
-    let allDeleted = true;
-    for (const id of ids) {
-      if (!(await deleteUser(id))) {
-        allDeleted = false;
-      }
-    }
-    setSelected(new Set());
-    if (allDeleted) {
-      toast.success("Đã xóa người dùng thành công");
-    } else {
-      toast.error("Không thể xóa một hoặc nhiều người dùng");
-    }
-  };
-
-  const handleFormSubmit = async (values: UserFormValues) => {
-    const success =
-      formTarget?.mode === "create"
-        ? await createUser({
-            fullName: values.full_name,
-            email: values.email,
-            phone: values.phone ?? "",
-            password: values.password ?? "",
-            role: values.role as UserRole,
-          })
-        : formTarget?.user
-          ? await updateUser(formTarget.user.userId, {
-              fullName: values.full_name,
-              phone: values.phone ?? "",
-              role: values.role as UserRole,
-            })
-          : false;
-
-    if (!success) {
-      toast.error("Không thể lưu thông tin người dùng");
+  const handleDeleteBatch = async (ids: string[], label: string) => {
+    if (isDeleting) return;
+    if (!window.confirm(`Bạn có chắc chắn muốn xóa ${label}? Dữ liệu địa chỉ giao hàng cũng sẽ bị xóa.`)) {
       return;
     }
 
-    toast.success(
-      formTarget?.mode === "create"
-        ? "Đã thêm người dùng mới thành công"
-        : "Đã cập nhật thông tin người dùng thành công",
-    );
-    setFormTarget(null);
+    setIsDeleting(true);
+    try {
+      let deletedCount = 0;
+      for (const id of ids) {
+        if (await deleteUser(id)) deletedCount += 1;
+      }
+
+      setSelected(new Set());
+      if (deletedCount === ids.length) {
+        toast.success(ids.length === 1 ? "Đã xóa tài khoản thành công" : `Đã xóa ${deletedCount} tài khoản thành công`);
+      } else {
+        toast.error(
+          deletedCount
+            ? `Đã xóa ${deletedCount}/${ids.length} tài khoản. Một số tài khoản không thể xóa do còn đơn hàng hoặc dữ liệu liên quan.`
+            : "Không thể xóa tài khoản có đơn hàng hoặc dữ liệu liên quan.",
+        );
+      }
+
+      const nextPage =
+        page > 1 && (page - 1) * pageSize >= total - deletedCount
+          ? page - 1
+          : page;
+      if (nextPage !== page) setPage(nextPage);
+      else await fetchUsers({ page: nextPage - 1, page_size: pageSize });
+    } finally {
+      setIsDeleting(false);
+    }
   };
 
-  const handleConfirmBlockToggle = async () => {
+  const handleBlockConfirm = async (reason?: string) => {
     if (!blockTarget) return;
 
-    const isCurrentlyBlocked = blockTarget.status === UserStatus.BLOCKED;
-    const reason = isCurrentlyBlocked
-      ? undefined
-      : window.prompt("Nhập lý do khóa tài khoản")?.trim();
-
-    if (!isCurrentlyBlocked && !reason) {
-      toast.error("Vui lòng nhập lý do khóa tài khoản");
-      return;
-    }
-
-    const success = await blockUser(blockTarget.userId, {
-      isBlocked: !isCurrentlyBlocked,
+    const isBlocked = blockTarget.status === UserStatus.BLOCKED;
+    const succeeded = await blockUser(blockTarget.userId, {
+      isBlocked: !isBlocked,
       reason,
     });
 
-    if (!success) {
-      toast.error("Thao tác khóa/mở khóa thất bại");
+    if (!succeeded) {
+      toast.error("Không thể thay đổi trạng thái tài khoản");
       return;
     }
 
     toast.success(
-      isCurrentlyBlocked
+      isBlocked
         ? `Đã mở khóa tài khoản ${blockTarget.email}`
         : `Đã khóa tài khoản ${blockTarget.email}`,
     );
     setBlockTarget(null);
   };
 
+  const handleRoleConfirm = async (role: UserRole) => {
+    if (!roleTarget) return;
+
+    const succeeded = await updateUserRole(roleTarget.userId, { role });
+    if (!succeeded) {
+      toast.error("Không thể cập nhật vai trò người dùng");
+      return;
+    }
+
+    toast.success(`Đã cập nhật vai trò của ${roleTarget.email}`);
+    setRoleTarget(null);
+  };
+
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[var(--color-surface-bg,#f8fafc)] via-white to-[var(--color-surface-bg,#f8fafc)] text-[var(--color-text-main,#0f172a)] antialiased selection:bg-[var(--color-primary,#0f766e)] selection:text-white">
+    <div className="min-h-screen bg-surface-bg text-text-main antialiased selection:bg-primary selection:text-primary-contrast">
       <main className="max-w-[1240px] mx-auto px-4 py-6 md:py-10 space-y-8">
-        
-        {/* Hero Header Banner */}
-        <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[var(--color-primary,#0f766e)] via-[#115e59] to-[#042f2e] p-8 md:p-12 text-white shadow-2xl shadow-[var(--color-primary,#0f766e)]/40 border border-white/20 group transition-all duration-500 hover:shadow-[var(--color-primary,#0f766e)]/50">
-          <div className="relative z-10 max-w-2xl space-y-4">
-            <h1 className="text-3xl md:text-5xl font-black tracking-tight leading-tight drop-shadow-lg flex items-center gap-3 group-hover:translate-x-1.5 transition-transform duration-300">
-              Quản lý người dùng
-            </h1>
-            <p className="text-emerald-100/90 text-sm md:text-base leading-relaxed font-normal">
-              Hệ thống hiện đang quản lý tổng số <strong className="text-white font-bold">{total}</strong> tài khoản. Phân quyền và kiểm soát bảo mật hệ thống dễ dàng.
-            </p>
-          </div>
-          <div className="absolute -right-16 -bottom-16 w-80 h-80 bg-emerald-400/30 rounded-full blur-3xl pointer-events-none group-hover:scale-125 transition-transform duration-1000" />
-          <div className="absolute right-1/4 -top-20 w-60 h-60 bg-teal-300/30 rounded-full blur-2xl pointer-events-none group-hover:scale-110 transition-transform duration-700" />
-        </div>
-
-        {/* Action Header Bar & Nút Thêm Người Dùng */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white/90 backdrop-blur-md p-6 rounded-3xl border border-surface-border shadow-md">
-          <div className="group/iconbox flex items-center gap-3.5 cursor-pointer">
-            <div className="w-12 h-12 rounded-2xl bg-emerald-50 text-[var(--color-primary,#0f766e)] flex items-center justify-center shadow-inner transition-all duration-300 group-hover/iconbox:-translate-y-1.5 group-hover/iconbox:scale-110 group-hover/iconbox:bg-primary group-hover/iconbox:text-white group-hover/iconbox:shadow-md">
-              <Users className="w-6 h-6 transition-transform duration-300 group-hover/iconbox:rotate-6" />
-            </div>
-            <div>
-              <h3 className="font-extrabold text-base text-text-main transition-colors group-hover/iconbox:text-primary">
-                Danh sách tài khoản hệ thống
-              </h3>
-              <p className="text-xs text-text-muted">
-                Thực hiện tìm kiếm, thay đổi vai trò hoặc khóa tài khoản
-              </p>
-            </div>
-          </div>
-
-          <button
-            type="button"
-            onClick={() => setFormTarget({ mode: "create" })}
-            className="group/btn relative inline-flex items-center justify-center gap-2 w-full sm:w-auto rounded-2xl bg-primary px-6 py-3 text-sm font-bold text-primary-contrast shadow-lg transition-all duration-300 hover:-translate-y-1 hover:bg-primary-hover hover:shadow-xl active:translate-y-0 cursor-pointer"
-          >
-            <Plus className="size-4 transition-transform duration-300 group-hover/btn:scale-125 group-hover/btn:rotate-90" aria-hidden="true" />
-            <span>Thêm người dùng mới</span>
-          </button>
-        </div>
+        <UserHeaderBar />
+        <UserHeroBanner stats={stats} />
 
         {/* Bộ lọc & Tìm kiếm */}
         <UserFilterBar
@@ -250,53 +208,31 @@ export default function AdminUserPage() {
           }}
         />
 
-        {/* Thanh thao tác hàng loạt */}
-        {selected.size > 0 && (
-          <div className="flex items-center justify-between rounded-2xl border border-primary/30 bg-primary-light px-5 py-3.5 text-sm shadow-md transition-all duration-300 animate-in fade-in zoom-in-95">
-            <span className="font-bold text-primary flex items-center gap-2">
-              <CheckCircle2 className="w-4 h-4" /> Đã chọn <span className="underline decoration-2">{selected.size}</span> tài khoản
-            </span>
-            <div className="flex items-center gap-2.5">
-              <button
-                type="button"
-                onClick={() => setSelected(new Set())}
-                className="inline-flex items-center justify-center rounded-xl px-3.5 py-2 text-text-sub transition-all duration-200 hover:-translate-y-0.5 hover:bg-surface-card hover:text-text-main hover:shadow-xs cursor-pointer font-medium"
-              >
-                Bỏ chọn
-              </button>
-
-              <button
-                type="button"
-                onClick={() =>
-                  void handleDelete(
-                    Array.from(selected),
-                    `${selected.size} người dùng đã chọn`,
-                  )
-                }
-                className="group/delbtn inline-flex items-center gap-1.5 rounded-xl bg-status-error px-4 py-2 font-medium text-white shadow-xs transition-all duration-200 hover:-translate-y-0.5 hover:opacity-95 hover:shadow-md active:translate-y-0 cursor-pointer"
-              >
-                <Trash2 className="size-4 transition-transform duration-200 group-hover/delbtn:scale-110" aria-hidden="true" />
-                <span>Xóa đã chọn</span>
-              </button>
-            </div>
-          </div>
-        )}
+        <UserBulkActionBar
+          selectedCount={selected.size}
+          isSubmitting={isSubmitting || isDeleting}
+          onClearSelection={() => setSelected(new Set())}
+          onDeleteSelected={() =>
+            void handleDeleteBatch(Array.from(selected), `${selected.size} tài khoản đã chọn`)
+          }
+        />
 
         {/* Bảng dữ liệu người dùng */}
         <UserTable
           items={safeUsers}
           isLoading={isLoading}
+          isDeleting={isDeleting}
           search={search}
           selected={selected}
           onToggleAll={toggleAll}
           onToggleOne={toggleOne}
-          onEdit={(user: UserDetailResponse) =>
-            setFormTarget({ mode: "edit", user })
-          }
+          onView={setViewedUser}
+          onEditRole={(user: UserDetailResponse) => setRoleTarget(user)}
           onToggleBlock={(user: UserDetailResponse) => setBlockTarget(user)}
           onDelete={(user: UserDetailResponse) =>
-            void handleDelete([user.userId], `tài khoản “${user.email}”`)
+            void handleDeleteBatch([String(user.userId)], `tài khoản “${user.email}”`)
           }
+          isUpdatingStatus={isSubmitting}
           total={total}
           page={page}
           pageSize={pageSize}
@@ -312,23 +248,23 @@ export default function AdminUserPage() {
           }}
         />
 
-        {/* Modal Thêm/Sửa */}
-        {formTarget && (
-          <UserFormModal
-            target={formTarget}
-            isSubmitting={isSubmitting}
-            onSubmit={handleFormSubmit}
-            onClose={() => setFormTarget(null)}
-          />
+        {viewedUser && (
+          <UserDetailsModal user={viewedUser} onClose={() => setViewedUser(null)} />
         )}
-
-        {/* Modal Khóa/Mở khóa */}
         {blockTarget && (
           <UserBlockModal
             user={blockTarget}
             isSubmitting={isSubmitting}
-            onConfirm={handleConfirmBlockToggle}
+            onConfirm={handleBlockConfirm}
             onClose={() => setBlockTarget(null)}
+          />
+        )}
+        {roleTarget && (
+          <UserRoleModal
+            user={roleTarget}
+            isSubmitting={isSubmitting}
+            onConfirm={handleRoleConfirm}
+            onClose={() => setRoleTarget(null)}
           />
         )}
       </main>

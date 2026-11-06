@@ -7,10 +7,11 @@ import { SortDirection, UserDetailResponse, UserRole, UserStatus } from "../type
 import { UserHeroBanner } from "./UserHeroBanner";
 import { UserHeaderBar } from "./UserHeaderBar";
 import { UserFilterBar, UserSortBy } from "./UserFilterBar";
-import { UserBulkActionBar } from "./UserBulkActionBar";
 import { UserTable } from "./UserTable";
-import { UserFormModal, UserFormValues } from "./UserFormModal";
+import { UserDetailsModal } from "./UserDetailsModal";
 import { UserBlockModal } from "./UserBlockModal";
+import { UserRoleModal } from "./UserRoleModal";
+import { UserBulkActionBar } from "./UserBulkActionBar";
 
 const SORT_PARAMS: Record<UserSortBy, { sortBy: string; sortDir: SortDirection }> = {
   id_desc: { sortBy: "createdAt", sortDir: SortDirection.DESC },
@@ -20,14 +21,14 @@ const SORT_PARAMS: Record<UserSortBy, { sortBy: string; sortDir: SortDirection }
 
 export const UserManagement: React.FC = () => {
   const {
-    users, isLoading, total, totalPages, queryParams, isSubmitting,
-    fetchUsers, createUser, updateUser, blockUser, deleteUser,
+    users, isLoading, isSubmitting, total, totalPages, stats, queryParams, fetchUsers, fetchUserStats, deleteUser, blockUser, updateUserRole,
   } = useAdminUserStore();
 
-  const [isFormOpen, setIsFormOpen] = useState(false);
-  const [isBlockOpen, setIsBlockOpen] = useState(false);
-  const [selectedUser, setSelectedUser] = useState<UserDetailResponse | null>(null);
+  const [viewedUser, setViewedUser] = useState<UserDetailResponse | null>(null);
+  const [blockTarget, setBlockTarget] = useState<UserDetailResponse | null>(null);
+  const [roleTarget, setRoleTarget] = useState<UserDetailResponse | null>(null);
   const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const [searchInput, setSearchInput] = useState(queryParams.search ?? "");
   const [search, setSearch] = useState(queryParams.search ?? "");
@@ -62,92 +63,107 @@ export const UserManagement: React.FC = () => {
     });
   }, [fetchUsers, page, pageSize, roleFilter, search, sortBy, statusFilter]);
 
+  useEffect(() => {
+    void fetchUserStats();
+  }, [fetchUserStats]);
+
   const safeUsers = users ?? [];
-
-  // Quản lý chọn checkbox
   const toggleAll = () => {
-    const allSelected = safeUsers.length > 0 && safeUsers.every((u) => selected.has(String(u.userId)));
-    setSelected(allSelected ? new Set() : new Set(safeUsers.map((u) => String(u.userId))));
+    const allSelected =
+      safeUsers.length > 0 &&
+      safeUsers.every((user) => selected.has(String(user.userId)));
+    setSelected(
+      allSelected
+        ? new Set()
+        : new Set(safeUsers.map((user) => String(user.userId))),
+    );
   };
-
   const toggleOne = (id: string) => {
-    setSelected((prev) => {
-      const next = new Set(prev);
+    setSelected((previous) => {
+      const next = new Set(previous);
       if (next.has(id)) next.delete(id);
       else next.add(id);
       return next;
     });
   };
 
-  // Thao tác xóa (1 người dùng hoặc hàng loạt)
-  const handleDeleteBatch = async (ids: (string | number)[], label: string) => {
-    if (!window.confirm(`Bạn có chắc chắn muốn xóa ${label}?`)) return;
-
-    let allDeleted = true;
-    for (const id of ids) {
-      const ok = await deleteUser(id);
-      if (!ok) allDeleted = false;
+  const handleDeleteBatch = async (ids: string[], targetLabel: string) => {
+    if (isDeleting) return;
+    if (!window.confirm(`Bạn có chắc chắn muốn xóa ${targetLabel}? Dữ liệu địa chỉ giao hàng cũng sẽ bị xóa.`)) {
+      return;
     }
-    setSelected(new Set());
-    if (allDeleted) {
-      toast.success("Đã xóa người dùng thành công");
-    } else {
-      toast.error("Không thể xóa một số tài khoản");
-    }
-  };
 
-  // Submit Form Thêm/Sửa (không truyền nhầm password hay secret key khi sửa)
-  const handleFormSubmit = async (values: UserFormValues) => {
-    const isEdit = Boolean(selectedUser);
-    const succeeded = isEdit && selectedUser
-      ? await updateUser(selectedUser.userId, {
-          fullName: values.full_name.trim(),
-          phone: values.phone.trim(),
-          address: values.address?.trim() || undefined,
-          role: values.role,
-        })
-      : await createUser({
-          fullName: values.full_name.trim(),
-          email: values.email.trim().toLowerCase(),
-          phone: values.phone.trim(),
-          password: values.password ?? "",
-          role: values.role,
-        });
+    setIsDeleting(true);
+    try {
+      let deletedCount = 0;
+      for (const id of ids) {
+        if (await deleteUser(id)) deletedCount += 1;
+      }
 
-    if (succeeded) {
-      toast.success(isEdit ? "Đã cập nhật thông tin thành công" : "Đã tạo tài khoản thành công");
-      setIsFormOpen(false);
-    } else {
-      toast.error("Không thể lưu thông tin người dùng");
+      setSelected(new Set());
+      if (deletedCount === ids.length) {
+        toast.success(ids.length === 1 ? "Đã xóa tài khoản thành công" : `Đã xóa ${deletedCount} tài khoản thành công`);
+      } else {
+        toast.error(
+          deletedCount
+            ? `Đã xóa ${deletedCount}/${ids.length} tài khoản. Một số tài khoản không thể xóa do còn đơn hàng hoặc dữ liệu liên quan.`
+            : "Không thể xóa tài khoản có đơn hàng hoặc dữ liệu liên quan.",
+        );
+      }
+
+      const nextPage =
+        page > 1 && (page - 1) * pageSize >= total - deletedCount
+          ? page - 1
+          : page;
+      if (nextPage !== page) setPage(nextPage);
+      else await fetchUsers({ page: nextPage - 1, page_size: pageSize });
+    } finally {
+      setIsDeleting(false);
     }
   };
 
-  // Xác nhận Khóa / Mở khóa (Lấy lý do từ Modal)
-  const handleConfirmBlock = async (reason?: string) => {
-    if (!selectedUser) return;
+  const handleBlockConfirm = async (reason?: string) => {
+    if (!blockTarget) return;
 
-    const isBlocked = selectedUser.status === UserStatus.BLOCKED;
-    const succeeded = await blockUser(selectedUser.userId, {
+    const isBlocked = blockTarget.status === UserStatus.BLOCKED;
+    const succeeded = await blockUser(blockTarget.userId, {
       isBlocked: !isBlocked,
-      reason: !isBlocked ? reason?.trim() : undefined,
+      reason,
     });
 
-    if (succeeded) {
-      toast.success(isBlocked ? `Đã mở khóa tài khoản ${selectedUser.email}` : `Đã khóa tài khoản ${selectedUser.email}`);
-      setIsBlockOpen(false);
-    } else {
-      toast.error("Thao tác khóa/mở khóa thất bại");
+    if (!succeeded) {
+      toast.error("Không thể thay đổi trạng thái tài khoản");
+      return;
     }
+
+    toast.success(
+      isBlocked
+        ? `Đã mở khóa tài khoản ${blockTarget.email}`
+        : `Đã khóa tài khoản ${blockTarget.email}`,
+    );
+    setBlockTarget(null);
+  };
+
+  const handleRoleConfirm = async (role: UserRole) => {
+    if (!roleTarget) return;
+
+    const succeeded = await updateUserRole(roleTarget.userId, { role });
+    if (!succeeded) {
+      toast.error("Không thể cập nhật vai trò người dùng");
+      return;
+    }
+
+    toast.success(`Đã cập nhật vai trò của ${roleTarget.email}`);
+    setRoleTarget(null);
   };
 
   return (
     <div className="min-h-screen bg-surface-bg text-text-main antialiased selection:bg-primary selection:text-white">
       <main className="max-w-[1240px] mx-auto px-4 py-6 md:py-10 space-y-8">
-        {/* Banner Hero */}
-        <UserHeroBanner total={total} />
+        <UserHeaderBar />
 
-        {/* Thanh Header & Nút Thêm */}
-        <UserHeaderBar onAddUser={() => { setSelectedUser(null); setIsFormOpen(true); }} />
+        {/* Banner thống kê */}
+        <UserHeroBanner stats={stats} />
 
         {/* Thanh Bộ Lọc & Tìm Kiếm */}
         <UserFilterBar
@@ -161,50 +177,56 @@ export const UserManagement: React.FC = () => {
           onSortChange={(v) => { setSortBy(v); setPage(1); setSelected(new Set()); }}
         />
 
-        {/* Thanh Thao Tác Hàng Loạt */}
         <UserBulkActionBar
           selectedCount={selected.size}
-          isSubmitting={isSubmitting}
+          isSubmitting={isSubmitting || isDeleting}
           onClearSelection={() => setSelected(new Set())}
-          onDeleteSelected={() => void handleDeleteBatch(Array.from(selected), `${selected.size} tài khoản đã chọn`)}
+          onDeleteSelected={() =>
+            void handleDeleteBatch(Array.from(selected), `${selected.size} tài khoản đã chọn`)
+          }
         />
 
         {/* Bảng Dữ Liệu */}
         <UserTable
           items={safeUsers}
           isLoading={isLoading}
+          isDeleting={isDeleting}
           search={search}
           selected={selected}
           onToggleAll={toggleAll}
           onToggleOne={toggleOne}
-          onEdit={(user) => { setSelectedUser(user); setIsFormOpen(true); }}
-          onToggleBlock={(user) => { setSelectedUser(user); setIsBlockOpen(true); }}
-          onDelete={(user) => void handleDeleteBatch([user.userId], `tài khoản "${user.email}"`)}
+          onView={setViewedUser}
+          onEditRole={setRoleTarget}
+          onToggleBlock={setBlockTarget}
+          onDelete={(user) =>
+            void handleDeleteBatch([String(user.userId)], `“${user.email}”`)
+          }
+          isUpdatingStatus={isSubmitting}
           total={total}
           page={page}
           pageSize={pageSize}
           totalPages={totalPages}
-          onPageChange={(p) => { setPage(p); setSelected(new Set()); }}
+          onPageChange={(nextPage) => { setPage(nextPage); setSelected(new Set()); }}
           onPageSizeChange={(s) => { setPageSize(s); setPage(1); setSelected(new Set()); }}
         />
 
-        {/* Modal Thêm/Sửa */}
-        {isFormOpen && (
-          <UserFormModal
-            target={{ mode: selectedUser ? "edit" : "create", user: selectedUser ?? undefined }}
+        {viewedUser && (
+          <UserDetailsModal user={viewedUser} onClose={() => setViewedUser(null)} />
+        )}
+        {blockTarget && (
+          <UserBlockModal
+            user={blockTarget}
             isSubmitting={isSubmitting}
-            onSubmit={handleFormSubmit}
-            onClose={() => setIsFormOpen(false)}
+            onConfirm={handleBlockConfirm}
+            onClose={() => setBlockTarget(null)}
           />
         )}
-
-        {/* Modal Khóa/Mở khóa */}
-        {isBlockOpen && selectedUser && (
-          <UserBlockModal
-            user={selectedUser}
+        {roleTarget && (
+          <UserRoleModal
+            user={roleTarget}
             isSubmitting={isSubmitting}
-            onConfirm={handleConfirmBlock}
-            onClose={() => setIsBlockOpen(false)}
+            onConfirm={handleRoleConfirm}
+            onClose={() => setRoleTarget(null)}
           />
         )}
       </main>

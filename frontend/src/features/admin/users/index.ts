@@ -1,7 +1,8 @@
 export { UserManagement, UserManagement as AdminUsersFeature } from "./components/UserManagement";
 export { UserTable } from "./components/UserTable";
-export { UserFormModal } from "./components/UserFormModal";
+export { UserDetailsModal } from "./components/UserDetailsModal";
 export { UserBlockModal } from "./components/UserBlockModal";
+export { UserRoleModal } from "./components/UserRoleModal";
 export { UserHeroBanner } from "./components/UserHeroBanner";
 export { UserHeaderBar } from "./components/UserHeaderBar";
 export { UserFilterBar } from "./components/UserFilterBar";

@@ -5,10 +5,10 @@ import {
   AdminUserQueryParams,
   SortDirection,
   UserBlockForm,
-  UserCreateForm,
   UserDetailResponse,
   UserListResponse,
-  UserUpdateForm,
+  UserRoleUpdateForm,
+  UserStatsResponse,
 } from "../types";
 
 interface AdminUserState {
@@ -17,6 +17,7 @@ interface AdminUserState {
   selectedUser: UserDetailResponse | null;
   total: number;
   totalPages: number;
+  stats: UserStatsResponse;
 
   // State bộ lọc & phân trang
   queryParams: AdminUserQueryParams;
@@ -36,10 +37,10 @@ interface AdminUserState {
 
   // Async Actions - Admin User Services
   fetchUsers: (customParams?: Partial<AdminUserQueryParams>) => Promise<UserListResponse | null>;
+  fetchUserStats: () => Promise<UserStatsResponse | null>;
   fetchUserById: (userId: string | number) => Promise<UserDetailResponse | null>;
-  createUser: (form: UserCreateForm) => Promise<boolean>;
-  updateUser: (userId: string | number, form: UserUpdateForm) => Promise<boolean>;
   blockUser: (userId: string | number, form: UserBlockForm) => Promise<boolean>;
+  updateUserRole: (userId: string | number, form: UserRoleUpdateForm) => Promise<boolean>;
   deleteUser: (userId: string | number) => Promise<boolean>;
 }
 
@@ -58,6 +59,7 @@ const initialState = {
   selectedUser: null,
   total: 0,
   totalPages: 0,
+  stats: { total: 0, customers: 0, admins: 0, staff: 0, blocked: 0 },
   queryParams: initialQueryParams,
   isLoading: false,
   isSubmitting: false,
@@ -105,6 +107,18 @@ export const useAdminUserStore = create<AdminUserState>((set, get) => ({
     }
   },
 
+  fetchUserStats: async () => {
+    try {
+      const stats = await adminUserApi.getUserStats();
+      set({ stats });
+      return stats;
+    } catch (err: unknown) {
+      const errorMessage = parseErrorMessage(err, "Không thể tải số liệu người dùng");
+      set({ error: errorMessage });
+      return null;
+    }
+  },
+
   /** 2. Lấy thông tin chi tiết một người dùng */
   fetchUserById: async (userId: string | number) => {
     set({ isLoading: true, error: null });
@@ -119,86 +133,73 @@ export const useAdminUserStore = create<AdminUserState>((set, get) => ({
     }
   },
 
-  /** 3. Tạo người dùng mới */
-  createUser: async (form: UserCreateForm) => {
-    set({ isSubmitting: true, error: null });
-    try {
-      await adminUserApi.createUser(form);
-      set({ isSubmitting: false });
-      await get().fetchUsers({ page: 0 });
-      return true;
-    } catch (err: unknown) {
-      const errorMessage = parseErrorMessage(err, "Tạo tài khoản thất bại");
-      set({ error: errorMessage, isSubmitting: false });
-      return false;
-    }
-  },
-
-  /** 4. Cập nhật thông tin người dùng */
-  updateUser: async (userId: string | number, form: UserUpdateForm) => {
-    set({ isSubmitting: true, error: null });
-    try {
-      const updatedUser = await adminUserApi.updateUser(userId, form);
-
-      set((state) => ({
-        selectedUser:
-          state.selectedUser && String(state.selectedUser.userId) === String(userId)
-            ? updatedUser
-            : state.selectedUser,
-        isSubmitting: false,
-      }));
-
-      await get().fetchUsers();
-      return true;
-    } catch (err: unknown) {
-      const errorMessage = parseErrorMessage(err, "Cập nhật thông tin thất bại");
-      set({ error: errorMessage, isSubmitting: false });
-      return false;
-    }
-  },
-
-  /** 5. Khóa hoặc Mở khóa tài khoản */
   blockUser: async (userId: string | number, form: UserBlockForm) => {
     set({ isSubmitting: true, error: null });
     try {
       const updatedUser = await adminUserApi.blockUser(userId, form);
-
       set((state) => ({
+        users: state.users.map((user) =>
+          String(user.userId) === String(userId) ? updatedUser : user,
+        ),
         selectedUser:
           state.selectedUser && String(state.selectedUser.userId) === String(userId)
             ? updatedUser
             : state.selectedUser,
         isSubmitting: false,
       }));
-
       await get().fetchUsers();
+      await get().fetchUserStats();
       return true;
     } catch (err: unknown) {
-      const errorMessage = parseErrorMessage(err, "Thao tác khóa/mở khóa thất bại");
+      const errorMessage = parseErrorMessage(err, "Không thể thay đổi trạng thái tài khoản");
       set({ error: errorMessage, isSubmitting: false });
       return false;
     }
   },
 
-  /** 6. Xóa tài khoản người dùng */
+  updateUserRole: async (userId: string | number, form: UserRoleUpdateForm) => {
+    set({ isSubmitting: true, error: null });
+    try {
+      const updatedUser = await adminUserApi.updateUserRole(userId, form);
+      set((state) => ({
+        users: state.users.map((user) =>
+          String(user.userId) === String(userId) ? updatedUser : user,
+        ),
+        selectedUser:
+          state.selectedUser && String(state.selectedUser.userId) === String(userId)
+            ? updatedUser
+            : state.selectedUser,
+        isSubmitting: false,
+      }));
+      await get().fetchUsers();
+      await get().fetchUserStats();
+      return true;
+    } catch (err: unknown) {
+      const errorMessage = parseErrorMessage(err, "Không thể cập nhật vai trò người dùng");
+      set({ error: errorMessage, isSubmitting: false });
+      return false;
+    }
+  },
+
   deleteUser: async (userId: string | number) => {
     set({ isSubmitting: true, error: null });
     try {
       await adminUserApi.deleteUser(userId);
       set((state) => ({
+        users: state.users.filter((user) => String(user.userId) !== String(userId)),
+        total: Math.max(0, state.total - 1),
         selectedUser:
           state.selectedUser && String(state.selectedUser.userId) === String(userId)
             ? null
             : state.selectedUser,
         isSubmitting: false,
       }));
-
-      await get().fetchUsers();
       return true;
     } catch (err: unknown) {
-      const errorMessage = parseErrorMessage(err, "Không thể xóa người dùng");
+      const errorMessage = parseErrorMessage(err, "Không thể xóa tài khoản người dùng");
       set({ error: errorMessage, isSubmitting: false });
       return false;
     }
   },
+
 }));

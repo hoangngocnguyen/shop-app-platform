@@ -3,9 +3,9 @@ import type {
   AdminUserQueryParams,
   UserListResponse,
   UserDetailResponse,
-  UserCreateForm,
-  UserUpdateForm,
   UserBlockForm,
+  UserRoleUpdateForm,
+  UserStatsResponse,
 } from "../types";
 
 const ENDPOINT = "/admin/users";
@@ -17,38 +17,34 @@ export const adminUserApi = {
     return response.data;
   },
 
-  /** 2. Tạo mới người dùng (POST /admin/users) */
-  createUser: async (form: UserCreateForm): Promise<UserDetailResponse> => {
-    const response = await api.post<UserDetailResponse>(ENDPOINT, form);
-    return response.data;
-  },
-
-  /** 3. Xem chi tiết người dùng (GET /admin/users/{userId}) */
+  /** 2. Xem chi tiết người dùng (GET /admin/users/{userId}) */
   getUserById: async (userId: string | number): Promise<UserDetailResponse> => {
     const response = await api.get<UserDetailResponse>(`${ENDPOINT}/${userId}`);
     return response.data;
   },
 
-  /** 4. Cập nhật thông tin (PUT /admin/users/{userId}) */
-  updateUser: async (
-    userId: string | number,
-    form: UserUpdateForm
-  ): Promise<UserDetailResponse> => {
-    const response = await api.put<UserDetailResponse>(`${ENDPOINT}/${userId}`, form);
+  getUserStats: async (): Promise<UserStatsResponse> => {
+    const response = await api.get<UserStatsResponse>(`${ENDPOINT}/stats`);
     return response.data;
   },
 
-  /** 5. Khóa hoặc Mở khóa tài khoản (PATCH /admin/users/{userId}/block) */
+  deleteUser: async (userId: string | number): Promise<void> => {
+    await api.delete(`${ENDPOINT}/${userId}`);
+  },
+
   blockUser: async (
     userId: string | number,
-    form: UserBlockForm
+    form: UserBlockForm,
   ): Promise<UserDetailResponse> => {
     const response = await api.patch<UserDetailResponse>(`${ENDPOINT}/${userId}/block`, form);
     return response.data;
   },
 
-  /** 6. Xóa tài khoản (DELETE /admin/users/{userId}) */
-  deleteUser: async (userId: string | number): Promise<void> => {
-    await api.delete(`${ENDPOINT}/${userId}`);
+  updateUserRole: async (
+    userId: string | number,
+    form: UserRoleUpdateForm,
+  ): Promise<UserDetailResponse> => {
+    const response = await api.patch<UserDetailResponse>(`${ENDPOINT}/${userId}/role`, form);
+    return response.data;
   },
 };

@@ -19,12 +19,32 @@ export interface UserDetailResponse {
   fullName: string;
   email: string;
   phone?: string | null;
-  address?: string | null;
+  shippingAddresses?: ShippingAddressResponse[];
   role: UserRole | string;
   status: UserStatus | string;
   reason?: string | null;
   createdAt: string;
   updatedAt?: string | null;
+}
+
+export interface ShippingAddressResponse {
+  id: number;
+  recipientName?: string | null;
+  phone?: string | null;
+  province?: string | null;
+  district?: string | null;
+  ward?: string | null;
+  detailAddress?: string | null;
+  isDefault: boolean;
+}
+
+export interface UserBlockForm {
+  isBlocked: boolean;
+  reason?: string;
+}
+
+export interface UserRoleUpdateForm {
+  role: UserRole;
 }
 
 export interface UserListResponse {
@@ -35,6 +55,14 @@ export interface UserListResponse {
   total_pages: number;
 }
 
+export interface UserStatsResponse {
+  total: number;
+  customers: number;
+  admins: number;
+  staff: number;
+  blocked: number;
+}
+
 export interface AdminUserQueryParams {
   page?: number;
   page_size?: number;
@@ -43,24 +71,4 @@ export interface AdminUserQueryParams {
   status?: UserStatus | string;
   sortBy?: string;
   sortDir?: SortDirection | "asc" | "desc";
-}
-
-export interface UserCreateForm {
-  fullName: string;
-  email: string;
-  phone: string;
-  password?: string;
-  role: UserRole | string;
-}
-
-export interface UserUpdateForm {
-  fullName: string;
-  phone: string;
-  address?: string;
-  role: UserRole | string;
-}
-
-export interface UserBlockForm {
-  isBlocked: boolean;
-  reason?: string;
 }

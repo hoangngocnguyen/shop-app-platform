@@ -33,7 +33,7 @@ export function UserFilterBar({
   onSortChange,
 }: UserFilterBarProps) {
   return (
-    <div className="flex flex-wrap items-center gap-3 bg-white/90 backdrop-blur-md p-4 rounded-2xl border border-surface-border shadow-sm">
+    <div className="flex flex-wrap items-center gap-3 rounded-2xl border border-surface-border bg-surface-card/90 p-4 shadow-brand-sm backdrop-blur-md transition-all duration-300 hover:-translate-y-0.5 hover:border-primary/25 hover:shadow-brand-md">
       {/* Ô tìm kiếm từ khóa */}
       <div className="relative min-w-[240px] flex-1 transition-all duration-300 hover:-translate-y-0.5">
         <Search className="pointer-events-none absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-text-muted" aria-hidden />
@@ -43,7 +43,7 @@ export function UserFilterBar({
           onChange={(e) => onSearchChange(e.target.value)}
           placeholder="Tìm theo tên, email, sđt hoặc ID..."
           aria-label="Tìm kiếm người dùng"
-          className="w-full rounded-xl border border-surface-border bg-surface-card py-2.5 pl-10 pr-3.5 text-sm text-text-main placeholder:text-text-muted shadow-xs transition-all duration-200 hover:border-primary/50 hover:shadow-md focus:border-ring-brand focus:outline-none focus:ring-4 focus:ring-ring-brand/15"
+          className="w-full rounded-xl border border-surface-border bg-surface-card py-2.5 pl-10 pr-3.5 text-sm text-text-main placeholder:text-text-muted shadow-xs transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/50 hover:shadow-brand-sm focus:border-ring-brand focus:outline-none focus:ring-4 focus:ring-ring-brand/15"
         />
       </div>
 
@@ -54,7 +54,7 @@ export function UserFilterBar({
           value={roleFilter}
           onChange={(e) => onRoleChange(e.target.value)}
           aria-label="Lọc theo vai trò"
-          className="rounded-xl border border-surface-border bg-surface-card py-2.5 pl-9 pr-9 text-sm text-text-main shadow-xs transition-all duration-200 hover:border-primary/50 hover:shadow-md focus:border-ring-brand focus:outline-none focus:ring-4 focus:ring-ring-brand/15 cursor-pointer appearance-none"
+          className="rounded-xl border border-surface-border bg-surface-card py-2.5 pl-9 pr-9 text-sm text-text-main shadow-xs transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/50 hover:shadow-brand-sm focus:border-ring-brand focus:outline-none focus:ring-4 focus:ring-ring-brand/15 cursor-pointer appearance-none"
         >
           <option value="all">Tất cả vai trò</option>
           <option value="ADMIN">ADMIN</option>
@@ -71,7 +71,7 @@ export function UserFilterBar({
           value={statusFilter}
           onChange={(e) => onStatusChange(e.target.value)}
           aria-label="Lọc theo trạng thái"
-          className="rounded-xl border border-surface-border bg-surface-card py-2.5 pl-9 pr-9 text-sm text-text-main shadow-xs transition-all duration-200 hover:border-primary/50 hover:shadow-md focus:border-ring-brand focus:outline-none focus:ring-4 focus:ring-ring-brand/15 cursor-pointer appearance-none"
+          className="rounded-xl border border-surface-border bg-surface-card py-2.5 pl-9 pr-9 text-sm text-text-main shadow-xs transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/50 hover:shadow-brand-sm focus:border-ring-brand focus:outline-none focus:ring-4 focus:ring-ring-brand/15 cursor-pointer appearance-none"
         >
           <option value="all">Tất cả trạng thái</option>
           <option value="active">Hoạt động (ACTIVE)</option>
@@ -87,7 +87,7 @@ export function UserFilterBar({
           value={sortBy}
           onChange={(e) => onSortChange(e.target.value as UserSortBy)}
           aria-label="Sắp xếp danh sách"
-          className="rounded-xl border border-surface-border bg-surface-card py-2.5 pl-9 pr-9 text-sm text-text-main shadow-xs transition-all duration-200 hover:border-primary/50 hover:shadow-md focus:border-ring-brand focus:outline-none focus:ring-4 focus:ring-ring-brand/15 cursor-pointer appearance-none"
+          className="rounded-xl border border-surface-border bg-surface-card py-2.5 pl-9 pr-9 text-sm text-text-main shadow-xs transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/50 hover:shadow-brand-sm focus:border-ring-brand focus:outline-none focus:ring-4 focus:ring-ring-brand/15 cursor-pointer appearance-none"
         >
           {SORT_OPTIONS.map((o) => (
             <option key={o.value} value={o.value}>{o.label}</option>
