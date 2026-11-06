@@ -1,7 +1,8 @@
 from datetime import datetime
 from enum import Enum
-from typing import List, Optional
+from typing import Any, List, Optional
 from pydantic import (
+    AliasChoices,
     BaseModel,
     ConfigDict,
     EmailStr,
@@ -79,18 +80,56 @@ class UserBlockForm(BaseModel):
 # Response DTO Schemas
 # ==========================================
 class UserDetailResponse(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
+    model_config = ConfigDict(
+        from_attributes=True,
+        populate_by_name=True,
+    )
 
-    userId: str = Field(..., description="ID duy nhất của người dùng")
-    fullName: Optional[str] = Field(default=None, description="Họ và tên người dùng")
-    email: Optional[EmailStr] = Field(default=None, description="Địa chỉ email")
+    userId: str = Field(
+        ..., 
+        validation_alias=AliasChoices("userId", "id"), 
+        description="ID duy nhất của người dùng"
+    )
+    fullName: str = Field(
+        ..., 
+        validation_alias=AliasChoices("fullName", "full_name"), 
+        description="Họ và tên người dùng"
+    )
+    email: EmailStr = Field(..., description="Địa chỉ email")
     phone: Optional[str] = Field(default=None, description="Số điện thoại liên lạc")
     address: Optional[str] = Field(default=None, description="Địa chỉ")
     role: UserRole = Field(..., description="Vai trò người dùng (ADMIN, CUSTOMER, STAFF)")
-    status: UserStatus = Field(..., description="Trạng thái tài khoản (ACTIVE, BLOCKED)")
-    reason: Optional[str] = Field(default=None, description="Lý do khóa tài khoản (nếu bị khóa)")
-    createdAt: datetime = Field(..., description="Thời gian tạo tài khoản")
-    updatedAt: datetime = Field(..., description="Thời gian cập nhật gần nhất")
+    status: UserStatus = Field(
+        default=UserStatus.ACTIVE,
+        description="Trạng thái tài khoản (ACTIVE, BLOCKED)"
+    )
+    reason: Optional[str] = Field(
+        default=None, 
+        validation_alias=AliasChoices("reason", "block_reason"), 
+        description="Lý do khóa tài khoản (nếu bị khóa)"
+    )
+    createdAt: datetime = Field(
+        ..., 
+        validation_alias=AliasChoices("createdAt", "created_at"), 
+        description="Thời gian tạo tài khoản"
+    )
+    updatedAt: Optional[datetime] = Field(
+        default=None, 
+        validation_alias=AliasChoices("updatedAt", "updated_at"), 
+        description="Thời gian cập nhật gần nhất"
+    )
+
+    @model_validator(mode="before")
+    @classmethod
+    def resolve_status_from_orm(cls, data: Any) -> Any:
+        """Tự động tính toán status = BLOCKED nếu object DB có is_blocked = True"""
+        if hasattr(data, "is_blocked"):
+            status_val = UserStatus.BLOCKED if getattr(data, "is_blocked", False) else UserStatus.ACTIVE
+            if isinstance(data, dict):
+                data["status"] = status_val
+            else:
+                setattr(data, "status", status_val)
+        return data
 
 
 class UserListResponse(BaseModel):
