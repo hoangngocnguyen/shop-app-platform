@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import { parseErrorMessage } from "@/lib/axios/parseError";
 import { adminUserApi } from "../api";
 import {
   AdminUserQueryParams,
@@ -6,6 +7,7 @@ import {
   UserBlockForm,
   UserCreateForm,
   UserDetailResponse,
+  UserListResponse,
   UserUpdateForm,
 } from "../types";
 
@@ -24,19 +26,21 @@ interface AdminUserState {
   isSubmitting: boolean;
   error: string | null;
 
-  // Actions xử lý logic
-  fetchUsers: (customParams?: Partial<AdminUserQueryParams>) => Promise<void>;
-  fetchUserById: (userId: string) => Promise<void>;
-  createUser: (form: UserCreateForm) => Promise<boolean>;
-  updateUser: (userId: string, form: UserUpdateForm) => Promise<boolean>;
-  blockUser: (userId: string, form: UserBlockForm) => Promise<boolean>;
-  deleteUser: (userId: string) => Promise<boolean>;
-
-  // Actions thao tác State bộ lọc & Modal
+  // Actions (Setters & Reset)
+  setUsers: (users: UserDetailResponse[]) => void;
+  setSelectedUser: (user: UserDetailResponse | null) => void;
   setQueryParams: (params: Partial<AdminUserQueryParams>) => void;
   resetQueryParams: () => void;
-  setSelectedUser: (user: UserDetailResponse | null) => void;
   clearError: () => void;
+  reset: () => void;
+
+  // Async Actions - Admin User Services
+  fetchUsers: (customParams?: Partial<AdminUserQueryParams>) => Promise<UserListResponse | null>;
+  fetchUserById: (userId: string | number) => Promise<UserDetailResponse | null>;
+  createUser: (form: UserCreateForm) => Promise<boolean>;
+  updateUser: (userId: string | number, form: UserUpdateForm) => Promise<boolean>;
+  blockUser: (userId: string | number, form: UserBlockForm) => Promise<boolean>;
+  deleteUser: (userId: string | number) => Promise<boolean>;
 }
 
 const initialQueryParams: AdminUserQueryParams = {
@@ -49,8 +53,7 @@ const initialQueryParams: AdminUserQueryParams = {
   sortDir: SortDirection.DESC,
 };
 
-export const useAdminUserStore = create<AdminUserState>((set, get) => ({
-  // Dữ liệu ban đầu
+const initialState = {
   users: [],
   selectedUser: null,
   total: 0,
@@ -59,143 +62,143 @@ export const useAdminUserStore = create<AdminUserState>((set, get) => ({
   isLoading: false,
   isSubmitting: false,
   error: null,
+};
 
-  /**
-   * 1. Lấy danh sách người dùng (kèm phân trang, lọc, tìm kiếm)
-   */
+export const useAdminUserStore = create<AdminUserState>((set, get) => ({
+  ...initialState,
+
+  setUsers: (users) => set({ users }),
+  setSelectedUser: (selectedUser) => set({ selectedUser }),
+
+  setQueryParams: (params) =>
+    set((state) => ({
+      queryParams: { ...state.queryParams, ...params },
+    })),
+
+  resetQueryParams: () => {
+    set({ queryParams: initialQueryParams });
+    void get().fetchUsers(initialQueryParams);
+  },
+
+  clearError: () => set({ error: null }),
+  reset: () => set(initialState),
+
+  /** 1. Lấy danh sách người dùng (kèm phân trang, lọc, tìm kiếm) */
   fetchUsers: async (customParams?: Partial<AdminUserQueryParams>) => {
     set({ isLoading: true, error: null });
     try {
       const mergedParams = { ...get().queryParams, ...customParams };
-      const response = await adminUserApi.getUsers(mergedParams);
+      const data = await adminUserApi.getUsers(mergedParams);
 
       set({
-        users: response.data.content,
-        total: response.data.total,
-        totalPages: response.data.total_pages,
+        users: data?.content ?? [],
+        total: data?.total ?? 0,
+        totalPages: data?.total_pages ?? 0,
         queryParams: mergedParams,
         isLoading: false,
       });
-    } catch (err: any) {
-      set({
-        error: err.response?.data?.detail || "Không thể tải danh sách người dùng",
-        isLoading: false,
-      });
+      return data;
+    } catch (err: unknown) {
+      const errorMessage = parseErrorMessage(err, "Không thể tải danh sách người dùng");
+      set({ error: errorMessage, isLoading: false });
+      return null;
     }
   },
 
-  /**
-   * 2. Lấy thông tin chi tiết một người dùng
-   */
-  fetchUserById: async (userId: string) => {
+  /** 2. Lấy thông tin chi tiết một người dùng */
+  fetchUserById: async (userId: string | number) => {
     set({ isLoading: true, error: null });
     try {
-      const response = await adminUserApi.getUserById(userId);
-      set({ selectedUser: response.data, isLoading: false });
-    } catch (err: any) {
-      set({
-        error: err.response?.data?.detail || "Không thể lấy thông tin người dùng",
-        isLoading: false,
-      });
+      const user = await adminUserApi.getUserById(userId);
+      set({ selectedUser: user, isLoading: false });
+      return user;
+    } catch (err: unknown) {
+      const errorMessage = parseErrorMessage(err, "Không thể lấy thông tin người dùng");
+      set({ error: errorMessage, isLoading: false });
+      return null;
     }
   },
 
-  /**
-   * 3. Tạo người dùng mới
-   */
+  /** 3. Tạo người dùng mới */
   createUser: async (form: UserCreateForm) => {
     set({ isSubmitting: true, error: null });
     try {
       await adminUserApi.createUser(form);
       set({ isSubmitting: false });
-      // Reload lại danh sách sau khi tạo thành công
       await get().fetchUsers({ page: 0 });
       return true;
-    } catch (err: any) {
-      set({
-        error: err.response?.data?.detail || "Tạo tài khoản thất bại",
-        isSubmitting: false,
-      });
+    } catch (err: unknown) {
+      const errorMessage = parseErrorMessage(err, "Tạo tài khoản thất bại");
+      set({ error: errorMessage, isSubmitting: false });
       return false;
     }
   },
 
-  /**
-   * 4. Cập nhật thông tin người dùng
-   */
-  updateUser: async (userId: string, form: UserUpdateForm) => {
+  /** 4. Cập nhật thông tin người dùng */
+  updateUser: async (userId: string | number, form: UserUpdateForm) => {
     set({ isSubmitting: true, error: null });
     try {
-      await adminUserApi.updateUser(userId, form);
-      set({ isSubmitting: false });
-      // Reload lại danh sách người dùng
+      const updatedUser = await adminUserApi.updateUser(userId, form);
+
+      set((state) => ({
+        selectedUser:
+          state.selectedUser && String(state.selectedUser.userId) === String(userId)
+            ? updatedUser
+            : state.selectedUser,
+        isSubmitting: false,
+      }));
+
       await get().fetchUsers();
       return true;
-    } catch (err: any) {
-      set({
-        error: err.response?.data?.detail || "Cập nhật thông tin thất bại",
-        isSubmitting: false,
-      });
+    } catch (err: unknown) {
+      const errorMessage = parseErrorMessage(err, "Cập nhật thông tin thất bại");
+      set({ error: errorMessage, isSubmitting: false });
       return false;
     }
   },
 
-  /**
-   * 5. Khóa hoặc Mở khóa tài khoản
-   */
-  blockUser: async (userId: string, form: UserBlockForm) => {
+  /** 5. Khóa hoặc Mở khóa tài khoản */
+  blockUser: async (userId: string | number, form: UserBlockForm) => {
     set({ isSubmitting: true, error: null });
     try {
-      await adminUserApi.blockUser(userId, form);
-      set({ isSubmitting: false });
-      // Reload lại danh sách
+      const updatedUser = await adminUserApi.blockUser(userId, form);
+
+      set((state) => ({
+        selectedUser:
+          state.selectedUser && String(state.selectedUser.userId) === String(userId)
+            ? updatedUser
+            : state.selectedUser,
+        isSubmitting: false,
+      }));
+
       await get().fetchUsers();
       return true;
-    } catch (err: any) {
-      set({
-        error: err.response?.data?.detail || "Thao tác khóa/mở khóa thất bại",
-        isSubmitting: false,
-      });
+    } catch (err: unknown) {
+      const errorMessage = parseErrorMessage(err, "Thao tác khóa/mở khóa thất bại");
+      set({ error: errorMessage, isSubmitting: false });
       return false;
     }
   },
 
-  /**
-   * 6. Xóa tài khoản người dùng
-   */
-  deleteUser: async (userId: string) => {
+  /** 6. Xóa tài khoản người dùng */
+  deleteUser: async (userId: string | number) => {
     set({ isSubmitting: true, error: null });
     try {
       await adminUserApi.deleteUser(userId);
-      set({ isSubmitting: false });
-      // Reload lại danh sách người dùng
+      set((state) => ({
+        selectedUser:
+          state.selectedUser && String(state.selectedUser.userId) === String(userId)
+            ? null
+            : state.selectedUser,
+        isSubmitting: false,
+      }));
+
       await get().fetchUsers();
       return true;
-    } catch (err: any) {
-      set({
-        error: err.response?.data?.detail || "Không thể xóa người dùng",
-        isSubmitting: false,
-      });
+    } catch (err: unknown) {
+      const errorMessage = parseErrorMessage(err, "Không thể xóa người dùng");
+      set({ error: errorMessage, isSubmitting: false });
       return false;
     }
   },
-
-  // Cập nhật bộ lọc và kích hoạt gọi lại API
-  setQueryParams: (params: Partial<AdminUserQueryParams>) => {
-    set((state) => ({
-      queryParams: { ...state.queryParams, ...params },
-    }));
-  },
-
-  // Reset bộ lọc về trạng thái ban đầu
-  resetQueryParams: () => {
-    set({ queryParams: initialQueryParams });
-    get().fetchUsers(initialQueryParams);
-  },
-
-  // Set user đang được chọn để sửa / khóa / xem chi tiết
-  setSelectedUser: (user: UserDetailResponse | null) => set({ selectedUser: user }),
-
-  // Xóa thông báo lỗi
-  clearError: () => set({ error: null }),
 }));
