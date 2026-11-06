@@ -116,6 +116,7 @@ export function UserFormModal({
             </label>
             <input
               type="text"
+              maxLength={255}
               placeholder="Nhập địa chỉ người dùng..."
               value={formData.address}
               onChange={(e) => setFormData({ ...formData, address: e.target.value })}
