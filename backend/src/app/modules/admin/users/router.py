@@ -3,12 +3,14 @@ from fastapi import APIRouter, Depends, Query, status
 from sqlalchemy.orm import Session
 
 from src.app.core.database import get_db
+from src.app.core.deps import require_role
 from src.app.core.response import ApiResponse, success_response
 from src.app.modules.admin.users import schema, service
 
 router = APIRouter(
     prefix="/admin/users",
     tags=["Admin - Quản lý người dùng"],
+    dependencies=[Depends(require_role("ADMIN"))],
 )
 
 
@@ -38,7 +40,7 @@ def get_users(
         role=role.value if role else None,
         status_filter=status_filter.value if status_filter else None,
         sort_by=sortBy,
-        sort_dir=sortDir.value if isinstance(sortDir, schema.SortDirection) else sortDir,
+        sort_dir=getattr(sortDir, "value", sortDir),
     )
     return success_response(data=result, message="Lấy danh sách người dùng thành công")
 
