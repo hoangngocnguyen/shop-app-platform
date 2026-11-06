@@ -1,11 +1,22 @@
 from typing import Optional
+
 from fastapi import APIRouter, Depends, Query, status
 from sqlalchemy.orm import Session
 
 from src.app.core.database import get_db
 from src.app.core.deps import require_role
 from src.app.core.response import ApiResponse, success_response
-from src.app.modules.admin.users import schema, service
+from src.app.modules.admin.users import service
+from src.app.modules.admin.users.schema import (
+    SortDirection,
+    UserBlockForm,
+    UserDetailResponse,
+    UserListResponse,
+    UserRole,
+    UserRoleUpdateForm,
+    UserStatsResponse,
+    UserStatus,
+)
 
 router = APIRouter(
     prefix="/admin/users",
@@ -16,7 +27,7 @@ router = APIRouter(
 
 @router.get(
     "",
-    response_model=ApiResponse[schema.UserListResponse],
+    response_model=ApiResponse[UserListResponse],
     status_code=status.HTTP_200_OK,
     summary="Lấy danh sách người dùng",
     description="Lấy danh sách người dùng có hỗ trợ phân trang, tìm kiếm theo từ khóa và lọc theo vai trò, trạng thái tài khoản.",
@@ -26,10 +37,10 @@ def get_users(
     page: int = Query(0, ge=0, description="Số trang, mặc định = 0"),
     page_size: int = Query(10, ge=1, le=100, description="Số lượng bản ghi mỗi trang, mặc định = 10"),
     search: Optional[str] = Query(None, description="Tìm kiếm theo tên, email, sđt hoặc userId"),
-    role: Optional[schema.UserRole] = Query(None, description="Lọc theo vai trò (ADMIN, CUSTOMER, STAFF)"),
-    status_filter: Optional[schema.UserStatus] = Query(None, alias="status", description="Lọc theo trạng thái (ACTIVE, BLOCKED)"),
+    role: Optional[UserRole] = Query(None, description="Lọc theo vai trò (ADMIN, CUSTOMER, STAFF)"),
+    status_filter: Optional[UserStatus] = Query(None, alias="status", description="Lọc theo trạng thái (ACTIVE, BLOCKED)"),
     sortBy: str = Query("createdAt", description="Trường sắp xếp (createdAt, fullName, email)"),
-    sortDir: schema.SortDirection = Query(schema.SortDirection.DESC, description="Chiều sắp xếp: asc hoặc desc"),
+    sortDir: SortDirection = Query(SortDirection.DESC, description="Chiều sắp xếp: asc hoặc desc"),
     db: Session = Depends(get_db),
 ):
     result = service.get_users_paginated(
@@ -47,7 +58,7 @@ def get_users(
 
 @router.get(
     "/stats",
-    response_model=ApiResponse[schema.UserStatsResponse],
+    response_model=ApiResponse[UserStatsResponse],
     status_code=status.HTTP_200_OK,
     summary="Lấy số liệu thống kê người dùng",
     description="Lấy số liệu tổng hợp toàn hệ thống theo vai trò và trạng thái tài khoản.",
@@ -60,7 +71,7 @@ def get_user_stats(db: Session = Depends(get_db)):
 
 @router.get(
     "/{userId}",
-    response_model=ApiResponse[schema.UserDetailResponse],
+    response_model=ApiResponse[UserDetailResponse],
     status_code=status.HTTP_200_OK,
     summary="Lấy chi tiết người dùng",
     description="Lấy thông tin chi tiết của một người dùng dựa theo ID.",
@@ -76,7 +87,7 @@ def get_user_by_id(
 
 @router.patch(
     "/{userId}/block",
-    response_model=ApiResponse[schema.UserDetailResponse],
+    response_model=ApiResponse[UserDetailResponse],
     status_code=status.HTTP_200_OK,
     summary="Khóa hoặc mở khóa tài khoản",
     description="Khóa tài khoản với lý do hoặc mở khóa tài khoản.",
@@ -84,7 +95,7 @@ def get_user_by_id(
 )
 def block_user(
     userId: str,
-    form: schema.UserBlockForm,
+    form: UserBlockForm,
     db: Session = Depends(get_db),
 ):
     updated_user = service.block_user(db=db, user_id=userId, form=form)
@@ -94,7 +105,7 @@ def block_user(
 
 @router.patch(
     "/{userId}/role",
-    response_model=ApiResponse[schema.UserDetailResponse],
+    response_model=ApiResponse[UserDetailResponse],
     status_code=status.HTTP_200_OK,
     summary="Cập nhật vai trò người dùng",
     description="Chỉ cập nhật vai trò hệ thống của người dùng.",
@@ -102,7 +113,7 @@ def block_user(
 )
 def update_user_role(
     userId: str,
-    form: schema.UserRoleUpdateForm,
+    form: UserRoleUpdateForm,
     db: Session = Depends(get_db),
 ):
     updated_user = service.update_user_role(db=db, user_id=userId, form=form)
