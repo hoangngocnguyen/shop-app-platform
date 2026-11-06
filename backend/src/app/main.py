@@ -27,15 +27,19 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-app.include_router(api_v1_router)
-
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],
+    allow_origins=[
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+    ],
+    allow_origin_regex=r"^https?://(localhost|127\.0\.0\.1)(:[0-9]+)?$",
     allow_credentials=True,
     allow_methods=["*"],
-    allow_headers=["Authorization", "Content-Type"],
+    allow_headers=["*"],
 )
+
+app.include_router(api_v1_router)
 
 # [REFACTOR: Đăng ký tập trung toàn bộ Exception Handlers thay vì add thủ công từng handler]
 register_exception_handlers(app)
