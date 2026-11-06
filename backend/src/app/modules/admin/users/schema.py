@@ -1,6 +1,7 @@
 from datetime import datetime
 from enum import Enum
 from typing import Any, List, Optional
+
 from pydantic import (
     AliasChoices,
     BaseModel,
@@ -9,6 +10,8 @@ from pydantic import (
     Field,
     model_validator,
 )
+
+from src.app.modules.shipping_addresses.schema import ShippingAddressResponse
 
 
 # ==========================================
@@ -65,32 +68,32 @@ class AdminUserQueryParams(BaseModel):
 # ==========================================
 # Shipping Address Schema (Địa chỉ phân cấp - Admin Read-only)
 # ==========================================
-class ShippingAddressDTO(BaseModel):
+class ShippingAddressDTO(ShippingAddressResponse):
     model_config = ConfigDict(
         from_attributes=True,
         populate_by_name=True,
     )
 
-    id: int = Field(..., description="ID địa chỉ giao hàng")
-    recipientName: Optional[str] = Field(
+    recipient_name: str = Field(..., exclude=True)
+    province_code: str = Field(..., exclude=True)
+    ward_code: str = Field(..., exclude=True)
+    address_line: str = Field(..., exclude=True)
+    is_default: bool = Field(..., exclude=True)
+    province_name: Optional[str] = Field(default=None, exclude=True)
+    ward_name: Optional[str] = Field(default=None, exclude=True)
+
+    recipientName: Optional[str] = Field(default=None, description="Tên người nhận")
+    province: Optional[str] = Field(
         default=None,
-        validation_alias=AliasChoices("recipientName", "recipient_name"),
-        description="Tên người nhận"
+        description="Tỉnh / Thành phố",
     )
-    phone: Optional[str] = Field(default=None, description="Số điện thoại người nhận")
-    province: Optional[str] = Field(default=None, description="Tỉnh / Thành phố")
     district: Optional[str] = Field(default=None, description="Quận / Huyện")
     ward: Optional[str] = Field(default=None, description="Phường / Xã")
     detailAddress: Optional[str] = Field(
         default=None,
-        validation_alias=AliasChoices("detailAddress", "detail_address"),
-        description="Địa chỉ chi tiết (số nhà, tên đường)"
+        description="Địa chỉ chi tiết (số nhà, tên đường)",
     )
-    isDefault: bool = Field(
-        default=False,
-        validation_alias=AliasChoices("isDefault", "is_default"),
-        description="Địa chỉ mặc định hay không"
-    )
+    isDefault: bool = Field(default=False, description="Địa chỉ mặc định hay không")
 
 
 # ==========================================
