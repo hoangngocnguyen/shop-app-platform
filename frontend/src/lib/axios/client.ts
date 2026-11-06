@@ -20,6 +20,11 @@ export function clearTokenCache() {
 }
 
 api.interceptors.request.use(async (config) => {
+  // Nếu đã chủ động truyền Authorization header (ví dụ gọi từ Server Route Handler kèm access_token)
+  if (config.headers.Authorization) {
+    return config;
+  }
+
   const now = Math.floor(Date.now() / 1000);
 
   // Nếu token còn hạn ít nhất 30 giây nữa, tái sử dụng token ngay lập tức (0ms overhead)
@@ -57,7 +62,9 @@ api.interceptors.response.use(
   async (error: AxiosError<ApiErrorResponse>) => {
     if (error.response?.status === 401) {
       clearTokenCache();
-      await useAuthStore.getState().logout();
+      if (typeof window !== "undefined") {
+        await useAuthStore.getState().logout();
+      }
     }
     return Promise.reject(error);
   }
