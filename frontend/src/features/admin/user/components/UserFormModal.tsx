@@ -156,9 +156,9 @@ export function UserFormModal({
             onChange={(e) => setFormData({ ...formData, role: e.target.value })}
             className="w-full rounded-xl border border-surface-border bg-surface-card px-3.5 py-2.5 text-sm text-text-main shadow-xs transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/50 hover:shadow-md focus:-translate-y-0.5 focus:border-ring-brand focus:outline-none focus:ring-4 focus:ring-ring-brand/15 cursor-pointer"
           >
-            <option value={UserRole.CUSTOMER}>CUSTOMER (Khách hàng)</option>
-            <option value={UserRole.STAFF}>STAFF (Nhân viên)</option>
-            <option value={UserRole.ADMIN}>ADMIN (Quản trị viên)</option>
+            <option value={UserRole.CUSTOMER}>Khách hàng</option>
+            <option value={UserRole.STAFF}>Nhân viên</option>
+            <option value={UserRole.ADMIN}>Quản trị viên</option>
           </select>
         </div>
 
