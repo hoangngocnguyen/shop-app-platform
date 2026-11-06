@@ -11,6 +11,7 @@ from src.app.modules.carts.model import Cart, CartItem
 from src.app.modules.orders.model import Order, OrderDetail, OrderLog
 from src.app.modules.products.model import Product
 from src.app.modules.shipping_addresses.model import ShippingAddress
+from src.app.modules.users.model import User
 
 
 class OrderRepository:
@@ -238,6 +239,120 @@ class OrderRepository:
         orders = list(self.db.scalars(paged_stmt).all())
 
         return orders, total_items, total_pages
+
+    def get_admin_orders_paginated(
+        self,
+        status: str | None = None,
+        payment_method: str | None = None,
+        payment_status: str | None = None,
+        search: str | None = None,
+        sort_by: str = "order_date_desc",
+        page: int = 1,
+        page_size: int = 10,
+    ) -> tuple[list[Order], int, int]:
+        """
+        Lấy danh sách tất cả đơn hàng cho Admin, hỗ trợ lọc đa tiêu chí
+        (trạng thái đơn, PTTT, trạng thái TT) và tìm kiếm (mã đơn, tên/sđt người nhận, tên sản phẩm).
+        """
+        base_query = (
+            select(Order)
+            .options(
+                selectinload(Order.order_details).joinedload(OrderDetail.product),
+                joinedload(Order.user),
+            )
+        )
+
+        if status and status.upper() != "ALL":
+            base_query = base_query.where(Order.status == status.upper())
+
+        if payment_method:
+            base_query = base_query.where(Order.payment_method == payment_method.upper())
+
+        if payment_status:
+            base_query = base_query.where(Order.payment_status == payment_status.upper())
+
+        if search and search.strip():
+            search_pattern = f"%{search.strip()}%"
+            base_query = base_query.where(
+                or_(
+                    Order.order_id.ilike(search_pattern),
+                    Order.shipping_recipient_name.ilike(search_pattern),
+                    Order.shipping_phone.ilike(search_pattern),
+                    Order.order_details.any(
+                        OrderDetail.product.has(
+                            Product.product_name.ilike(search_pattern)
+                        )
+                    ),
+                )
+            )
+
+        # Đếm tổng số lượng bản ghi
+        count_stmt = select(func.count()).select_from(
+            base_query.order_by(None).subquery()
+        )
+        total_items: int = self.db.scalar(count_stmt) or 0
+        total_pages = math.ceil(total_items / page_size) if total_items > 0 else 1
+        offset = (page - 1) * page_size
+
+        # Sắp xếp
+        if sort_by == "order_date_asc":
+            order_col = Order.order_date.asc()
+        elif sort_by == "total_desc":
+            order_col = Order.total.desc()
+        elif sort_by == "total_asc":
+            order_col = Order.total.asc()
+        else:
+            order_col = Order.order_date.desc()
+
+        paged_stmt = base_query.order_by(order_col).offset(offset).limit(page_size)
+        orders = list(self.db.scalars(paged_stmt).all())
+
+        return orders, total_items, total_pages
+
+    def count_orders_by_statuses(self) -> dict[str, int]:
+        """Đếm số lượng đơn hàng theo từng trạng thái phục vụ hiển thị Tab Admin."""
+        stmt = select(Order.status, func.count(Order.order_id)).group_by(Order.status)
+        rows = self.db.execute(stmt).all()
+        return {str(row[0]): int(row[1]) for row in rows}
+
+    def get_admin_order_by_id(
+        self,
+        order_id: str,
+        for_update: bool = False,
+    ) -> Order | None:
+        """Lấy chi tiết đơn hàng cho Admin kèm đầy đủ user, items, logs."""
+        stmt = (
+            select(Order)
+            .options(
+                selectinload(Order.order_details).joinedload(OrderDetail.product),
+                selectinload(Order.order_logs),
+                joinedload(Order.user),
+            )
+            .where(Order.order_id == order_id)
+        )
+        if for_update:
+            stmt = stmt.with_for_update()
+        return self.db.scalar(stmt)
+
+    def get_orders_by_ids(
+        self,
+        order_ids: Sequence[str],
+        for_update: bool = False,
+    ) -> list[Order]:
+        """Lấy danh sách đơn hàng theo danh sách mã đơn cho Admin."""
+        if not order_ids:
+            return []
+        stmt = (
+            select(Order)
+            .options(
+                selectinload(Order.order_details),
+                selectinload(Order.order_logs),
+            )
+            .where(Order.order_id.in_(order_ids))
+        )
+        if for_update:
+            stmt = stmt.with_for_update()
+        return list(self.db.scalars(stmt).all())
 
     # ==========================================================================
     # 5. ORDER STATUS TRANSITIONS & INVENTORY MANAGEMENT

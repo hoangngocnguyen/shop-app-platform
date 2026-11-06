@@ -102,3 +102,13 @@ CANCEL_REASON_TEXT: dict[str, str] = {
     SystemCancelReason.PAYMENT_TIMEOUT.value: "Hết thời hạn thanh toán.",
     SystemCancelReason.CONFIRMATION_TIMEOUT.value: "Quá hạn xác nhận đơn hàng mà Shop không xử lý.",
 }
+
+ORDER_STATUS_LABELS: dict[str, str] = {
+    OrderStatus.PENDING.value: "Chờ xác nhận",
+    OrderStatus.PROCESSING.value: "Chờ lấy hàng / Chuẩn bị",
+    OrderStatus.SHIPPING.value: "Đang vận chuyển",
+    OrderStatus.DELIVERED.value: "Đã giao hàng",
+    OrderStatus.COMPLETED.value: "Đã hoàn thành",
+    OrderStatus.CANCELLED.value: "Đã hủy",
+    OrderStatus.RETURNED.value: "Trả hàng / Hoàn tiền",
+}

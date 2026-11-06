@@ -7,6 +7,7 @@ import os
 import sys
 import uuid
 from decimal import Decimal
+import pytest
 from unittest.mock import AsyncMock, patch
 
 # Đảm bảo PYTHONPATH nhận diện thư mục backend
@@ -43,7 +44,9 @@ TestingSessionLocal = sessionmaker(
 )
 
 
+@pytest.fixture(scope="module")
 def db_session():
+    Base.metadata.drop_all(bind=test_engine)
     Base.metadata.create_all(bind=test_engine)
     session = TestingSessionLocal()
 
@@ -145,8 +148,14 @@ def db_session():
         order_id="ORD_TEST_001",
         user_id=regular_user.user_id,
         total=Decimal("27000000.00"),
-        shipping_address="123 Đường Test",
-        receiver_name="Người nhận Test",
+        shipping_recipient_name="Người nhận Test",
+        shipping_province_code="01",
+        shipping_province_name="Hà Nội",
+        shipping_ward_code="00001",
+        shipping_ward_name="Phúc Xá",
+        shipping_address_line="123 Đường Test",
+        payment_method="COD",
+
         shipping_phone="0901234567",
         payment_status="PAID",
         status="COMPLETED",
@@ -168,6 +177,7 @@ def db_session():
     session.close()
 
 
+@pytest.fixture(scope="module")
 def client(db_session):
     def override_get_db():
         yield db_session

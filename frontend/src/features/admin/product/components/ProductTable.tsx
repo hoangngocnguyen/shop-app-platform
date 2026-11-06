@@ -71,10 +71,10 @@ export const ProductTable: React.FC<ProductTableProps> = ({
                 />
               </th>
               <th className="py-3.5 px-2 w-14 text-center">ID</th>
-              <th className="py-3.5 px-4 min-w-[240px]">Sản phẩm</th>
+              <th className="py-3.5 px-4 min-w-[220px] max-w-[280px]">Sản phẩm</th>
               <th className="py-3.5 px-4 w-40 min-w-[140px]">Danh mục & Xuất xứ</th>
               <th className="py-3.5 px-4 w-36 min-w-[130px]">Giá bán</th>
-              <th className="py-3.5 px-4 w-32 min-w-[110px] text-center">Tồn kho</th>
+              <th className="py-3.5 px-4 w-32 min-w-[120px] text-center whitespace-nowrap">Tồn kho</th>
               <th className="py-3.5 px-4 w-28 min-w-[100px] text-center">Đã bán</th>
               <th className="py-3.5 px-4 w-28 min-w-[110px] text-right">Thao tác</th>
             </tr>
@@ -241,7 +241,7 @@ export const ProductTable: React.FC<ProductTableProps> = ({
                           <button
                             type="button"
                             onClick={() => onViewDetail(product)}
-                            className="w-full text-left font-semibold text-sm text-text-main hover:text-primary transition-colors line-clamp-3 [overflow-wrap:anywhere] cursor-pointer"
+                            className="w-full text-left font-semibold text-sm text-text-main hover:text-primary transition-colors line-clamp-2 max-w-[280px] break-words cursor-pointer"
                             title={product.product_name}
                           >
                             {product.product_name}
@@ -299,9 +299,9 @@ export const ProductTable: React.FC<ProductTableProps> = ({
                     </td>
 
                     {/* Stock Status */}
-                    <td className="py-3 px-4 text-center">
+                    <td className="py-3 px-4 text-center whitespace-nowrap">
                       <span
-                        className={`inline-flex items-center gap-1 px-2.5 py-0.5 text-xs font-semibold rounded-full border ${isOutOfStock
+                        className={`inline-flex items-center gap-1 px-2.5 py-0.5 text-xs font-semibold rounded-full border whitespace-nowrap ${isOutOfStock
                           ? "bg-status-error-bg text-status-error border-status-error/20"
                           : isLowStock
                             ? "bg-status-warning-bg text-status-warning border-status-warning/20"
