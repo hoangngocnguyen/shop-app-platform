@@ -1,6 +1,3 @@
-// ==========================================
-// Enums
-// ==========================================
 export enum UserRole {
   ADMIN = "ADMIN",
   CUSTOMER = "CUSTOMER",
@@ -17,56 +14,17 @@ export enum SortDirection {
   DESC = "desc",
 }
 
-// ==========================================
-// Query Parameters Type
-// ==========================================
-export interface AdminUserQueryParams {
-  page?: number;
-  page_size?: number;
-  search?: string;
-  role?: UserRole;
-  status?: UserStatus;
-  sortBy?: string;
-  sortDir?: SortDirection;
-}
-
-// ==========================================
-// Request Body Types
-// ==========================================
-export interface UserCreateForm {
-  fullName: string;
-  email: string;
-  phone: string;
-  password: string;
-  role: UserRole;
-}
-
-export interface UserUpdateForm {
-  fullName: string;
-  phone: string;
-  address?: string;
-  role: UserRole;
-}
-
-export interface UserBlockForm {
-  isBlocked: boolean;
-  reason?: string;
-}
-
-// ==========================================
-// Response DTO Types
-// ==========================================
 export interface UserDetailResponse {
   userId: string;
-  fullName?: string;
-  email?: string;
-  phone?: string;
-  address?: string;
-  role: UserRole;
-  status: UserStatus;
-  reason?: string;
-  createdAt: string; // Định dạng ISO Date String từ Backend
-  updatedAt: string; // Định dạng ISO Date String từ Backend
+  fullName: string;
+  email: string;
+  phone?: string | null;
+  address?: string | null;
+  role: UserRole | string;
+  status: UserStatus | string;
+  reason?: string | null;
+  createdAt: string;
+  updatedAt?: string | null;
 }
 
 export interface UserListResponse {
@@ -77,9 +35,32 @@ export interface UserListResponse {
   total_pages: number;
 }
 
-// Wrapper Response chuẩn từ FastAPI ApiResponse
-export interface ApiResponse<T> {
-  code: number;
-  message: string;
-  data: T;
+export interface AdminUserQueryParams {
+  page?: number;
+  page_size?: number;
+  search?: string;
+  role?: UserRole | string;
+  status?: UserStatus | string;
+  sortBy?: string;
+  sortDir?: SortDirection | "asc" | "desc";
+}
+
+export interface UserCreateForm {
+  fullName: string;
+  email: string;
+  phone: string;
+  password?: string;
+  role: UserRole | string;
+}
+
+export interface UserUpdateForm {
+  fullName: string;
+  phone: string;
+  address?: string;
+  role: UserRole | string;
+}
+
+export interface UserBlockForm {
+  isBlocked: boolean;
+  reason?: string;
 }
