@@ -1,4 +1,5 @@
 import time
+import traceback
 from typing import Any, cast
 
 import cloudinary.exceptions
@@ -6,6 +7,7 @@ from fastapi import FastAPI, Request, status
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
+from sqlalchemy.exc import SQLAlchemyError
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 
@@ -202,8 +204,9 @@ def build_api_error_response(
     message: str,
     error_code: str = "BUSINESS_ERROR",
     errors: dict[str, str] | None = None,
+    headers: dict[str, str] | None = None,
 ) -> JSONResponse:
-    """Hàm tiện ích tạo JSONResponse theo ErrorResponse DTO chuẩn"""
+    """Hàm tiện ích tạo JSONResponse theo ErrorResponse DTO chuẩn kèm CORS headers an toàn"""
     error_payload = ErrorResponse(
         success=False,
         error_code=error_code,
@@ -211,7 +214,17 @@ def build_api_error_response(
         data=None,
         errors=errors or {},
     )
-    return JSONResponse(status_code=status_code, content=error_payload.model_dump())
+    cors_headers = {
+        "Access-Control-Allow-Origin": "http://localhost:3000",
+        "Access-Control-Allow-Credentials": "true",
+    }
+    if headers:
+        cors_headers.update(headers)
+    return JSONResponse(
+        status_code=status_code,
+        content=error_payload.model_dump(),
+        headers=cors_headers,
+    )
 
 
 async def app_exception_handler(request: Request, exc: Exception) -> JSONResponse:
@@ -281,11 +294,24 @@ async def cloudinary_exception_handler(
     )
 
 
+async def sqlalchemy_exception_handler(
+    request: Request, exc: Exception
+) -> JSONResponse:
+    """Bắt lỗi từ SQLAlchemy / Cơ sở dữ liệu (Database Connection Error)"""
+    traceback.print_exc()
+    return build_api_error_response(
+        status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+        message="Không thể kết nối đến cơ sở dữ liệu. Vui lòng đảm bảo container PostgreSQL/Docker đang chạy.",
+        error_code="DATABASE_CONNECTION_ERROR",
+    )
+
+
 async def global_exception_handler(request: Request, exc: Exception) -> JSONResponse:
     """Bắt toàn bộ exception chưa được xử lý (500 Internal Server Error)"""
+    traceback.print_exc()
     return build_api_error_response(
         status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-        message="Có lỗi hệ thống nội bộ xảy ra, vui lòng liên hệ quản trị viên.",
+        message=f"Có lỗi hệ thống nội bộ xảy ra: {str(exc)}",
         error_code="INTERNAL_SERVER_ERROR",
     )
 
@@ -300,4 +326,5 @@ def register_exception_handlers(app: FastAPI) -> None:
     app.add_exception_handler(
         cloudinary.exceptions.Error, cloudinary_exception_handler
     )
+    app.add_exception_handler(SQLAlchemyError, sqlalchemy_exception_handler)
     app.add_exception_handler(Exception, global_exception_handler)
