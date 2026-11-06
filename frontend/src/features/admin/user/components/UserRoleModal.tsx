@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import { Shield } from "lucide-react";
 import { ModalShell } from "./ModalShell";
-import { UserDetailResponse, UserRole } from "../types";
+import { UserDetailResponse, UserRole, USER_ROLE_LABELS } from "../types";
 
 interface UserRoleModalProps {
   user: UserDetailResponse;
@@ -13,9 +13,9 @@ interface UserRoleModalProps {
 }
 
 const ROLE_OPTIONS = [
-  { value: UserRole.CUSTOMER, label: "Khách hàng" },
-  { value: UserRole.STAFF, label: "Nhân viên" },
-  { value: UserRole.ADMIN, label: "Quản trị viên" },
+  { value: UserRole.CUSTOMER, label: USER_ROLE_LABELS[UserRole.CUSTOMER] },
+  { value: UserRole.STAFF, label: USER_ROLE_LABELS[UserRole.STAFF] },
+  { value: UserRole.ADMIN, label: USER_ROLE_LABELS[UserRole.ADMIN] },
 ];
 
 export function UserRoleModal({
@@ -51,7 +51,7 @@ export function UserRoleModal({
           >
             {ROLE_OPTIONS.map((option) => (
               <option key={option.value} value={option.value}>
-                {option.label} ({option.value})
+                {option.label}
               </option>
             ))}
           </select>
