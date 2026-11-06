@@ -150,3 +150,26 @@ class CreateOrderRequest(BaseModel):
             }
         }
     )
+
+class BulkOrderActionRequest(BaseModel):
+    """Request Body dành cho Admin cập nhật trạng thái một hoặc nhiều đơn hàng."""
+
+    order_ids: list[str] = Field(
+        ...,
+        min_length=1,
+        description="Danh sách mã đơn hàng cần cập nhật trạng thái (chấp nhận 1 hoặc nhiều ID)",
+    )
+    note: str | None = Field(
+        default=None,
+        max_length=500,
+        description="Ghi chú tùy chọn của quản trị viên khi chuyển trạng thái",
+    )
+
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {
+                "order_ids": ["OD261013050123AB12CD", "OD261013050124EF34GH"],
+                "note": "Xác nhận và chuẩn bị đóng gói hàng loạt",
+            }
+        }
+    )
