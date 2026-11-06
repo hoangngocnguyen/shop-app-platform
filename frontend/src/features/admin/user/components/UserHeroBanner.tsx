@@ -12,7 +12,6 @@ const STAT_CARDS = [
   {
     key: "total",
     label: "TỔNG TÀI KHOẢN",
-    description: "Toàn bộ tài khoản hệ thống",
     icon: Users,
     valueClass: "text-text-main",
     iconClass: "bg-primary-light text-primary",
@@ -21,7 +20,6 @@ const STAT_CARDS = [
   {
     key: "customers",
     label: "KHÁCH HÀNG",
-    description: "Tài khoản vai trò CUSTOMER",
     icon: UserCheck,
     valueClass: "text-text-main",
     iconClass: "bg-status-info-bg text-status-info",
@@ -30,7 +28,6 @@ const STAT_CARDS = [
   {
     key: "admins",
     label: "QUẢN TRỊ VIÊN",
-    description: "Tài khoản vai trò ADMIN",
     icon: ShieldCheck,
     valueClass: "text-text-main",
     iconClass: "bg-status-warning-bg text-status-warning",
@@ -39,7 +36,6 @@ const STAT_CARDS = [
   {
     key: "staff",
     label: "NHÂN VIÊN",
-    description: "Tài khoản vai trò STAFF",
     icon: BriefcaseBusiness,
     valueClass: "text-text-main",
     iconClass: "bg-status-success-bg text-status-success",
@@ -48,7 +44,6 @@ const STAT_CARDS = [
   {
     key: "blocked",
     label: "TÀI KHOẢN BỊ KHÓA",
-    description: "Trạng thái tạm khóa (BLOCKED)",
     icon: UserX,
     valueClass: "text-status-error",
     iconClass: "bg-status-error-bg text-status-error",
@@ -59,7 +54,7 @@ const STAT_CARDS = [
 export function UserHeroBanner({ stats }: UserHeroBannerProps) {
   return (
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-5">
-      {STAT_CARDS.map(({ key, label, description, icon: Icon, valueClass, iconClass, glowClass }) => (
+      {STAT_CARDS.map(({ key, label, icon: Icon, valueClass, iconClass, glowClass }) => (
         <div
           key={key}
           className="group/stat relative isolate overflow-hidden rounded-2xl border border-surface-border bg-surface-card p-5 shadow-brand-sm transition-all duration-300 hover:-translate-y-1 hover:border-primary/30 hover:shadow-brand-md"
@@ -74,7 +69,6 @@ export function UserHeroBanner({ stats }: UserHeroBannerProps) {
           <div className={`mt-3 text-3xl font-black transition-transform duration-300 group-hover/stat:translate-x-0.5 ${valueClass}`}>
             {stats[key]}
           </div>
-          <p className="mt-1 text-xs text-text-muted">{description}</p>
         </div>
       ))}
     </div>
