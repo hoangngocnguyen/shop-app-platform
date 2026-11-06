@@ -54,7 +54,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       })();
     }
 
-    return syncPromise;
+    return syncPromise ?? Promise.resolve(null);
   },
 
   logout: async () => {

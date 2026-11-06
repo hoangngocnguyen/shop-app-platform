@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Mascot } from 'page-mascot';
@@ -12,9 +12,22 @@ import { useAuthStore } from '@/features/auth/stores/useAuthStore';
 import { createClient } from '@/lib/supabase/client';
 import { loginSchema, type LoginFormValues } from '../schemas/auth-schema';
 
+const AUTH_ERROR_MESSAGES: Record<string, string> = {
+  auth_failed: 'Xác thực thất bại. Vui lòng thử đăng nhập lại.',
+  sync_failed: 'Không thể đồng bộ tài khoản. Vui lòng thử lại hoặc liên hệ hỗ trợ.',
+};
+
+function getInitialErrorMsg(searchParams: ReturnType<typeof useSearchParams>): string {
+  const errorCode = searchParams.get('error');
+  return (errorCode && AUTH_ERROR_MESSAGES[errorCode]) ? AUTH_ERROR_MESSAGES[errorCode] : '';
+}
+
 export function LoginForm() {
+  const searchParams = useSearchParams();
+
   const [showPassword, setShowPassword] = useState(false);
-  const [errorMsg, setErrorMsg] = useState('');
+  // Khởi tạo trực tiếp từ searchParams – tránh useEffect + setState gây cascading render
+  const [errorMsg, setErrorMsg] = useState(() => getInitialErrorMsg(searchParams));
   const [successMsg, setSuccessMsg] = useState('');
 
   const router = useRouter();
@@ -73,7 +86,7 @@ export function LoginForm() {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${window.location.origin}/auth/callback`,
+          redirectTo: `${window.location.origin}${ROUTES.AUTH.CALLBACK}`,
         },
       });
 
