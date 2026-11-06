@@ -6,7 +6,17 @@ from sqlalchemy import String, asc, case, cast, desc, func, or_
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from sqlalchemy.orm import Session, joinedload, selectinload
 
-from src.app.modules.admin.users import schema
+from src.app.modules.admin.users.schema import (
+    ShippingAddressDTO,
+    SortDirection,
+    UserBlockForm,
+    UserDetailResponse,
+    UserListResponse,
+    UserRole,
+    UserRoleUpdateForm,
+    UserStatsResponse,
+    UserStatus,
+)
 from src.app.modules.orders.model import Order
 from src.app.modules.roles.model import Role
 from src.app.modules.shipping_addresses.model import ShippingAddress
@@ -20,21 +30,21 @@ def _parse_user_id(user_id: str) -> UUID:
         raise HTTPException(status_code=404, detail=f"Không tìm thấy người dùng với ID: {user_id}")
 
 
-def _get_role_code(role: schema.UserRole) -> str:
-    return "USER" if role == schema.UserRole.CUSTOMER else role.value
+def _get_role_code(role: UserRole) -> str:
+    return "USER" if role == UserRole.CUSTOMER else role.value
 
 
-def _map_user_to_response(user: User) -> schema.UserDetailResponse:
+def _map_user_to_response(user: User) -> UserDetailResponse:
     role_code = user.role.code.upper() if (user.role and user.role.code) else "USER"
-    response_role = schema.UserRole.CUSTOMER if role_code in ("USER", "CUSTOMER") else schema.UserRole(role_code)
-    
-    return schema.UserDetailResponse(
+    response_role = UserRole.CUSTOMER if role_code in ("USER", "CUSTOMER") else UserRole(role_code)
+
+    return UserDetailResponse(
         userId=str(user.user_id),
         fullName=user.name or "",
         email=user.email or "",
         phone=user.phone,
         shippingAddresses=[
-            schema.ShippingAddressDTO(
+            ShippingAddressDTO(
                 id=address.id,
                 recipientName=address.recipient_name,
                 phone=address.phone,
@@ -46,7 +56,7 @@ def _map_user_to_response(user: User) -> schema.UserDetailResponse:
             for address in user.shipping_addresses
         ],
         role=response_role,
-        status=schema.UserStatus.BLOCKED if getattr(user, "is_blocked", False) else schema.UserStatus.ACTIVE,
+        status=UserStatus.BLOCKED if getattr(user, "is_blocked", False) else UserStatus.ACTIVE,
         reason=getattr(user, "block_reason", None),
         createdAt=user.created_at,
         updatedAt=user.updated_at,
@@ -62,7 +72,7 @@ def get_users_paginated(
     status_filter: str | None = None,
     sort_by: str = "createdAt",
     sort_dir: str = "desc",
-) -> schema.UserListResponse:
+) -> UserListResponse:
     query = db.query(User).options(
         joinedload(User.role),
         selectinload(User.shipping_addresses).joinedload(ShippingAddress.province),
@@ -77,14 +87,14 @@ def get_users_paginated(
         query = query.filter(or_(*filters))
 
     if role:
-        role_code = _get_role_code(schema.UserRole(role.upper()))
+        role_code = _get_role_code(UserRole(role.upper()))
         query = query.join(User.role).filter(Role.code == role_code)
 
     if status_filter:
         norm_status = status_filter.upper()
-        if norm_status == schema.UserStatus.BLOCKED.value:
+        if norm_status == UserStatus.BLOCKED.value:
             query = query.filter(User.is_blocked.is_(True))
-        elif norm_status == schema.UserStatus.ACTIVE.value:
+        elif norm_status == UserStatus.ACTIVE.value:
             query = query.filter(User.is_blocked.is_(False))
 
     sort_cols = {"createdAt": User.created_at, "fullName": User.name, "email": User.email}
@@ -93,7 +103,7 @@ def get_users_paginated(
 
     total = query.count()
     users = query.offset(page * page_size).limit(page_size).all()
-    return schema.UserListResponse(
+    return UserListResponse(
         content=[_map_user_to_response(u) for u in users],
         page=page,
         page_size=page_size,
@@ -102,7 +112,7 @@ def get_users_paginated(
     )
 
 
-def get_user_stats(db: Session) -> schema.UserStatsResponse:
+def get_user_stats(db: Session) -> UserStatsResponse:
     total, customers, admins, staff, blocked = (
         db.query(
             func.count(User.user_id),
@@ -123,7 +133,7 @@ def get_user_stats(db: Session) -> schema.UserStatsResponse:
         .join(Role, User.role_id == Role.id)
         .one()
     )
-    return schema.UserStatsResponse(
+    return UserStatsResponse(
         total=total,
         customers=customers,
         admins=admins,
@@ -132,7 +142,7 @@ def get_user_stats(db: Session) -> schema.UserStatsResponse:
     )
 
 
-def get_user_by_id(db: Session, user_id: str) -> schema.UserDetailResponse:
+def get_user_by_id(db: Session, user_id: str) -> UserDetailResponse:
     user = (
         db.query(User)
         .options(
@@ -148,7 +158,7 @@ def get_user_by_id(db: Session, user_id: str) -> schema.UserDetailResponse:
     return _map_user_to_response(user)
 
 
-def block_user(db: Session, user_id: str, form: schema.UserBlockForm) -> schema.UserDetailResponse:
+def block_user(db: Session, user_id: str, form: UserBlockForm) -> UserDetailResponse:
     user = (
         db.query(User)
         .options(
@@ -176,8 +186,8 @@ def block_user(db: Session, user_id: str, form: schema.UserBlockForm) -> schema.
 def update_user_role(
     db: Session,
     user_id: str,
-    form: schema.UserRoleUpdateForm,
-) -> schema.UserDetailResponse:
+    form: UserRoleUpdateForm,
+) -> UserDetailResponse:
     user = (
         db.query(User)
         .options(
