@@ -1,6 +1,5 @@
-import axios from "axios";
-import {
-  ApiResponse,
+import api from "@/lib/axios/client";
+import type {
   AdminUserQueryParams,
   UserListResponse,
   UserDetailResponse,
@@ -9,72 +8,47 @@ import {
   UserBlockForm,
 } from "../types";
 
-// Base API URL của Admin User Module (thay đổi baseURL nếu dự án có axios instance dùng chung)
-const BASE_URL = "http://127.0.0.1:8000/api/v1/admin/users";
+const ENDPOINT = "/admin/users";
 
 export const adminUserApi = {
-  /**
-   * 1. Lấy danh sách người dùng (Phân trang, Tìm kiếm, Lọc theo Role/Status, Sắp xếp)
-   * HTTP Method: GET /api/v1/admin/users
-   */
-  getUsers: async (params?: AdminUserQueryParams): Promise<ApiResponse<UserListResponse>> => {
-    const response = await axios.get<ApiResponse<UserListResponse>>(BASE_URL, {
-      params,
-    });
+  /** 1. Lấy danh sách người dùng (GET /admin/users) */
+  getUsers: async (params?: AdminUserQueryParams): Promise<UserListResponse> => {
+    const response = await api.get<UserListResponse>(ENDPOINT, { params });
     return response.data;
   },
 
-  /**
-   * 2. Tạo người dùng mới
-   * HTTP Method: POST /api/v1/admin/users
-   */
-  createUser: async (form: UserCreateForm): Promise<ApiResponse<UserDetailResponse>> => {
-    const response = await axios.post<ApiResponse<UserDetailResponse>>(BASE_URL, form);
+  /** 2. Tạo mới người dùng (POST /admin/users) */
+  createUser: async (form: UserCreateForm): Promise<UserDetailResponse> => {
+    const response = await api.post<UserDetailResponse>(ENDPOINT, form);
     return response.data;
   },
 
-  /**
-   * 3. Lấy chi tiết thông tin người dùng theo userId
-   * HTTP Method: GET /api/v1/admin/users/{userId}
-   */
-  getUserById: async (userId: string): Promise<ApiResponse<UserDetailResponse>> => {
-    const response = await axios.get<ApiResponse<UserDetailResponse>>(`${BASE_URL}/${userId}`);
+  /** 3. Xem chi tiết người dùng (GET /admin/users/{userId}) */
+  getUserById: async (userId: string | number): Promise<UserDetailResponse> => {
+    const response = await api.get<UserDetailResponse>(`${ENDPOINT}/${userId}`);
     return response.data;
   },
 
-  /**
-   * 4. Cập nhật thông tin người dùng
-   * HTTP Method: PUT /api/v1/admin/users/{userId}
-   */
+  /** 4. Cập nhật thông tin (PUT /admin/users/{userId}) */
   updateUser: async (
-    userId: string,
+    userId: string | number,
     form: UserUpdateForm
-  ): Promise<ApiResponse<UserDetailResponse>> => {
-    const response = await axios.put<ApiResponse<UserDetailResponse>>(`${BASE_URL}/${userId}`, form);
+  ): Promise<UserDetailResponse> => {
+    const response = await api.put<UserDetailResponse>(`${ENDPOINT}/${userId}`, form);
     return response.data;
   },
 
-  /**
-   * 5. Khóa hoặc Mở khóa tài khoản người dùng
-   * HTTP Method: PATCH /api/v1/admin/users/{userId}/block
-   */
+  /** 5. Khóa hoặc Mở khóa tài khoản (PATCH /admin/users/{userId}/block) */
   blockUser: async (
-    userId: string,
+    userId: string | number,
     form: UserBlockForm
-  ): Promise<ApiResponse<UserDetailResponse>> => {
-    const response = await axios.patch<ApiResponse<UserDetailResponse>>(
-      `${BASE_URL}/${userId}/block`,
-      form
-    );
+  ): Promise<UserDetailResponse> => {
+    const response = await api.patch<UserDetailResponse>(`${ENDPOINT}/${userId}/block`, form);
     return response.data;
   },
 
-  /**
-   * 6. Xóa tài khoản người dùng
-   * HTTP Method: DELETE /api/v1/admin/users/{userId}
-   */
-  deleteUser: async (userId: string): Promise<ApiResponse<null>> => {
-    const response = await axios.delete<ApiResponse<null>>(`${BASE_URL}/${userId}`);
-    return response.data;
+  /** 6. Xóa tài khoản (DELETE /admin/users/{userId}) */
+  deleteUser: async (userId: string | number): Promise<void> => {
+    await api.delete(`${ENDPOINT}/${userId}`);
   },
 };
