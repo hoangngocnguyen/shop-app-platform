@@ -16,10 +16,7 @@ def _parse_user_id(user_id: str) -> UUID:
     try:
         return UUID(user_id)
     except ValueError:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Không tìm thấy người dùng với ID: {user_id}",
-        ) from None
+        raise HTTPException(status_code=404, detail=f"Không tìm thấy người dùng với ID: {user_id}")
 
 
 def _get_role_code(role: schema.UserRole) -> str:
@@ -27,25 +24,18 @@ def _get_role_code(role: schema.UserRole) -> str:
 
 
 def _map_user_to_response(user: User) -> schema.UserDetailResponse:
-    role_code = user.role.code
-    response_role = (
-        schema.UserRole.CUSTOMER
-        if role_code == "USER"
-        else schema.UserRole(role_code)
-    )
+    role_code = user.role.code.upper() if (user.role and user.role.code) else "USER"
+    response_role = schema.UserRole.CUSTOMER if role_code in ("USER", "CUSTOMER") else schema.UserRole(role_code)
+    
     return schema.UserDetailResponse(
         userId=str(user.user_id),
-        fullName=user.name,
-        email=user.email,
+        fullName=user.name or "",
+        email=user.email or "",
         phone=user.phone,
         address=None,
         role=response_role,
-        status=(
-            schema.UserStatus.BLOCKED
-            if user.is_blocked
-            else schema.UserStatus.ACTIVE
-        ),
-        reason=user.block_reason,
+        status=schema.UserStatus.BLOCKED if getattr(user, "is_blocked", False) else schema.UserStatus.ACTIVE,
+        reason=getattr(user, "block_reason", None),
         createdAt=user.created_at,
         updatedAt=user.updated_at,
     )
@@ -61,199 +51,123 @@ def get_users_paginated(
     sort_by: str = "createdAt",
     sort_dir: str = "desc",
 ) -> schema.UserListResponse:
-    if page < 0 or page_size < 1:
-        raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail="Số trang phải từ 0, page_size phải lớn hơn 0",
-        )
-
     query = db.query(User).options(joinedload(User.role))
 
     if search and search.strip():
-        search_fmt = f"%{search.strip()}%"
-        query = query.filter(
-            or_(
-                User.name.ilike(search_fmt),
-                User.username.ilike(search_fmt),
-                User.email.ilike(search_fmt),
-                User.phone.ilike(search_fmt),
-                cast(User.user_id, String).ilike(search_fmt),
-            )
-        )
+        fmt = f"%{search.strip()}%"
+        filters = [User.name.ilike(fmt), User.email.ilike(fmt), User.phone.ilike(fmt), cast(User.user_id, String).ilike(fmt)]
+        if hasattr(User, "username"):
+            filters.append(getattr(User, "username").ilike(fmt))
+        query = query.filter(or_(*filters))
 
     if role:
-        try:
-            role_code = _get_role_code(schema.UserRole(role))
-        except ValueError:
-            raise HTTPException(
-                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                detail=f"Vai trò không hợp lệ: {role}",
-            ) from None
+        role_code = _get_role_code(schema.UserRole(role.upper()))
         query = query.join(User.role).filter(Role.code == role_code)
 
     if status_filter:
-        normalized_status = status_filter.upper()
-        if normalized_status == schema.UserStatus.BLOCKED.value:
+        norm_status = status_filter.upper()
+        if norm_status == schema.UserStatus.BLOCKED.value:
             query = query.filter(User.is_blocked.is_(True))
-        elif normalized_status == schema.UserStatus.ACTIVE.value:
+        elif norm_status == schema.UserStatus.ACTIVE.value:
             query = query.filter(User.is_blocked.is_(False))
-        else:
-            raise HTTPException(
-                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                detail=f"Trạng thái không hợp lệ: {status_filter}",
-            )
 
-    sort_columns = {
-        "createdAt": User.created_at,
-        "fullName": User.name,
-        "email": User.email,
-    }
-    sort_column = sort_columns.get(sort_by, User.created_at)
-    if sort_dir.lower() == "asc":
-        query = query.order_by(asc(sort_column))
-    elif sort_dir.lower() == "desc":
-        query = query.order_by(desc(sort_column))
-    else:
-        raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail=f"Chiều sắp xếp không hợp lệ: {sort_dir}",
-        )
+    sort_cols = {"createdAt": User.created_at, "fullName": User.name, "email": User.email}
+    sort_col = sort_cols.get(sort_by, User.created_at)
+    query = query.order_by(asc(sort_col) if sort_dir.lower() == "asc" else desc(sort_col))
 
     total = query.count()
     users = query.offset(page * page_size).limit(page_size).all()
-
     return schema.UserListResponse(
-        content=[_map_user_to_response(user) for user in users],
+        content=[_map_user_to_response(u) for u in users],
         page=page,
         page_size=page_size,
         total=total,
-        total_pages=math.ceil(total / page_size),
+        total_pages=math.ceil(total / page_size) if total > 0 else 0,
     )
 
 
-def create_user(
-    db: Session, form: schema.UserCreateForm
-) -> schema.UserDetailResponse:
-    del db, form
-    raise HTTPException(
-        status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-        detail=(
-            "Tạo tài khoản cần tích hợp Supabase Auth Admin API; "
-            "luồng này hiện chưa được cấu hình."
-        ),
-    )
-
-
-def get_user_by_id(db: Session, user_id: str) -> schema.UserDetailResponse:
-    user = (
-        db.query(User)
-        .options(joinedload(User.role))
-        .filter(User.user_id == _parse_user_id(user_id))
-        .first()
-    )
-    if not user:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Không tìm thấy người dùng với ID: {user_id}",
-        )
-    return _map_user_to_response(user)
-
-
-def update_user(
-    db: Session, user_id: str, form: schema.UserUpdateForm
-) -> schema.UserDetailResponse:
-    parsed_user_id = _parse_user_id(user_id)
-    user = (
-        db.query(User)
-        .options(joinedload(User.role))
-        .filter(User.user_id == parsed_user_id)
-        .first()
-    )
-    if not user:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Người dùng không tồn tại",
-        )
-
-    if form.address is not None:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Địa chỉ được quản lý qua chức năng địa chỉ giao hàng",
-        )
-
-    if form.phone != user.phone:
-        existing_phone = (
-            db.query(User)
-            .filter(User.phone == form.phone, User.user_id != parsed_user_id)
-            .first()
-        )
-        if existing_phone:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Số điện thoại đã được sử dụng bởi người dùng khác",
-            )
+def create_user(db: Session, form: schema.UserCreateForm) -> schema.UserDetailResponse:
+    if db.query(User).filter(User.email == form.email).first():
+        raise HTTPException(status_code=400, detail="Email đã được sử dụng")
+    if db.query(User).filter(User.phone == form.phone).first():
+        raise HTTPException(status_code=400, detail="Số điện thoại đã được sử dụng")
 
     role = db.query(Role).filter(Role.code == _get_role_code(form.role)).first()
     if not role:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Không tìm thấy vai trò: {form.role.value}",
-        )
+        raise HTTPException(status_code=400, detail=f"Không tìm thấy vai trò: {form.role.value}")
 
-    user.name = form.fullName
-    user.phone = form.phone
-    user.role = role
+    try:
+        new_user = User(name=form.fullName, email=form.email, phone=form.phone, role=role, is_blocked=False)
+        if hasattr(new_user, "password"):
+            setattr(new_user, "password", form.password)
+        db.add(new_user)
+        db.commit()
+        db.refresh(new_user)
+        return _map_user_to_response(new_user)
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail="Không thể tạo tài khoản người dùng") from e
 
-    db.commit()
-    db.refresh(user)
+
+def get_user_by_id(db: Session, user_id: str) -> schema.UserDetailResponse:
+    user = db.query(User).options(joinedload(User.role)).filter(User.user_id == _parse_user_id(user_id)).first()
+    if not user:
+        raise HTTPException(status_code=404, detail=f"Không tìm thấy người dùng với ID: {user_id}")
     return _map_user_to_response(user)
 
 
-def block_user(
-    db: Session, user_id: str, form: schema.UserBlockForm
-) -> schema.UserDetailResponse:
-    parsed_user_id = _parse_user_id(user_id)
-    user = (
-        db.query(User)
-        .options(joinedload(User.role))
-        .filter(User.user_id == parsed_user_id)
-        .first()
-    )
+def update_user(db: Session, user_id: str, form: schema.UserUpdateForm) -> schema.UserDetailResponse:
+    uid = _parse_user_id(user_id)
+    user = db.query(User).options(joinedload(User.role)).filter(User.user_id == uid).first()
     if not user:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Không tìm thấy người dùng với ID: {user_id}",
-        )
+        raise HTTPException(status_code=404, detail="Người dùng không tồn tại")
+
+    if form.phone and form.phone != user.phone:
+        if db.query(User).filter(User.phone == form.phone, User.user_id != uid).first():
+            raise HTTPException(status_code=400, detail="Số điện thoại đã được sử dụng")
+
+    role = db.query(Role).filter(Role.code == _get_role_code(form.role)).first()
+    if not role:
+        raise HTTPException(status_code=400, detail=f"Không tìm thấy vai trò: {form.role.value}")
+
+    user.name, user.phone, user.role = form.fullName, form.phone, role
+    try:
+        db.commit()
+        db.refresh(user)
+        return _map_user_to_response(user)
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail="Không thể cập nhật người dùng") from e
+
+
+def block_user(db: Session, user_id: str, form: schema.UserBlockForm) -> schema.UserDetailResponse:
+    user = db.query(User).options(joinedload(User.role)).filter(User.user_id == _parse_user_id(user_id)).first()
+    if not user:
+        raise HTTPException(status_code=404, detail=f"Không tìm thấy người dùng với ID: {user_id}")
 
     user.is_blocked = form.isBlocked
     user.block_reason = form.reason.strip() if form.isBlocked and form.reason else None
-
-    db.commit()
-    db.refresh(user)
-    return _map_user_to_response(user)
+    try:
+        db.commit()
+        db.refresh(user)
+        return _map_user_to_response(user)
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail="Không thể thay đổi trạng thái tài khoản") from e
 
 
 def delete_user(db: Session, user_id: str) -> None:
-    parsed_user_id = _parse_user_id(user_id)
-    user = db.query(User).filter(User.user_id == parsed_user_id).first()
+    uid = _parse_user_id(user_id)
+    user = db.query(User).filter(User.user_id == uid).first()
     if not user:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Không tìm thấy người dùng với ID: {user_id}",
-        )
+        raise HTTPException(status_code=404, detail=f"Không tìm thấy người dùng với ID: {user_id}")
 
-    if db.query(Order).filter(Order.user_id == parsed_user_id).first():
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail="Không thể xóa người dùng đã có đơn hàng",
-        )
+    if db.query(Order).filter(Order.user_id == uid).first():
+        raise HTTPException(status_code=409, detail="Không thể xóa người dùng đã có đơn hàng")
 
     db.delete(user)
     try:
         db.commit()
     except IntegrityError:
         db.rollback()
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail="Không thể xóa người dùng do còn dữ liệu liên quan",
-        ) from None
+        raise HTTPException(status_code=409, detail="Không thể xóa người dùng do còn dữ liệu liên quan") from None
