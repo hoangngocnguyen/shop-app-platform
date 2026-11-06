@@ -10,24 +10,15 @@ const api = axios.create({
   },
 });
 
-// Cache access token trong memory để tránh gọi supabase.auth.getSession() lặp đi lặp lại
-let cachedAccessToken: string | null = null;
-let tokenExpiresAt = 0; // Epoch timestamp tính theo giây
-
+/**
+ * Hàm clearTokenCache giữ lại để đảm bảo tương thích ngược với các module khác.
+ */
 export function clearTokenCache() {
-  cachedAccessToken = null;
-  tokenExpiresAt = 0;
+  // Supabase GoTrueClient tự động quản lý session in-memory atomic,
+  // nên không cần lưu trữ token cache thủ công gây lệch state khi đổi tài khoản.
 }
 
 api.interceptors.request.use(async (config) => {
-  const now = Math.floor(Date.now() / 1000);
-
-  // Nếu token còn hạn ít nhất 30 giây nữa, tái sử dụng token ngay lập tức (0ms overhead)
-  if (cachedAccessToken && tokenExpiresAt > now + 30) {
-    config.headers.Authorization = `Bearer ${cachedAccessToken}`;
-    return config;
-  }
-
   try {
     const supabase = createClient();
     const {
@@ -35,17 +26,11 @@ api.interceptors.request.use(async (config) => {
     } = await supabase.auth.getSession();
 
     if (session?.access_token) {
-      cachedAccessToken = session.access_token;
-      tokenExpiresAt = session.expires_at ?? (now + 3600);
-      config.headers.Authorization = `Bearer ${cachedAccessToken}`;
+      config.headers.Authorization = `Bearer ${session.access_token}`;
     } else {
-      cachedAccessToken = null;
-      tokenExpiresAt = 0;
       delete config.headers.Authorization;
     }
   } catch {
-    cachedAccessToken = null;
-    tokenExpiresAt = 0;
     delete config.headers.Authorization;
   }
 
@@ -56,7 +41,6 @@ api.interceptors.response.use(
   (response) => response.data,
   async (error: AxiosError<ApiErrorResponse>) => {
     if (error.response?.status === 401) {
-      clearTokenCache();
       await useAuthStore.getState().logout();
     }
     return Promise.reject(error);
