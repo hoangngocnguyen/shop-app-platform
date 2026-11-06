@@ -2,7 +2,7 @@
 
 import React from "react";
 import { ChevronLeft, ChevronRight, Eye, Shield, User, Users, UserCheck, Trash2, Lock, Unlock, Pencil } from "lucide-react";
-import { UserDetailResponse, UserRole, UserStatus } from "../types";
+import { getUserRoleLabel, UserDetailResponse, UserRole, UserStatus } from "../types";
 
 const PAGE_SIZES = [10, 20, 50];
 
@@ -60,19 +60,19 @@ export function UserTable({
       case UserRole.ADMIN:
         return (
           <span className="inline-flex items-center gap-1.5 rounded-full bg-purple-50 px-3 py-1 text-xs font-semibold text-purple-700 border border-purple-200">
-            <Shield className="size-3" aria-hidden /> ADMIN
+            <Shield className="size-3" aria-hidden /> {getUserRoleLabel(role)}
           </span>
         );
       case UserRole.STAFF:
         return (
           <span className="inline-flex items-center gap-1.5 rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700 border border-blue-200">
-            <UserCheck className="size-3" aria-hidden /> STAFF
+            <UserCheck className="size-3" aria-hidden /> {getUserRoleLabel(role)}
           </span>
         );
       default:
         return (
           <span className="inline-flex items-center gap-1.5 rounded-full bg-surface-active px-3 py-1 text-xs font-medium text-text-sub border border-surface-border">
-            <User className="size-3" aria-hidden /> CUSTOMER
+            <User className="size-3" aria-hidden /> {getUserRoleLabel(role)}
           </span>
         );
     }
@@ -88,7 +88,7 @@ export function UserTable({
   };
 
   return (
-    <div className="overflow-hidden rounded-2xl border border-surface-border bg-surface-card shadow-brand-sm transition-all duration-300 hover:border-primary/25 hover:shadow-brand-md">
+    <div className="mt-8 overflow-hidden rounded-2xl border border-surface-border bg-surface-card shadow-brand-sm transition-all duration-300 hover:border-primary/25 hover:shadow-brand-md">
       <div className="overflow-x-auto">
         <table className="w-full min-w-170 text-left text-sm border-separate border-spacing-y-1.5 px-3">
           <thead className="text-text-sub">
