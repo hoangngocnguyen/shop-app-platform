@@ -32,7 +32,7 @@ def _map_user_to_response(user: User) -> schema.UserDetailResponse:
         fullName=user.name or "",
         email=user.email or "",
         phone=user.phone,
-        address=None,
+        address=user.address,
         role=response_role,
         status=schema.UserStatus.BLOCKED if getattr(user, "is_blocked", False) else schema.UserStatus.ACTIVE,
         reason=getattr(user, "block_reason", None),
@@ -130,7 +130,12 @@ def update_user(db: Session, user_id: str, form: schema.UserUpdateForm) -> schem
     if not role:
         raise HTTPException(status_code=400, detail=f"Không tìm thấy vai trò: {form.role.value}")
 
-    user.name, user.phone, user.role = form.fullName, form.phone, role
+    user.name, user.phone, user.address, user.role = (
+        form.fullName,
+        form.phone,
+        form.address,
+        role,
+    )
     try:
         db.commit()
         db.refresh(user)

@@ -57,7 +57,11 @@ class UserCreateForm(BaseModel):
 class UserUpdateForm(BaseModel):
     fullName: str = Field(..., min_length=1, max_length=256, description="Không được để trống, tối đa 256 ký tự")
     phone: str = Field(..., pattern=r"^(0|\+84)[0-9]{9}$", description="Số điện thoại hợp lệ")
-    address: Optional[str] = Field(default=None, description="Địa chỉ chi tiết người dùng")
+    address: Optional[str] = Field(
+        default=None,
+        max_length=255,
+        description="Địa chỉ liên hệ chính của người dùng",
+    )
     role: UserRole = Field(..., description="Vai trò mới của người dùng")
 
 
