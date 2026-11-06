@@ -1,14 +1,15 @@
 import math
 from uuid import UUID
 
-from fastapi import HTTPException, status
-from sqlalchemy import String, asc, cast, desc, or_
-from sqlalchemy.exc import IntegrityError
-from sqlalchemy.orm import Session, joinedload
+from fastapi import HTTPException
+from sqlalchemy import String, asc, case, cast, desc, func, or_
+from sqlalchemy.exc import IntegrityError, SQLAlchemyError
+from sqlalchemy.orm import Session, joinedload, selectinload
 
 from src.app.modules.admin.users import schema
 from src.app.modules.orders.model import Order
 from src.app.modules.roles.model import Role
+from src.app.modules.shipping_addresses.model import ShippingAddress
 from src.app.modules.users.model import User
 
 
@@ -32,7 +33,18 @@ def _map_user_to_response(user: User) -> schema.UserDetailResponse:
         fullName=user.name or "",
         email=user.email or "",
         phone=user.phone,
-        address=user.address,
+        shippingAddresses=[
+            schema.ShippingAddressDTO(
+                id=address.id,
+                recipientName=address.recipient_name,
+                phone=address.phone,
+                province=address.province_name,
+                ward=address.ward_name,
+                detailAddress=address.address_line,
+                isDefault=address.is_default,
+            )
+            for address in user.shipping_addresses
+        ],
         role=response_role,
         status=schema.UserStatus.BLOCKED if getattr(user, "is_blocked", False) else schema.UserStatus.ACTIVE,
         reason=getattr(user, "block_reason", None),
@@ -51,7 +63,11 @@ def get_users_paginated(
     sort_by: str = "createdAt",
     sort_dir: str = "desc",
 ) -> schema.UserListResponse:
-    query = db.query(User).options(joinedload(User.role))
+    query = db.query(User).options(
+        joinedload(User.role),
+        selectinload(User.shipping_addresses).joinedload(ShippingAddress.province),
+        selectinload(User.shipping_addresses).joinedload(ShippingAddress.ward),
+    )
 
     if search and search.strip():
         fmt = f"%{search.strip()}%"
@@ -86,67 +102,63 @@ def get_users_paginated(
     )
 
 
-def create_user(db: Session, form: schema.UserCreateForm) -> schema.UserDetailResponse:
-    if db.query(User).filter(User.email == form.email).first():
-        raise HTTPException(status_code=400, detail="Email đã được sử dụng")
-    if db.query(User).filter(User.phone == form.phone).first():
-        raise HTTPException(status_code=400, detail="Số điện thoại đã được sử dụng")
-
-    role = db.query(Role).filter(Role.code == _get_role_code(form.role)).first()
-    if not role:
-        raise HTTPException(status_code=400, detail=f"Không tìm thấy vai trò: {form.role.value}")
-
-    try:
-        new_user = User(name=form.fullName, email=form.email, phone=form.phone, role=role, is_blocked=False)
-        if hasattr(new_user, "password"):
-            setattr(new_user, "password", form.password)
-        db.add(new_user)
-        db.commit()
-        db.refresh(new_user)
-        return _map_user_to_response(new_user)
-    except Exception as e:
-        db.rollback()
-        raise HTTPException(status_code=500, detail="Không thể tạo tài khoản người dùng") from e
+def get_user_stats(db: Session) -> schema.UserStatsResponse:
+    total, customers, admins, staff, blocked = (
+        db.query(
+            func.count(User.user_id),
+            func.coalesce(
+                func.sum(case((func.upper(Role.code).in_(("USER", "CUSTOMER")), 1), else_=0)),
+                0,
+            ),
+            func.coalesce(
+                func.sum(case((func.upper(Role.code) == "ADMIN", 1), else_=0)),
+                0,
+            ),
+            func.coalesce(
+                func.sum(case((func.upper(Role.code) == "STAFF", 1), else_=0)),
+                0,
+            ),
+            func.coalesce(func.sum(case((User.is_blocked.is_(True), 1), else_=0)), 0),
+        )
+        .join(Role, User.role_id == Role.id)
+        .one()
+    )
+    return schema.UserStatsResponse(
+        total=total,
+        customers=customers,
+        admins=admins,
+        staff=staff,
+        blocked=blocked,
+    )
 
 
 def get_user_by_id(db: Session, user_id: str) -> schema.UserDetailResponse:
-    user = db.query(User).options(joinedload(User.role)).filter(User.user_id == _parse_user_id(user_id)).first()
+    user = (
+        db.query(User)
+        .options(
+            joinedload(User.role),
+            selectinload(User.shipping_addresses).joinedload(ShippingAddress.province),
+            selectinload(User.shipping_addresses).joinedload(ShippingAddress.ward),
+        )
+        .filter(User.user_id == _parse_user_id(user_id))
+        .first()
+    )
     if not user:
         raise HTTPException(status_code=404, detail=f"Không tìm thấy người dùng với ID: {user_id}")
     return _map_user_to_response(user)
 
 
-def update_user(db: Session, user_id: str, form: schema.UserUpdateForm) -> schema.UserDetailResponse:
-    uid = _parse_user_id(user_id)
-    user = db.query(User).options(joinedload(User.role)).filter(User.user_id == uid).first()
-    if not user:
-        raise HTTPException(status_code=404, detail="Người dùng không tồn tại")
-
-    if form.phone and form.phone != user.phone:
-        if db.query(User).filter(User.phone == form.phone, User.user_id != uid).first():
-            raise HTTPException(status_code=400, detail="Số điện thoại đã được sử dụng")
-
-    role = db.query(Role).filter(Role.code == _get_role_code(form.role)).first()
-    if not role:
-        raise HTTPException(status_code=400, detail=f"Không tìm thấy vai trò: {form.role.value}")
-
-    user.name, user.phone, user.address, user.role = (
-        form.fullName,
-        form.phone,
-        form.address,
-        role,
-    )
-    try:
-        db.commit()
-        db.refresh(user)
-        return _map_user_to_response(user)
-    except Exception as e:
-        db.rollback()
-        raise HTTPException(status_code=500, detail="Không thể cập nhật người dùng") from e
-
-
 def block_user(db: Session, user_id: str, form: schema.UserBlockForm) -> schema.UserDetailResponse:
-    user = db.query(User).options(joinedload(User.role)).filter(User.user_id == _parse_user_id(user_id)).first()
+    user = (
+        db.query(User)
+        .options(
+            joinedload(User.role),
+            selectinload(User.shipping_addresses).joinedload(ShippingAddress.province),
+            selectinload(User.shipping_addresses).joinedload(ShippingAddress.ward),
+        )
+        .filter(User.user_id == _parse_user_id(user_id))
+        .first()
+    )
     if not user:
         raise HTTPException(status_code=404, detail=f"Không tìm thấy người dùng với ID: {user_id}")
 
@@ -156,9 +168,42 @@ def block_user(db: Session, user_id: str, form: schema.UserBlockForm) -> schema.
         db.commit()
         db.refresh(user)
         return _map_user_to_response(user)
-    except Exception as e:
+    except SQLAlchemyError as error:
         db.rollback()
-        raise HTTPException(status_code=500, detail="Không thể thay đổi trạng thái tài khoản") from e
+        raise HTTPException(status_code=500, detail="Không thể thay đổi trạng thái tài khoản") from error
+
+
+def update_user_role(
+    db: Session,
+    user_id: str,
+    form: schema.UserRoleUpdateForm,
+) -> schema.UserDetailResponse:
+    user = (
+        db.query(User)
+        .options(
+            joinedload(User.role),
+            selectinload(User.shipping_addresses).joinedload(ShippingAddress.province),
+            selectinload(User.shipping_addresses).joinedload(ShippingAddress.ward),
+        )
+        .filter(User.user_id == _parse_user_id(user_id))
+        .first()
+    )
+    if not user:
+        raise HTTPException(status_code=404, detail=f"Không tìm thấy người dùng với ID: {user_id}")
+
+    role_code = _get_role_code(form.role)
+    role = db.query(Role).filter(Role.code == role_code).first()
+    if not role:
+        raise HTTPException(status_code=404, detail=f"Không tìm thấy vai trò: {role_code}")
+
+    user.role = role
+    try:
+        db.commit()
+        db.refresh(user)
+        return _map_user_to_response(user)
+    except SQLAlchemyError as error:
+        db.rollback()
+        raise HTTPException(status_code=500, detail="Không thể cập nhật vai trò người dùng") from error
 
 
 def delete_user(db: Session, user_id: str) -> None:

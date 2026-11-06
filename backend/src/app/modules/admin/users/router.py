@@ -45,20 +45,17 @@ def get_users(
     return success_response(data=result, message="Lấy danh sách người dùng thành công")
 
 
-@router.post(
-    "",
-    response_model=ApiResponse[schema.UserDetailResponse],
-    status_code=status.HTTP_201_CREATED,
-    summary="Tạo người dùng mới",
-    description="Admin tạo trực tiếp một tài khoản người dùng mới trên hệ thống.",
-    response_description="Thông tin chi tiết người dùng vừa tạo thành công.",
+@router.get(
+    "/stats",
+    response_model=ApiResponse[schema.UserStatsResponse],
+    status_code=status.HTTP_200_OK,
+    summary="Lấy số liệu thống kê người dùng",
+    description="Lấy số liệu tổng hợp toàn hệ thống theo vai trò và trạng thái tài khoản.",
+    response_description="Số liệu người dùng toàn hệ thống.",
 )
-def create_user(
-    form: schema.UserCreateForm,
-    db: Session = Depends(get_db),
-):
-    created_user = service.create_user(db=db, form=form)
-    return success_response(data=created_user, message="Tạo tài khoản người dùng thành công")
+def get_user_stats(db: Session = Depends(get_db)):
+    stats = service.get_user_stats(db=db)
+    return success_response(data=stats, message="Lấy số liệu người dùng thành công")
 
 
 @router.get(
@@ -77,29 +74,12 @@ def get_user_by_id(
     return success_response(data=user, message="Lấy thông tin người dùng thành công")
 
 
-@router.put(
-    "/{userId}",
-    response_model=ApiResponse[schema.UserDetailResponse],
-    status_code=status.HTTP_200_OK,
-    summary="Cập nhật thông tin người dùng",
-    description="Cập nhật thông tin cá nhân và vai trò của người dùng đã tồn tại.",
-    response_description="Thông tin người dùng sau khi cập nhật.",
-)
-def update_user(
-    userId: str,
-    form: schema.UserUpdateForm,
-    db: Session = Depends(get_db),
-):
-    updated_user = service.update_user(db=db, user_id=userId, form=form)
-    return success_response(data=updated_user, message="Cập nhật thông tin người dùng thành công")
-
-
 @router.patch(
     "/{userId}/block",
     response_model=ApiResponse[schema.UserDetailResponse],
     status_code=status.HTTP_200_OK,
     summary="Khóa hoặc mở khóa tài khoản",
-    description="Thay đổi trạng thái tài khoản linh hoạt (Khóa kèm lý do hoặc Mở khóa tài khoản).",
+    description="Khóa tài khoản với lý do hoặc mở khóa tài khoản.",
     response_description="Thông tin người dùng sau khi thay đổi trạng thái.",
 )
 def block_user(
@@ -112,12 +92,29 @@ def block_user(
     return success_response(data=updated_user, message=f"{action_text} tài khoản thành công")
 
 
+@router.patch(
+    "/{userId}/role",
+    response_model=ApiResponse[schema.UserDetailResponse],
+    status_code=status.HTTP_200_OK,
+    summary="Cập nhật vai trò người dùng",
+    description="Chỉ cập nhật vai trò hệ thống của người dùng.",
+    response_description="Thông tin người dùng sau khi cập nhật vai trò.",
+)
+def update_user_role(
+    userId: str,
+    form: schema.UserRoleUpdateForm,
+    db: Session = Depends(get_db),
+):
+    updated_user = service.update_user_role(db=db, user_id=userId, form=form)
+    return success_response(data=updated_user, message="Cập nhật vai trò người dùng thành công")
+
+
 @router.delete(
     "/{userId}",
     response_model=ApiResponse[None],
     status_code=status.HTTP_200_OK,
     summary="Xóa tài khoản người dùng",
-    description="Xóa người dùng khỏi hệ thống (có kiểm tra ràng buộc liên quan đến đơn hàng).",
+    description="Xóa tài khoản người dùng; không cho phép xóa nếu còn đơn hàng liên quan.",
     response_description="Thông báo xóa thành công.",
 )
 def delete_user(

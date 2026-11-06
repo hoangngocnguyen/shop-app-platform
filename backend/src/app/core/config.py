@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 
 from pydantic import Field
@@ -12,9 +13,27 @@ def _find_backend_dir() -> Path:
 
 
 BACKEND_DIR = _find_backend_dir()
-ENV_LOCAL_PATH = BACKEND_DIR / ".env.local"
-ENV_DEFAULT_PATH = BACKEND_DIR / ".env"
-ENV_FILE_PATH = ENV_LOCAL_PATH if ENV_LOCAL_PATH.exists() else ENV_DEFAULT_PATH
+PROJECT_ROOT = BACKEND_DIR.parent
+ENV_CANDIDATES = [
+    BACKEND_DIR / ".env.local",
+    PROJECT_ROOT / ".env.local",
+    BACKEND_DIR / ".env",
+    PROJECT_ROOT / ".env",
+    BACKEND_DIR / ".env.local.example",
+    PROJECT_ROOT / ".env.local.example",
+    BACKEND_DIR / ".env.example",
+    PROJECT_ROOT / ".env.example",
+]
+ENV_FILE_PATH = next((path for path in ENV_CANDIDATES if path.exists()), ENV_CANDIDATES[0])
+
+
+def _default_database_url() -> str:
+    user = os.getenv("POSTGRES_USER", "shop_app_platform")
+    password = os.getenv("POSTGRES_PASSWORD", "shop_app_secret_password_2026")
+    host = os.getenv("POSTGRES_HOST", "localhost")
+    port = os.getenv("POSTGRES_PORT", "5433")
+    db_name = os.getenv("POSTGRES_DB", "shop_app_platform")
+    return f"postgresql+psycopg://{user}:{password}@{host}:{port}/{db_name}"
 
 
 class Settings(BaseSettings):
@@ -22,7 +41,7 @@ class Settings(BaseSettings):
     DEBUG: bool = False
     PORT: int = 8000
 
-    DATABASE_URL: str = Field(default="")
+    DATABASE_URL: str = Field(default_factory=_default_database_url)
     SECRET_KEY: str = Field(default="")
     SUPABASE_URL: str = Field(default="")
 

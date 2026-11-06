@@ -30,6 +30,25 @@ class SortDirection(str, Enum):
     DESC = "desc"
 
 
+class UserBlockForm(BaseModel):
+    isBlocked: bool = Field(..., description="true: Khóa tài khoản, false: Mở khóa tài khoản")
+    reason: Optional[str] = Field(
+        default=None,
+        max_length=500,
+        description="Lý do khóa tài khoản",
+    )
+
+    @model_validator(mode="after")
+    def validate_reason_if_blocked(self) -> "UserBlockForm":
+        if self.isBlocked and not (self.reason and self.reason.strip()):
+            raise ValueError("Vui lòng nhập lý do khóa tài khoản")
+        return self
+
+
+class UserRoleUpdateForm(BaseModel):
+    role: UserRole = Field(..., description="Vai trò hệ thống mới")
+
+
 # ==========================================
 # Query Parameters Schema
 # ==========================================
@@ -44,40 +63,34 @@ class AdminUserQueryParams(BaseModel):
 
 
 # ==========================================
-# Request Body Schemas
+# Shipping Address Schema (Địa chỉ phân cấp - Admin Read-only)
 # ==========================================
-class UserCreateForm(BaseModel):
-    fullName: str = Field(..., min_length=1, max_length=256, description="Không được để trống, tối đa 256 ký tự")
-    email: EmailStr = Field(..., description="Email hợp lệ, không trùng lặp")
-    phone: str = Field(..., pattern=r"^(0|\+84)[0-9]{9}$", description="Số điện thoại hợp lệ (VD: 0912345678)")
-    password: str = Field(..., min_length=6, description="Tối thiểu 6 ký tự bất kỳ (chữ, số hoặc ký tự đặc biệt)")
-    role: UserRole = Field(..., description="Vai trò hợp lệ (ADMIN, CUSTOMER, STAFF)")
-
-
-class UserUpdateForm(BaseModel):
-    fullName: str = Field(..., min_length=1, max_length=256, description="Không được để trống, tối đa 256 ký tự")
-    phone: str = Field(..., pattern=r"^(0|\+84)[0-9]{9}$", description="Số điện thoại hợp lệ")
-    address: Optional[str] = Field(
-        default=None,
-        max_length=255,
-        description="Địa chỉ liên hệ chính của người dùng",
-    )
-    role: UserRole = Field(..., description="Vai trò mới của người dùng")
-
-
-class UserBlockForm(BaseModel):
-    isBlocked: bool = Field(..., description="true: Khóa tài khoản, false: Mở khóa tài khoản")
-    reason: Optional[str] = Field(
-        default=None,
-        max_length=500,
-        description="Lý do khóa tài khoản (bắt buộc nếu isBlocked = true)",
+class ShippingAddressDTO(BaseModel):
+    model_config = ConfigDict(
+        from_attributes=True,
+        populate_by_name=True,
     )
 
-    @model_validator(mode="after")
-    def validate_reason_if_blocked(self) -> "UserBlockForm":
-        if self.isBlocked and not (self.reason and self.reason.strip()):
-            raise ValueError("Lý do khóa tài khoản (reason) là bắt buộc khi isBlocked = true")
-        return self
+    id: int = Field(..., description="ID địa chỉ giao hàng")
+    recipientName: Optional[str] = Field(
+        default=None,
+        validation_alias=AliasChoices("recipientName", "recipient_name"),
+        description="Tên người nhận"
+    )
+    phone: Optional[str] = Field(default=None, description="Số điện thoại người nhận")
+    province: Optional[str] = Field(default=None, description="Tỉnh / Thành phố")
+    district: Optional[str] = Field(default=None, description="Quận / Huyện")
+    ward: Optional[str] = Field(default=None, description="Phường / Xã")
+    detailAddress: Optional[str] = Field(
+        default=None,
+        validation_alias=AliasChoices("detailAddress", "detail_address"),
+        description="Địa chỉ chi tiết (số nhà, tên đường)"
+    )
+    isDefault: bool = Field(
+        default=False,
+        validation_alias=AliasChoices("isDefault", "is_default"),
+        description="Địa chỉ mặc định hay không"
+    )
 
 
 # ==========================================
@@ -101,7 +114,11 @@ class UserDetailResponse(BaseModel):
     )
     email: EmailStr = Field(..., description="Địa chỉ email")
     phone: Optional[str] = Field(default=None, description="Số điện thoại liên lạc")
-    address: Optional[str] = Field(default=None, description="Địa chỉ")
+    shippingAddresses: List[ShippingAddressDTO] = Field(
+        default_factory=list,
+        validation_alias=AliasChoices("shippingAddresses", "shipping_addresses"),
+        description="Danh sách địa chỉ giao hàng phân cấp (Read-only)"
+    )
     role: UserRole = Field(..., description="Vai trò người dùng (ADMIN, CUSTOMER, STAFF)")
     status: UserStatus = Field(
         default=UserStatus.ACTIVE,
@@ -142,3 +159,11 @@ class UserListResponse(BaseModel):
     page_size: int = Field(..., description="Số bản ghi mỗi trang")
     total: int = Field(..., description="Tổng số người dùng")
     total_pages: int = Field(..., description="Tổng số trang")
+
+
+class UserStatsResponse(BaseModel):
+    total: int = Field(..., description="Tổng số tài khoản")
+    customers: int = Field(..., description="Số tài khoản khách hàng")
+    admins: int = Field(..., description="Số tài khoản quản trị viên")
+    staff: int = Field(..., description="Số tài khoản nhân viên")
+    blocked: int = Field(..., description="Số tài khoản bị khóa")
