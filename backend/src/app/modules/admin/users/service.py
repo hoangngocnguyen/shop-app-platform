@@ -46,6 +46,13 @@ def _map_user_to_response(user: User) -> UserDetailResponse:
         shippingAddresses=[
             ShippingAddressDTO(
                 id=address.id,
+                recipient_name=address.recipient_name,
+                province_code=address.province_code,
+                ward_code=address.ward_code,
+                address_line=address.address_line,
+                is_default=address.is_default,
+                province_name=address.province_name,
+                ward_name=address.ward_name,
                 recipientName=address.recipient_name,
                 phone=address.phone,
                 province=address.province_name,
