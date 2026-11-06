@@ -11,10 +11,10 @@ interface CategoryState {
 
     // Actions
     setActiveCategorySlug: (slug: string | null) => void;
-    fetchCategories: () => Promise<CategoryResponse[] | null>;
+    fetchCategories: (force?: boolean) => Promise<CategoryResponse[] | null>;
 }
 
-export const useCategoryStore = create<CategoryState>((set) => ({
+export const useCategoryStore = create<CategoryState>((set, get) => ({
     categories: [],
     isLoading: false,
     error: null,
@@ -22,7 +22,13 @@ export const useCategoryStore = create<CategoryState>((set) => ({
 
     setActiveCategorySlug: (slug) => set({ activeCategorySlug: slug }),
 
-    fetchCategories: async () => {
+    fetchCategories: async (force = false) => {
+        // Tối ưu cache bộ nhớ: nếu đã có danh mục thì không tải lại trừ khi ép buộc (force = true)
+        const current = get().categories;
+        if (!force && current && current.length > 0) {
+            return current;
+        }
+
         set({ isLoading: true, error: null });
         try {
             const data = await categoryApi.getCategories();

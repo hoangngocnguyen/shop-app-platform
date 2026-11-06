@@ -38,7 +38,7 @@ interface ProductState {
     setError: (error: string | null) => void;
 
     // Async Actions - Quản trị sản phẩm (Admin Services)
-    fetchCategories: () => Promise<CategoryResponse[] | null>;
+    fetchCategories: (force?: boolean) => Promise<CategoryResponse[] | null>;
     fetchAdminProducts: (params?: AdminProductQueryParams) => Promise<PaginatedProductResponse | null>;
     createProduct: (payload: ProductCreate, file?: File | null) => Promise<ProductResponse | null>;
     updateProduct: (
@@ -54,7 +54,7 @@ interface ProductState {
     // Async Actions - Khách hàng / Public (Public Services)
     fetchPublicProducts: (params?: ProductQueryParams) => Promise<PaginatedProductResponse | null>;
     fetchProducts: (params?: ProductQueryParams) => Promise<PaginatedProductResponse | null>;
-    fetchPriceOptions: () => Promise<PriceOptionDTO[] | null>;
+    fetchPriceOptions: (force?: boolean) => Promise<PriceOptionDTO[] | null>;
     fetchProductDetail: (id: number) => Promise<ProductDetailResponse | null>;
     fetchRelatedProducts: (id: number, limit?: number) => Promise<ProductResponse[] | null>;
 
@@ -90,7 +90,11 @@ export const useProductStore = create<ProductState>((set, get) => ({
     // =========================================================================
 
     // Lấy danh sách danh mục
-    fetchCategories: async () => {
+    fetchCategories: async (force = false) => {
+        const current = get().categories;
+        if (!force && current && current.length > 0) {
+            return current;
+        }
         try {
             const categories = await adminProductApi.getCategories();
             set({ categories });
@@ -244,7 +248,11 @@ export const useProductStore = create<ProductState>((set, get) => ({
     },
 
     // Lấy metadata các dải giá cố định
-    fetchPriceOptions: async () => {
+    fetchPriceOptions: async (force = false) => {
+        const current = get().priceOptions;
+        if (!force && current && current.length > 0) {
+            return current;
+        }
         set({ isLoading: true, error: null });
         try {
             const priceOptions = await productApi.getPriceOptions();
