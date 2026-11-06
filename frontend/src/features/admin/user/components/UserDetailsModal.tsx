@@ -3,7 +3,7 @@
 import React from "react";
 import { Mail, MapPin, Phone, Shield, User } from "lucide-react";
 import { ModalShell } from "./ModalShell";
-import { UserDetailResponse, UserRole, UserStatus } from "../types";
+import { getUserRoleLabel, UserDetailResponse, UserStatus } from "../types";
 
 interface UserDetailsModalProps {
   user: UserDetailResponse;
@@ -11,11 +11,7 @@ interface UserDetailsModalProps {
 }
 
 export function UserDetailsModal({ user, onClose }: UserDetailsModalProps) {
-  const roleLabel = {
-    [UserRole.ADMIN]: "ADMIN (Quản trị viên)",
-    [UserRole.STAFF]: "STAFF (Nhân viên)",
-    [UserRole.CUSTOMER]: "CUSTOMER (Khách hàng)",
-  }[user.role as UserRole] ?? user.role;
+  const roleLabel = getUserRoleLabel(user.role);
 
   const formatDate = (date: string) => new Date(date).toLocaleString("vi-VN");
 
