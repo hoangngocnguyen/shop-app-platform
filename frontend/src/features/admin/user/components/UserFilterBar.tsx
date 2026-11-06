@@ -2,6 +2,7 @@
 
 import React from "react";
 import { Search, Shield, UserCheck, ArrowUpDown, ChevronDown } from "lucide-react";
+import { UserRole, USER_ROLE_LABELS } from "../types";
 
 export type UserSortBy = "id_desc" | "name_asc" | "email_asc";
 
@@ -57,9 +58,9 @@ export function UserFilterBar({
           className="rounded-xl border border-surface-border bg-surface-card py-2.5 pl-9 pr-9 text-sm text-text-main shadow-xs transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/50 hover:shadow-brand-sm focus:border-ring-brand focus:outline-none focus:ring-4 focus:ring-ring-brand/15 cursor-pointer appearance-none"
         >
           <option value="all">Tất cả vai trò</option>
-          <option value="ADMIN">ADMIN</option>
-          <option value="STAFF">STAFF</option>
-          <option value="CUSTOMER">CUSTOMER</option>
+          <option value={UserRole.ADMIN}>{USER_ROLE_LABELS[UserRole.ADMIN]}</option>
+          <option value={UserRole.STAFF}>{USER_ROLE_LABELS[UserRole.STAFF]}</option>
+          <option value={UserRole.CUSTOMER}>{USER_ROLE_LABELS[UserRole.CUSTOMER]}</option>
         </select>
         <ChevronDown className="pointer-events-none absolute right-3 top-1/2 size-3.5 -translate-y-1/2 text-text-muted" aria-hidden />
       </div>
