@@ -295,6 +295,7 @@ class AdminStatisticsService:
                 User.name,
                 User.username,
                 User.email,
+                User.avatar_url,
                 total_spent.label("total_spent"),
                 order_count.label("order_count"),
             )
@@ -304,7 +305,13 @@ class AdminStatisticsService:
                 Order.order_date >= month_start,
                 Order.order_date < month_end,
             )
-            .group_by(User.user_id, User.name, User.username, User.email)
+            .group_by(
+                User.user_id,
+                User.name,
+                User.username,
+                User.email,
+                User.avatar_url,
+            )
             .order_by(total_spent.desc(), order_count.desc())
             .limit(limit)
         )
@@ -314,6 +321,7 @@ class AdminStatisticsService:
                 name=row.name,
                 username=row.username,
                 email=row.email,
+                avatar_url=row.avatar_url,
                 total_spent=self._money(row.total_spent),
                 order_count=int(row.order_count or 0),
             )

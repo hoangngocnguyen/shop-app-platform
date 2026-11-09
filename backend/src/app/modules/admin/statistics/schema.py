@@ -156,6 +156,10 @@ class TopCustomerItem(BaseModel):
         description="Dia chi email",
         examples=["nguyenvana@example.com"],
     )
+    avatar_url: str | None = Field(
+        default=None,
+        description="Duong dan anh dai dien khach hang",
+    )
     total_spent: Decimal = Field(
         ...,
         ge=0,
