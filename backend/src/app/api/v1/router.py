@@ -1,5 +1,6 @@
 from fastapi import APIRouter
 
+from src.app.modules.admin.statistics.router import admin_statistics_router
 from src.app.modules.auth.router import router as auth_router
 from src.app.modules.carts.router import router as cart_router
 from src.app.modules.categories.admin_router import admin_category_router
@@ -22,6 +23,7 @@ api_v1_router = APIRouter(prefix="/api/v1")
 
 # Nối các router từ từng module vào
 api_v1_router.include_router(media_router)
+api_v1_router.include_router(admin_statistics_router)
 api_v1_router.include_router(products_router)
 api_v1_router.include_router(admin_product_router)
 api_v1_router.include_router(categories_router)
