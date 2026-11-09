@@ -3,6 +3,7 @@ export const ROUTES = {
   AUTH: {
     LOGIN: '/login',
     REGISTER: '/register',
+    CALLBACK: '/auth-callback',
   },
   USER: {
     PROFILE: '/user/profile',
