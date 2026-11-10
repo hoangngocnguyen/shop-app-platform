@@ -1,8 +1,11 @@
 import api from "@/lib/axios/client";
 import type {
     AdminOverviewResponse,
+    AdminOverviewQuery,
+    CustomerStatisticsQuery,
     CustomerStatisticsResponse,
     OrderStatisticsResponse,
+    ProductStatisticsQuery,
     ProductStatisticsResponse,
     RevenueStatisticsQuery,
     RevenueStatisticsResponse,
@@ -13,9 +16,11 @@ export const adminStatisticsApi = {
      * GET /admin/statistics
      * Thống kê tổng quan dashboard: doanh thu, đơn hàng, thanh toán và tồn kho thấp.
      */
-    getOverview: async (): Promise<AdminOverviewResponse> => {
+    getOverview: async (
+        params?: AdminOverviewQuery
+    ): Promise<AdminOverviewResponse> => {
         const response =
-            await api.get<AdminOverviewResponse>("/admin/statistics");
+            await api.get<AdminOverviewResponse>("/admin/statistics", { params });
         return response.data;
     },
 
@@ -47,9 +52,13 @@ export const adminStatisticsApi = {
      * GET /admin/statistics/products
      * Top sản phẩm bán chạy trong tháng và cảnh báo sản phẩm tồn kho thấp.
      */
-    getProductStatistics: async (): Promise<ProductStatisticsResponse> => {
-        const response =
-            await api.get<ProductStatisticsResponse>("/admin/statistics/products");
+    getProductStatistics: async (
+        params?: ProductStatisticsQuery
+    ): Promise<ProductStatisticsResponse> => {
+        const response = await api.get<ProductStatisticsResponse>(
+            "/admin/statistics/products",
+            { params }
+        );
         return response.data;
     },
 
@@ -57,11 +66,13 @@ export const adminStatisticsApi = {
      * GET /admin/statistics/customers
      * Danh sách khách hàng chi tiêu nhiều nhất trong tháng hiện tại.
      */
-    getCustomerStatistics: async (): Promise<CustomerStatisticsResponse> => {
-        const response =
-            await api.get<CustomerStatisticsResponse>(
-                "/admin/statistics/customers"
-            );
+    getCustomerStatistics: async (
+        params?: CustomerStatisticsQuery
+    ): Promise<CustomerStatisticsResponse> => {
+        const response = await api.get<CustomerStatisticsResponse>(
+            "/admin/statistics/customers",
+            { params }
+        );
         return response.data;
     },
 };

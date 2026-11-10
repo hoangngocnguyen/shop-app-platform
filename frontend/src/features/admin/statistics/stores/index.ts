@@ -2,9 +2,12 @@ import { create } from "zustand";
 import { parseErrorMessage } from "@/lib/axios/parseError";
 import { adminStatisticsApi } from "../api";
 import type {
+    AdminOverviewQuery,
     AdminOverviewResponse,
+    CustomerStatisticsQuery,
     CustomerStatisticsResponse,
     OrderStatisticsResponse,
+    ProductStatisticsQuery,
     ProductStatisticsResponse,
     RevenueStatisticsQuery,
     RevenueStatisticsResponse,
@@ -19,13 +22,19 @@ interface AdminStatisticsState {
     isLoading: boolean;
     error: string | null;
 
-    fetchOverview: () => Promise<AdminOverviewResponse | null>;
+    fetchOverview: (
+        query?: AdminOverviewQuery
+    ) => Promise<AdminOverviewResponse | null>;
     fetchRevenueStatistics: (
         query?: RevenueStatisticsQuery
     ) => Promise<RevenueStatisticsResponse | null>;
     fetchOrderStatistics: () => Promise<OrderStatisticsResponse | null>;
-    fetchProductStatistics: () => Promise<ProductStatisticsResponse | null>;
-    fetchCustomerStatistics: () => Promise<CustomerStatisticsResponse | null>;
+    fetchProductStatistics: (
+        query?: ProductStatisticsQuery
+    ) => Promise<ProductStatisticsResponse | null>;
+    fetchCustomerStatistics: (
+        query?: CustomerStatisticsQuery
+    ) => Promise<CustomerStatisticsResponse | null>;
     fetchAll: (revenueQuery?: RevenueStatisticsQuery) => Promise<void>;
     clearError: () => void;
     reset: () => void;
@@ -44,10 +53,10 @@ const initialState = {
 export const useAdminStatisticsStore = create<AdminStatisticsState>((set) => ({
     ...initialState,
 
-    fetchOverview: async () => {
+    fetchOverview: async (query) => {
         set({ isLoading: true, error: null });
         try {
-            const overview = await adminStatisticsApi.getOverview();
+            const overview = await adminStatisticsApi.getOverview(query);
             set({ overview, isLoading: false });
             return overview;
         } catch (err: unknown) {
@@ -91,11 +100,11 @@ export const useAdminStatisticsStore = create<AdminStatisticsState>((set) => ({
         }
     },
 
-    fetchProductStatistics: async () => {
+    fetchProductStatistics: async (query) => {
         set({ isLoading: true, error: null });
         try {
             const productStatistics =
-                await adminStatisticsApi.getProductStatistics();
+                await adminStatisticsApi.getProductStatistics(query);
             set({ productStatistics, isLoading: false });
             return productStatistics;
         } catch (err: unknown) {
@@ -107,11 +116,11 @@ export const useAdminStatisticsStore = create<AdminStatisticsState>((set) => ({
         }
     },
 
-    fetchCustomerStatistics: async () => {
+    fetchCustomerStatistics: async (query) => {
         set({ isLoading: true, error: null });
         try {
             const customerStatistics =
-                await adminStatisticsApi.getCustomerStatistics();
+                await adminStatisticsApi.getCustomerStatistics(query);
             set({ customerStatistics, isLoading: false });
             return customerStatistics;
         } catch (err: unknown) {

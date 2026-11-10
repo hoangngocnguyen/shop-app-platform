@@ -39,6 +39,19 @@ export interface RevenueStatisticsQuery {
     group_by: RevenueGroupBy;
 }
 
+export interface AdminOverviewQuery {
+    low_stock_limit?: number;
+}
+
+export interface ProductStatisticsQuery {
+    top_selling_limit?: number;
+    low_stock_limit?: number;
+}
+
+export interface CustomerStatisticsQuery {
+    limit?: number;
+}
+
 export interface RevenueTrendItem {
     period: string;
     revenue: number | string;
