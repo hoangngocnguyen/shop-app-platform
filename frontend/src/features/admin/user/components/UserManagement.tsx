@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { toast } from "@/common/stores/useToastStore";
 import { useAdminUserStore } from "../stores";
 import { SortDirection, UserDetailResponse, UserRole, UserStatus } from "../types";
@@ -8,7 +9,6 @@ import { UserHeroBanner } from "./UserHeroBanner";
 import { UserHeaderBar } from "./UserHeaderBar";
 import { UserFilterBar, UserSortBy } from "./UserFilterBar";
 import { UserTable } from "./UserTable";
-import { UserDetailsModal } from "./UserDetailsModal";
 import { UserBlockModal } from "./UserBlockModal";
 import { UserRoleModal } from "./UserRoleModal";
 import { UserBulkActionBar } from "./UserBulkActionBar";
@@ -20,11 +20,11 @@ const SORT_PARAMS: Record<UserSortBy, { sortBy: string; sortDir: SortDirection }
 };
 
 export const UserManagement: React.FC = () => {
+  const router = useRouter();
   const {
     users, isLoading, isSubmitting, total, totalPages, stats, queryParams, fetchUsers, fetchUserStats, deleteUser, blockUser, updateUserRole,
   } = useAdminUserStore();
 
-  const [viewedUser, setViewedUser] = useState<UserDetailResponse | null>(null);
   const [blockTarget, setBlockTarget] = useState<UserDetailResponse | null>(null);
   const [roleTarget, setRoleTarget] = useState<UserDetailResponse | null>(null);
   const [selected, setSelected] = useState<Set<string>>(new Set());
@@ -195,7 +195,7 @@ export const UserManagement: React.FC = () => {
           selected={selected}
           onToggleAll={toggleAll}
           onToggleOne={toggleOne}
-          onView={setViewedUser}
+          onView={(user) => router.push(`/admin/users/${user.userId}`)}
           onEditRole={setRoleTarget}
           onToggleBlock={setBlockTarget}
           onDelete={(user) =>
@@ -210,9 +210,6 @@ export const UserManagement: React.FC = () => {
           onPageSizeChange={(s) => { setPageSize(s); setPage(1); setSelected(new Set()); }}
         />
 
-        {viewedUser && (
-          <UserDetailsModal user={viewedUser} onClose={() => setViewedUser(null)} />
-        )}
         {blockTarget && (
           <UserBlockModal
             user={blockTarget}
