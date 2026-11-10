@@ -52,11 +52,9 @@ const NAV_ITEMS: AdminNavItem[] = [
   },
   {
     id: "users",
-    label: "Khách hàng",
+    label: "Người dùng",
     href: ROUTES.ADMIN.USERS,
     icon: Users,
-    badge: "Sắp có",
-    disabled: true,
   },
 ];
 
