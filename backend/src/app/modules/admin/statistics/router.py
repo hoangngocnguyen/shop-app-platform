@@ -42,9 +42,15 @@ def get_admin_statistics_service(
     ),
 )
 def get_admin_statistics_overview(
+    low_stock_limit: int = Query(
+        default=5,
+        ge=1,
+        le=100,
+        description="Số sản phẩm tồn kho thấp cần trả về (1-100)",
+    ),
     service: AdminStatisticsService = Depends(get_admin_statistics_service),
 ) -> ApiResponse[AdminOverviewResponse]:
-    data = service.get_admin_overview()
+    data = service.get_admin_overview(low_stock_limit=low_stock_limit)
     return success_response(
         data=data,
         message="Lấy thống kê tổng quan Dashboard thành công",
@@ -121,13 +127,29 @@ def get_admin_order_statistics(
     status_code=status.HTTP_200_OK,
     summary="Thống kê sản phẩm và tồn kho",
     description=(
-        "Trả về top 5 sản phẩm bán chạy trong tháng và top 5 sản phẩm sắp hết hàng."
+        "Trả về danh sách sản phẩm bán chạy trong tháng và sản phẩm sắp hết hàng. "
+        "Số lượng mỗi danh sách có thể tùy chỉnh qua query parameters."
     ),
 )
 def get_admin_product_statistics(
+    top_selling_limit: int = Query(
+        default=5,
+        ge=1,
+        le=100,
+        description="Số sản phẩm bán chạy cần trả về (1-100)",
+    ),
+    low_stock_limit: int = Query(
+        default=5,
+        ge=1,
+        le=100,
+        description="Số sản phẩm tồn kho thấp cần trả về (1-100)",
+    ),
     service: AdminStatisticsService = Depends(get_admin_statistics_service),
 ) -> ApiResponse[ProductStatisticsResponse]:
-    data = service.get_product_statistics()
+    data = service.get_product_statistics(
+        top_selling_limit=top_selling_limit,
+        low_stock_limit=low_stock_limit,
+    )
     return success_response(
         data=data,
         message="Lấy thống kê sản phẩm thành công",
@@ -140,13 +162,19 @@ def get_admin_product_statistics(
     status_code=status.HTTP_200_OK,
     summary="Thống kê khách hàng VIP",
     description=(
-        "Trả về top 5 khách hàng chi tiêu nhiều nhất trong tháng hiện tại."
+        "Trả về danh sách khách hàng chi tiêu nhiều nhất trong tháng hiện tại."
     ),
 )
 def get_admin_customer_statistics(
+    limit: int = Query(
+        default=5,
+        ge=1,
+        le=100,
+        description="Số khách hàng chi tiêu nhiều cần trả về (1-100)",
+    ),
     service: AdminStatisticsService = Depends(get_admin_statistics_service),
 ) -> ApiResponse[CustomerStatisticsResponse]:
-    data = service.get_customer_statistics()
+    data = service.get_customer_statistics(limit=limit)
     return success_response(
         data=data,
         message="Lấy thống kê khách hàng thành công",

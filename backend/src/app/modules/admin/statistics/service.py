@@ -129,20 +129,16 @@ class AdminStatisticsService:
     def get_admin_overview(
         self,
         now: datetime | None = None,
+        *,
+        low_stock_limit: int,
     ) -> AdminOverviewResponse:
         now = now or datetime.now(UTC)
         return AdminOverviewResponse(
             revenue_summary=self._get_revenue_overview(now),
             order_status_stats=self._get_order_status_breakdown(),
             payment_method_stats=self._get_payment_breakdown(),
-            low_stock_products=self.get_low_stock_products(),
+            low_stock_products=self.get_low_stock_products(low_stock_limit),
         )
-
-    def get_overview(
-        self,
-        now: datetime | None = None,
-    ) -> AdminOverviewResponse:
-        return self.get_admin_overview(now)
 
     def get_revenue_statistics(
         self,
@@ -215,7 +211,7 @@ class AdminStatisticsService:
             payment_breakdown=self._get_payment_breakdown(),
         )
 
-    def get_low_stock_products(self, limit: int = 5) -> list[ProductInventoryItem]:
+    def get_low_stock_products(self, limit: int) -> list[ProductInventoryItem]:
         stmt = (
             select(Product)
             .where(Product.quantity <= 5)
@@ -235,7 +231,8 @@ class AdminStatisticsService:
     def get_top_selling_products(
         self,
         now: datetime | None = None,
-        limit: int = 5,
+        *,
+        limit: int,
     ) -> list[TopSellingProductItem]:
         now = now or datetime.now(UTC)
         month_start, month_end = self._month_bounds(now)
@@ -274,16 +271,23 @@ class AdminStatisticsService:
     def get_product_statistics(
         self,
         now: datetime | None = None,
+        *,
+        top_selling_limit: int,
+        low_stock_limit: int,
     ) -> ProductStatisticsResponse:
         return ProductStatisticsResponse(
-            top_selling_month=self.get_top_selling_products(now=now),
-            low_stock_alerts=self.get_low_stock_products(),
+            top_selling_month=self.get_top_selling_products(
+                now=now,
+                limit=top_selling_limit,
+            ),
+            low_stock_alerts=self.get_low_stock_products(low_stock_limit),
         )
 
     def get_top_customers(
         self,
         now: datetime | None = None,
-        limit: int = 5,
+        *,
+        limit: int,
     ) -> list[TopCustomerItem]:
         now = now or datetime.now(UTC)
         month_start, month_end = self._month_bounds(now)
@@ -331,7 +335,9 @@ class AdminStatisticsService:
     def get_customer_statistics(
         self,
         now: datetime | None = None,
+        *,
+        limit: int,
     ) -> CustomerStatisticsResponse:
         return CustomerStatisticsResponse(
-            top_spenders_month=self.get_top_customers(now=now),
+            top_spenders_month=self.get_top_customers(now=now, limit=limit),
         )
