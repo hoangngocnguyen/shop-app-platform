@@ -46,7 +46,7 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({ onOpenMobile }) => {
     if (pathname.startsWith(ROUTES.ADMIN.PRODUCTS)) return "Quản lý sản phẩm";
     if (pathname.startsWith(ROUTES.ADMIN.CATEGORIES)) return "Quản lý danh mục";
     if (pathname.startsWith(ROUTES.ADMIN.ORDERS)) return "Quản lý đơn hàng";
-    if (pathname.startsWith(ROUTES.ADMIN.USERS)) return "Quản lý khách hàng";
+    if (pathname.startsWith(ROUTES.ADMIN.USERS)) return "Quản lý người dùng";
     return "Trung tâm Quản trị";
   };
 
