@@ -82,7 +82,6 @@ export interface AdminUserQueryParams {
   sortBy?: string;
   sortDir?: SortDirection | "asc" | "desc";
 }
-// --- Bổ sung thêm vào CUỐI file types/index.ts ---
 
 export interface UserOrderItem {
   order_id: string;
@@ -107,6 +106,7 @@ export interface UserDetailStatisticsResponse {
   email: string;
   phone?: string | null;
   address?: string | null;
+  shipping_addresses?: ShippingAddressResponse[];
   role: string;
   status: string;
   created_at: string;
