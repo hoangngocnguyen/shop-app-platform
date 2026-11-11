@@ -231,12 +231,24 @@ def get_user_statistics(
 
     role_code = user.role.code.upper() if (user.role and user.role.code) else "CUSTOMER"
 
+    shipping_dtos = [
+        ShippingAddressDTO(
+            id=a.id, recipient_name=a.recipient_name, province_code=a.province_code,
+            ward_code=a.ward_code, address_line=a.address_line, is_default=a.is_default,
+            province_name=a.province_name, ward_name=a.ward_name, recipientName=a.recipient_name,
+            phone=a.phone, province=a.province_name, ward=a.ward_name, detailAddress=a.address_line,
+            isDefault=a.is_default,
+        )
+        for a in user.shipping_addresses
+    ]
+
     return UserDetailStatisticsResponseDTO(
         user_id=str(user.user_id),
         full_name=user.name or "",
         email=user.email or "",
         phone=user.phone,
         address=address_str,
+        shipping_addresses=shipping_dtos,
         role="CUSTOMER" if role_code in ("USER", "CUSTOMER") else role_code,
         status="BLOCKED" if getattr(user, "is_blocked", False) else "ACTIVE",
         created_at=user.created_at,
