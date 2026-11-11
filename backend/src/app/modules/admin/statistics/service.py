@@ -1,8 +1,9 @@
 from datetime import UTC, date, datetime, time, timedelta
 from decimal import Decimal
+import time as time_module
 from typing import Literal
 
-from sqlalchemy import func, select
+from sqlalchemy import case, func, select
 from sqlalchemy.orm import Session
 
 from src.app.modules.admin.statistics.schema import (
@@ -28,6 +29,14 @@ from src.app.modules.orders.enums.order_enums import (
 from src.app.modules.orders.model import Order, OrderDetail
 from src.app.modules.products.model import Product
 from src.app.modules.users.model import User
+
+_OVERVIEW_CACHE: dict[int, tuple[float, AdminOverviewResponse]] = {}
+_OVERVIEW_CACHE_TTL = 30.0  # Cache in-memory 30 giây cho Dashboard tổng quan
+
+
+def clear_overview_cache() -> None:
+    """Xóa sạch cache in-memory thống kê."""
+    _OVERVIEW_CACHE.clear()
 
 
 class AdminStatisticsService:
@@ -95,11 +104,71 @@ class AdminStatisticsService:
         month_start, _ = self._month_bounds(now)
         year_start, year_end = self._year_bounds(now)
 
+        min_start = min(year_start, month_start, week_start, today_start)
+        stmt = select(
+            func.coalesce(
+                func.sum(
+                    case(
+                        (
+                            (Order.order_date >= today_start)
+                            & (Order.order_date < tomorrow),
+                            Order.total,
+                        ),
+                        else_=0,
+                    )
+                ),
+                0,
+            ).label('today_rev'),
+            func.coalesce(
+                func.sum(
+                    case(
+                        (
+                            (Order.order_date >= week_start)
+                            & (Order.order_date < tomorrow),
+                            Order.total,
+                        ),
+                        else_=0,
+                    )
+                ),
+                0,
+            ).label('week_rev'),
+            func.coalesce(
+                func.sum(
+                    case(
+                        (
+                            (Order.order_date >= month_start)
+                            & (Order.order_date < tomorrow),
+                            Order.total,
+                        ),
+                        else_=0,
+                    )
+                ),
+                0,
+            ).label('month_rev'),
+            func.coalesce(
+                func.sum(
+                    case(
+                        (
+                            (Order.order_date >= year_start)
+                            & (Order.order_date < year_end),
+                            Order.total,
+                        ),
+                        else_=0,
+                    )
+                ),
+                0,
+            ).label('year_rev'),
+        ).where(
+            Order.payment_status == PaymentStatus.PAID.value,
+            Order.order_date >= min_start,
+            Order.order_date < year_end,
+        )
+        row = self.db.execute(stmt).one()
         return RevenueOverview(
-            today_revenue=self._revenue_for_period(today_start, tomorrow),
-            week_revenue=self._revenue_for_period(week_start, tomorrow),
-            month_revenue=self._revenue_for_period(month_start, tomorrow),
-            year_revenue=self._revenue_for_period(year_start, year_end),
+            today_revenue=self._money(row.today_rev),
+            week_revenue=self._money(row.week_rev),
+            month_revenue=self._money(row.month_rev),
+            year_revenue=self._money(row.year_rev),
         )
 
     def _get_order_status_breakdown(self) -> list[OrderStatusCountItem]:
@@ -132,13 +201,25 @@ class AdminStatisticsService:
         *,
         low_stock_limit: int,
     ) -> AdminOverviewResponse:
-        now = now or datetime.now(UTC)
-        return AdminOverviewResponse(
-            revenue_summary=self._get_revenue_overview(now),
+        if now is None:
+            cached = _OVERVIEW_CACHE.get(low_stock_limit)
+            if cached is not None:
+                cached_time, response = cached
+                if time_module.monotonic() - cached_time < _OVERVIEW_CACHE_TTL:
+                    return response
+
+        resolved_now = now or datetime.now(UTC)
+        result = AdminOverviewResponse(
+            revenue_summary=self._get_revenue_overview(resolved_now),
             order_status_stats=self._get_order_status_breakdown(),
             payment_method_stats=self._get_payment_breakdown(),
             low_stock_products=self.get_low_stock_products(low_stock_limit),
         )
+
+        if now is None:
+            _OVERVIEW_CACHE[low_stock_limit] = (time_module.monotonic(), result)
+
+        return result
 
     def get_revenue_statistics(
         self,
@@ -183,7 +264,7 @@ class AdminStatisticsService:
         )
         date_format = {"day": "%Y-%m-%d", "month": "%Y-%m", "year": "%Y"}[group_by]
         trend_values = {
-            value.strftime(date_format): self._money(revenue)
+            (datetime.fromisoformat(value.replace("Z", "").split("+")[0].strip()).strftime(date_format) if isinstance(value, str) else value.strftime(date_format)): self._money(revenue)
             for value, revenue in self.db.execute(trend_stmt).all()
         }
 
