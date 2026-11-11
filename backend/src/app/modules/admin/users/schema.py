@@ -198,6 +198,7 @@ class UserDetailStatisticsResponseDTO(BaseModel):
     email: str
     phone: Optional[str] = None
     address: Optional[str] = None
+    shipping_addresses: List[ShippingAddressDTO] = Field(default_factory=list)
     role: str
     status: str
     created_at: datetime
