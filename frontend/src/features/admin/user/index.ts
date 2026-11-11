@@ -9,6 +9,7 @@ export { UserBulkActionBar } from "./components/UserBulkActionBar";
 export { UserProfileCard } from "./components/UserProfileCard";
 export { UserStatCards } from "./components/UserStatCards";
 export { UserOrderHistoryTable } from "./components/UserOrderHistoryTable";
+export { UserAddressListModal } from "./components/UserAddressListModal";
 export * from "./types";
 export * from "./stores";
 export * from "./api";
