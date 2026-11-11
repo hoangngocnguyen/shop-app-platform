@@ -14,6 +14,7 @@ import {
   ChevronRight,
   Shield,
   Sparkles,
+  ChartNoAxesCombined,
 } from "lucide-react";
 import { AdminNavItem } from "../types";
 import { ROUTES } from "@/constants/routes";
@@ -49,6 +50,12 @@ const NAV_ITEMS: AdminNavItem[] = [
     label: "Đơn hàng",
     href: ROUTES.ADMIN.ORDERS,
     icon: ShoppingCart,
+  },
+  {
+    id: "statistics",
+    label: "Thống kê",
+    href: ROUTES.ADMIN.STATISTICS,
+    icon: ChartNoAxesCombined,
   },
   {
     id: "users",
