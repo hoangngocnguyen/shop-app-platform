@@ -3,6 +3,11 @@
 import React from "react";
 import { Calendar, Search } from "lucide-react";
 import { UserOrdersPaginated } from "../types";
+import {
+  getOrderStatusClass,
+  getStatusLabel,
+  ORDER_STATUS_OPTIONS,
+} from "@/features/orders/utils/orderStatus";
 
 interface UserOrderHistoryTableProps {
   orders?: UserOrdersPaginated;
@@ -54,11 +59,11 @@ export function UserOrderHistoryTable({
             className="rounded-xl border border-surface-border bg-surface-bg px-3 py-1.5 text-sm outline-none focus:border-primary cursor-pointer"
           >
             <option value="">Tất cả trạng thái</option>
-            <option value="PENDING">Chờ xử lý</option>
-            <option value="CONFIRMED">Đã xác nhận</option>
-            <option value="SHIPPING">Đang giao</option>
-            <option value="COMPLETED">Hoàn thành</option>
-            <option value="CANCELLED">Đã hủy</option>
+            {ORDER_STATUS_OPTIONS.map((status) => (
+              <option key={status} value={status}>
+                {getStatusLabel(status)}
+              </option>
+            ))}
           </select>
         </div>
       </div>
@@ -97,9 +102,13 @@ export function UserOrderHistoryTable({
                   <td className="py-3 px-4">{order.recipient_name}</td>
                   <td className="py-3 px-4 font-semibold">{formatVND(order.total_amount)}</td>
                   <td className="py-3 px-4">
-                    <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-surface-bg border border-surface-border">
-                      {order.status}
-                    </span>
+                    {(() => {
+                      return (
+                        <span className={`px-2.5 py-0.5 rounded-full text-xs font-semibold ${getOrderStatusClass(order.status)}`}>
+                          {getStatusLabel(order.status)}
+                        </span>
+                      );
+                    })()}
                   </td>
                   <td className="py-3 px-4 font-mono text-xs text-text-muted">
                     {new Date(order.created_at).toLocaleDateString("vi-VN")}
