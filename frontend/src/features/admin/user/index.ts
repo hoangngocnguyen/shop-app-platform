@@ -1,12 +1,15 @@
 export { UserManagement, UserManagement as AdminUsersFeature } from "./components/UserManagement";
 export { UserTable } from "./components/UserTable";
-export { UserDetailsModal } from "./components/UserDetailsModal";
 export { UserBlockModal } from "./components/UserBlockModal";
 export { UserRoleModal } from "./components/UserRoleModal";
 export { UserHeroBanner } from "./components/UserHeroBanner";
 export { UserHeaderBar } from "./components/UserHeaderBar";
 export { UserFilterBar } from "./components/UserFilterBar";
 export { UserBulkActionBar } from "./components/UserBulkActionBar";
+export { UserProfileCard } from "./components/UserProfileCard";
+export { UserStatCards } from "./components/UserStatCards";
+export { UserOrderHistoryTable } from "./components/UserOrderHistoryTable";
+export { UserAddressListModal } from "./components/UserAddressListModal";
 export * from "./types";
 export * from "./stores";
 export * from "./api";

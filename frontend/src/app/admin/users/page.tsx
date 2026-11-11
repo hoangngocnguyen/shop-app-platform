@@ -1,11 +1,11 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { toast } from "@/common/stores/useToastStore";
 
 import { useAdminUserStore } from "@/features/admin/user/stores";
 import { UserTable } from "@/features/admin/user/components/UserTable";
-import { UserDetailsModal } from "@/features/admin/user/components/UserDetailsModal";
 import { UserBlockModal } from "@/features/admin/user/components/UserBlockModal";
 import { UserRoleModal } from "@/features/admin/user/components/UserRoleModal";
 import { UserHeroBanner } from "@/features/admin/user/components/UserHeroBanner";
@@ -20,6 +20,7 @@ import {
 } from "@/features/admin/user/types";
 
 export default function AdminUserPage() {
+  const router = useRouter();
   const {
     users,
     total,
@@ -41,7 +42,6 @@ export default function AdminUserPage() {
   const [roleFilter, setRoleFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
   const [searchInput, setSearchInput] = useState(search);
-  const [viewedUser, setViewedUser] = useState<UserDetailResponse | null>(null);
   const [blockTarget, setBlockTarget] = useState<UserDetailResponse | null>(null);
   const [roleTarget, setRoleTarget] = useState<UserDetailResponse | null>(null);
   const [selected, setSelected] = useState<Set<string>>(new Set());
@@ -226,7 +226,7 @@ export default function AdminUserPage() {
           selected={selected}
           onToggleAll={toggleAll}
           onToggleOne={toggleOne}
-          onView={setViewedUser}
+          onView={(user: UserDetailResponse) => router.push(`/admin/users/${user.userId}`)}
           onEditRole={(user: UserDetailResponse) => setRoleTarget(user)}
           onToggleBlock={(user: UserDetailResponse) => setBlockTarget(user)}
           onDelete={(user: UserDetailResponse) =>
@@ -248,9 +248,6 @@ export default function AdminUserPage() {
           }}
         />
 
-        {viewedUser && (
-          <UserDetailsModal user={viewedUser} onClose={() => setViewedUser(null)} />
-        )}
         {blockTarget && (
           <UserBlockModal
             user={blockTarget}

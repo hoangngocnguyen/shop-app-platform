@@ -11,7 +11,6 @@ import {
   Sparkles,
   ShieldCheck,
   ExternalLink,
-  Plus,
   TrendingUp,
 } from "lucide-react";
 import { ROUTES } from "@/constants/routes";
@@ -45,22 +44,18 @@ export default function AdminDashboardPage() {
       description: "Theo dõi đơn hàng, xử lý giao hàng và trạng thái thanh toán.",
       href: ROUTES.ADMIN.ORDERS,
       icon: ShoppingCart,
-      actionText: "Đang phát triển",
-      colorClass: "bg-surface-hover text-text-sub border-surface-border",
-      iconBg: "bg-text-muted text-white",
-      badge: "Sắp ra mắt",
-      disabled: true,
+      actionText: "Quản lý đơn hàng",
+      colorClass: "bg-status-info-bg text-status-info border-status-info/20",
+      iconBg: "bg-status-info text-white",
     },
     {
       title: "Tài khoản khách hàng",
-      description: "Quản lý danh sách thành viên, phân quyền và kiểm soát bảo mật.",
+      description: "Quản lý tài khoản, xem lịch sử mua hàng, phân quyền và kiểm soát bảo mật.",
       href: ROUTES.ADMIN.USERS,
       icon: Users,
-      actionText: "Đang phát triển",
-      colorClass: "bg-surface-hover text-text-sub border-surface-border",
-      iconBg: "bg-text-muted text-white",
-      badge: "Sắp ra mắt",
-      disabled: true,
+      actionText: "Quản lý người dùng",
+      colorClass: "bg-status-success-bg text-status-success border-status-success/20",
+      iconBg: "bg-status-success text-white",
     },
   ];
 
@@ -123,41 +118,6 @@ export default function AdminDashboardPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
           {statCards.map((card) => {
             const Icon = card.icon;
-
-            if (card.disabled) {
-              return (
-                <div
-                  key={card.title}
-                  className="rounded-2xl bg-surface-card border border-surface-border p-5 sm:p-6 opacity-75 relative overflow-hidden"
-                >
-                  <div className="flex items-start justify-between gap-4 mb-4">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-xl bg-surface-hover flex items-center justify-center text-text-muted">
-                        <Icon className="w-5 h-5" />
-                      </div>
-                      <div>
-                        <h4 className="text-sm sm:text-base font-bold text-text-main">
-                          {card.title}
-                        </h4>
-                        {card.badge && (
-                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-surface-hover text-text-muted border border-surface-border">
-                            {card.badge}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-
-                  <p className="text-xs text-text-muted leading-relaxed mb-4">
-                    {card.description}
-                  </p>
-
-                  <div className="text-xs font-semibold text-text-disabled flex items-center gap-1.5 cursor-not-allowed">
-                    <span>{card.actionText}</span>
-                  </div>
-                </div>
-              );
-            }
 
             return (
               <Link

@@ -6,6 +6,8 @@ import type {
   UserBlockForm,
   UserRoleUpdateForm,
   UserStatsResponse,
+  UserDetailStatisticsResponse,
+  UserStatisticsQueryParams,
 } from "../types";
 
 const ENDPOINT = "/admin/users";
@@ -20,6 +22,18 @@ export const adminUserApi = {
   /** 2. Xem chi tiết người dùng (GET /admin/users/{userId}) */
   getUserById: async (userId: string | number): Promise<UserDetailResponse> => {
     const response = await api.get<UserDetailResponse>(`${ENDPOINT}/${userId}`);
+    return response.data;
+  },
+
+  /** 3. Lấy thống kê chi tiết & lịch sử đơn hàng (GET /admin/users/{userId}/statistics) */
+  getUserStatistics: async (
+    userId: string | number,
+    params?: UserStatisticsQueryParams,
+  ): Promise<UserDetailStatisticsResponse> => {
+    const response = await api.get<UserDetailStatisticsResponse>(
+      `${ENDPOINT}/${userId}/statistics`,
+      { params },
+    );
     return response.data;
   },
 
