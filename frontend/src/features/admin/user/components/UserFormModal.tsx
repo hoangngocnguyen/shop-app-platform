@@ -17,6 +17,7 @@ export interface UserFormValues {
 type UserFormUser = Partial<UserDetailResponse> & {
   full_name?: string;
   name?: string;
+  address?: string;
 };
 
 interface UserFormModalProps {
