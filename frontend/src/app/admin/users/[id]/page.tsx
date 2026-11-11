@@ -1,16 +1,24 @@
 "use client";
 
-import React, { useEffect, useState, use } from "react";
+import React, { useCallback, useEffect, useRef, useState, use } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
+import { toast } from "@/common/stores/useToastStore";
 
 import { adminUserApi } from "@/features/admin/user/api";
-import { UserDetailStatisticsResponse } from "@/features/admin/user/types";
+import {
+  UserDetailStatisticsResponse,
+  UserDetailResponse,
+  UserRole,
+  UserStatus,
+} from "@/features/admin/user/types";
 import { parseErrorMessage } from "@/lib/axios/parseError";
 
 import { UserProfileCard } from "@/features/admin/user/components/UserProfileCard";
 import { UserStatCards } from "@/features/admin/user/components/UserStatCards";
 import { UserOrderHistoryTable } from "@/features/admin/user/components/UserOrderHistoryTable";
+import { UserRoleModal } from "@/features/admin/user/components/UserRoleModal";
+import { UserAddressListModal } from "@/features/admin/user/components/UserAddressListModal";
 
 export default function UserDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params);
@@ -21,11 +29,17 @@ export default function UserDetailPage({ params }: { params: Promise<{ id: strin
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Modal States
+  const [isEditingRole, setIsEditingRole] = useState(false);
+  const [isSubmittingRole, setIsSubmittingRole] = useState(false);
+  const [isViewingAddresses, setIsViewingAddresses] = useState(false);
+
   // Filter & Pagination States
   const [page, setPage] = useState(1);
   const [statusFilter, setStatusFilter] = useState("");
   const [searchInput, setSearchInput] = useState("");
   const [search, setSearch] = useState("");
+  const statisticsRequestId = useRef(0);
 
   // Debounce Search 400ms
   useEffect(() => {
@@ -36,7 +50,8 @@ export default function UserDetailPage({ params }: { params: Promise<{ id: strin
     return () => clearTimeout(timer);
   }, [searchInput]);
 
-  const fetchStatistics = async () => {
+  const fetchStatistics = useCallback(async () => {
+    const requestId = ++statisticsRequestId.current;
     setIsLoading(true);
     setError(null);
     try {
@@ -46,21 +61,56 @@ export default function UserDetailPage({ params }: { params: Promise<{ id: strin
         status: statusFilter || undefined,
         search: search || undefined,
       });
-      setData(res);
+      if (requestId === statisticsRequestId.current) setData(res);
     } catch (err) {
-      setError(parseErrorMessage(err, "Không thể tải thông tin chi tiết người dùng"));
+      if (requestId === statisticsRequestId.current) {
+        setError(parseErrorMessage(err, "Không thể tải thông tin chi tiết người dùng"));
+      }
     } finally {
-      setIsLoading(false);
+      if (requestId === statisticsRequestId.current) setIsLoading(false);
+    }
+  }, [page, search, statusFilter, userId]);
+
+  useEffect(() => {
+    let isActive = true;
+    void Promise.resolve().then(() => {
+      if (isActive) return fetchStatistics();
+    });
+    return () => {
+      isActive = false;
+      statisticsRequestId.current += 1;
+    };
+  }, [fetchStatistics]);
+
+  const handleRoleConfirm = async (role: UserRole) => {
+    setIsSubmittingRole(true);
+    try {
+      await adminUserApi.updateUserRole(userId, { role });
+      toast.success("Cập nhật vai trò người dùng thành công");
+      setIsEditingRole(false);
+      setData((prev) => (prev ? { ...prev, role } : prev));
+    } catch (err) {
+      toast.error(parseErrorMessage(err, "Không thể cập nhật vai trò người dùng"));
+    } finally {
+      setIsSubmittingRole(false);
     }
   };
 
-  useEffect(() => {
-    void fetchStatistics();
-  }, [userId, page, statusFilter, search]);
+  const userForModal: UserDetailResponse | null = data
+    ? ({
+        userId: data.user_id,
+        fullName: data.full_name,
+        email: data.email,
+        phone: data.phone,
+        role: data.role as UserRole,
+        status: data.status as UserStatus,
+        createdAt: data.created_at,
+      } as UserDetailResponse)
+    : null;
 
   return (
-    <div className="min-h-screen bg-surface-bg p-6 text-text-main antialiased">
-      <div className="max-w-[1240px] mx-auto space-y-6">
+    <div className="w-full text-text-main antialiased">
+      <div className="max-w-[1240px] mx-auto space-y-4 sm:space-y-5">
         <button
           onClick={() => router.push("/admin/users")}
           className="inline-flex items-center gap-2 text-sm font-medium text-text-sub hover:text-primary transition-colors cursor-pointer"
@@ -78,8 +128,13 @@ export default function UserDetailPage({ params }: { params: Promise<{ id: strin
         )}
 
         {/* Khối Thông tin cá nhân & Thống kê */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <UserProfileCard data={data} isLoading={isLoading} />
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+          <UserProfileCard
+            data={data}
+            isLoading={isLoading}
+            onEditRole={() => setIsEditingRole(true)}
+            onViewAllAddresses={() => setIsViewingAddresses(true)}
+          />
           <UserStatCards
             totalOrders={data?.total_orders ?? 0}
             totalSpent={data?.total_spent ?? 0}
@@ -101,6 +156,25 @@ export default function UserDetailPage({ params }: { params: Promise<{ id: strin
           page={page}
           onPageChange={setPage}
         />
+
+        {/* Modal Sửa Vai Trò */}
+        {isEditingRole && userForModal && (
+          <UserRoleModal
+            user={userForModal}
+            isSubmitting={isSubmittingRole}
+            onConfirm={handleRoleConfirm}
+            onClose={() => setIsEditingRole(false)}
+          />
+        )}
+
+        {/* Modal Xem Tất Cả Địa Chỉ Giao Hàng */}
+        {isViewingAddresses && data && (
+          <UserAddressListModal
+            addresses={data.shipping_addresses || []}
+            userName={data.full_name}
+            onClose={() => setIsViewingAddresses(false)}
+          />
+        )}
       </div>
     </div>
   );
