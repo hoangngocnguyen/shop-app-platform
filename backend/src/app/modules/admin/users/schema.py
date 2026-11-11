@@ -170,3 +170,38 @@ class UserStatsResponse(BaseModel):
     admins: int = Field(..., description="Số tài khoản quản trị viên")
     staff: int = Field(..., description="Số tài khoản nhân viên")
     blocked: int = Field(..., description="Số tài khoản bị khóa")
+
+
+# ==========================================
+# User Statistics & Orders DTOs
+# ==========================================
+class UserOrderItemDTO(BaseModel):
+    order_id: str
+    recipient_name: str
+    recipient_phone: Optional[str] = None
+    total_amount: float
+    status: str
+    created_at: datetime
+
+
+class UserOrdersPaginatedDTO(BaseModel):
+    items: List[UserOrderItemDTO]
+    total: int
+    page: int
+    page_size: int
+    total_pages: int
+
+
+class UserDetailStatisticsResponseDTO(BaseModel):
+    user_id: str
+    full_name: str
+    email: str
+    phone: Optional[str] = None
+    address: Optional[str] = None
+    shipping_addresses: List[ShippingAddressDTO] = Field(default_factory=list)
+    role: str
+    status: str
+    created_at: datetime
+    total_orders: int
+    total_spent: float
+    orders: UserOrdersPaginatedDTO

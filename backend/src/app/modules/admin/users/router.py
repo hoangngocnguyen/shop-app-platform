@@ -11,6 +11,7 @@ from src.app.modules.admin.users.schema import (
     SortDirection,
     UserBlockForm,
     UserDetailResponse,
+    UserDetailStatisticsResponseDTO,
     UserListResponse,
     UserRole,
     UserRoleUpdateForm,
@@ -83,6 +84,34 @@ def get_user_by_id(
 ):
     user = service.get_user_by_id(db=db, user_id=userId)
     return success_response(data=user, message="Lấy thông tin người dùng thành công")
+
+
+@router.get(
+    "/{userId}/statistics",
+    response_model=ApiResponse[UserDetailStatisticsResponseDTO],
+    status_code=status.HTTP_200_OK,
+    summary="Lấy chi tiết thống kê và lịch sử đơn hàng của người dùng",
+    description="Lấy thông tin chi tiết, thống kê tài chính và lịch sử đơn hàng của user.",
+    response_description="Thông tin chi tiết, thống kê tài chính và đơn hàng của user.",
+)
+def get_user_statistics(
+    userId: str,
+    page: int = Query(1, ge=1, description="Số trang (bắt đầu từ 1)"),
+    page_size: int = Query(10, ge=1, le=100, description="Số lượng bản ghi mỗi trang"),
+    status_filter: Optional[str] = Query(None, alias="status", description="Lọc theo trạng thái đơn hàng"),
+    search: Optional[str] = Query(None, description="Tìm kiếm theo OrderID, tên sản phẩm hoặc người nhận"),
+    db: Session = Depends(get_db),
+):
+    stats = service.get_user_statistics(
+        db=db,
+        user_id=userId,
+        page=page,
+        page_size=page_size,
+        status=status_filter,
+        search=search,
+    )
+    return success_response(data=stats, message="Lấy dữ liệu thống kê người dùng thành công")
+
 
 
 @router.patch(

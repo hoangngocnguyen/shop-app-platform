@@ -11,13 +11,17 @@ from src.app.modules.admin.users.schema import (
     SortDirection,
     UserBlockForm,
     UserDetailResponse,
+    UserDetailStatisticsResponseDTO,
     UserListResponse,
+    UserOrderItemDTO,
+    UserOrdersPaginatedDTO,
     UserRole,
     UserRoleUpdateForm,
     UserStatsResponse,
     UserStatus,
 )
-from src.app.modules.orders.model import Order
+from src.app.modules.orders.model import Order, OrderDetail
+from src.app.modules.products.model import Product
 from src.app.modules.roles.model import Role
 from src.app.modules.shipping_addresses.model import ShippingAddress
 from src.app.modules.users.model import User
@@ -45,22 +49,13 @@ def _map_user_to_response(user: User) -> UserDetailResponse:
         phone=user.phone,
         shippingAddresses=[
             ShippingAddressDTO(
-                id=address.id,
-                recipient_name=address.recipient_name,
-                province_code=address.province_code,
-                ward_code=address.ward_code,
-                address_line=address.address_line,
-                is_default=address.is_default,
-                province_name=address.province_name,
-                ward_name=address.ward_name,
-                recipientName=address.recipient_name,
-                phone=address.phone,
-                province=address.province_name,
-                ward=address.ward_name,
-                detailAddress=address.address_line,
-                isDefault=address.is_default,
+                id=a.id, recipient_name=a.recipient_name, province_code=a.province_code,
+                ward_code=a.ward_code, address_line=a.address_line, is_default=a.is_default,
+                province_name=a.province_name, ward_name=a.ward_name, recipientName=a.recipient_name,
+                phone=a.phone, province=a.province_name, ward=a.ward_name, detailAddress=a.address_line,
+                isDefault=a.is_default,
             )
-            for address in user.shipping_addresses
+            for a in user.shipping_addresses
         ],
         role=response_role,
         status=UserStatus.BLOCKED if getattr(user, "is_blocked", False) else UserStatus.ACTIVE,
@@ -123,33 +118,18 @@ def get_user_stats(db: Session) -> UserStatsResponse:
     total, customers, admins, staff, blocked = (
         db.query(
             func.count(User.user_id),
-            func.coalesce(
-                func.sum(case((func.upper(Role.code).in_(("USER", "CUSTOMER")), 1), else_=0)),
-                0,
-            ),
-            func.coalesce(
-                func.sum(case((func.upper(Role.code) == "ADMIN", 1), else_=0)),
-                0,
-            ),
-            func.coalesce(
-                func.sum(case((func.upper(Role.code) == "STAFF", 1), else_=0)),
-                0,
-            ),
+            func.coalesce(func.sum(case((func.upper(Role.code).in_(("USER", "CUSTOMER")), 1), else_=0)), 0),
+            func.coalesce(func.sum(case((func.upper(Role.code) == "ADMIN", 1), else_=0)), 0),
+            func.coalesce(func.sum(case((func.upper(Role.code) == "STAFF", 1), else_=0)), 0),
             func.coalesce(func.sum(case((User.is_blocked.is_(True), 1), else_=0)), 0),
         )
         .join(Role, User.role_id == Role.id)
         .one()
     )
-    return UserStatsResponse(
-        total=total,
-        customers=customers,
-        admins=admins,
-        staff=staff,
-        blocked=blocked,
-    )
+    return UserStatsResponse(total=total, customers=customers, admins=admins, staff=staff, blocked=blocked)
 
 
-def get_user_by_id(db: Session, user_id: str) -> UserDetailResponse:
+def _get_user_or_404(db: Session, user_id: str) -> User:
     user = (
         db.query(User)
         .options(
@@ -162,23 +142,16 @@ def get_user_by_id(db: Session, user_id: str) -> UserDetailResponse:
     )
     if not user:
         raise HTTPException(status_code=404, detail=f"Không tìm thấy người dùng với ID: {user_id}")
+    return user
+
+
+def get_user_by_id(db: Session, user_id: str) -> UserDetailResponse:
+    user = _get_user_or_404(db, user_id)
     return _map_user_to_response(user)
 
 
 def block_user(db: Session, user_id: str, form: UserBlockForm) -> UserDetailResponse:
-    user = (
-        db.query(User)
-        .options(
-            joinedload(User.role),
-            selectinload(User.shipping_addresses).joinedload(ShippingAddress.province),
-            selectinload(User.shipping_addresses).joinedload(ShippingAddress.ward),
-        )
-        .filter(User.user_id == _parse_user_id(user_id))
-        .first()
-    )
-    if not user:
-        raise HTTPException(status_code=404, detail=f"Không tìm thấy người dùng với ID: {user_id}")
-
+    user = _get_user_or_404(db, user_id)
     user.is_blocked = form.isBlocked
     user.block_reason = form.reason.strip() if form.isBlocked and form.reason else None
     try:
@@ -195,19 +168,7 @@ def update_user_role(
     user_id: str,
     form: UserRoleUpdateForm,
 ) -> UserDetailResponse:
-    user = (
-        db.query(User)
-        .options(
-            joinedload(User.role),
-            selectinload(User.shipping_addresses).joinedload(ShippingAddress.province),
-            selectinload(User.shipping_addresses).joinedload(ShippingAddress.ward),
-        )
-        .filter(User.user_id == _parse_user_id(user_id))
-        .first()
-    )
-    if not user:
-        raise HTTPException(status_code=404, detail=f"Không tìm thấy người dùng với ID: {user_id}")
-
+    user = _get_user_or_404(db, user_id)
     role_code = _get_role_code(form.role)
     role = db.query(Role).filter(Role.code == role_code).first()
     if not role:
@@ -221,6 +182,97 @@ def update_user_role(
     except SQLAlchemyError as error:
         db.rollback()
         raise HTTPException(status_code=500, detail="Không thể cập nhật vai trò người dùng") from error
+
+
+def get_user_statistics(
+    db: Session,
+    user_id: str,
+    page: int = 1,
+    page_size: int = 10,
+    status: str | None = None,
+    search: str | None = None,
+) -> UserDetailStatisticsResponseDTO:
+    uid = _parse_user_id(user_id)
+    user = _get_user_or_404(db, user_id)
+
+    total_orders = db.query(func.count(Order.order_id)).filter(Order.user_id == uid).scalar() or 0
+    total_spent = (
+        db.query(func.coalesce(func.sum(Order.total), 0))
+        .filter(Order.user_id == uid, Order.status != "CANCELLED")
+        .scalar()
+        or 0
+    )
+
+    query = db.query(Order).filter(Order.user_id == uid)
+    if status and status.strip():
+        query = query.filter(Order.status == status.strip().upper())
+    if search and search.strip():
+        term = f"%{search.strip()}%"
+        query = query.filter(
+            or_(
+                Order.order_id.ilike(term),
+                Order.shipping_recipient_name.ilike(term),
+                Order.order_details.any(OrderDetail.product.has(Product.product_name.ilike(term))),
+            )
+        )
+
+    orders_count = query.count()
+    offset = max(0, (page - 1) * page_size)
+    orders = query.order_by(desc(Order.order_date)).offset(offset).limit(page_size).all()
+
+    default_addr = next((a for a in user.shipping_addresses if a.is_default), None)
+    if not default_addr and user.shipping_addresses:
+        default_addr = user.shipping_addresses[0]
+    address_str = (
+        ", ".join(p for p in [default_addr.address_line, default_addr.ward_name, default_addr.province_name] if p)
+        if default_addr
+        else None
+    )
+
+    role_code = user.role.code.upper() if (user.role and user.role.code) else "CUSTOMER"
+
+    shipping_dtos = [
+        ShippingAddressDTO(
+            id=a.id, recipient_name=a.recipient_name, province_code=a.province_code,
+            ward_code=a.ward_code, address_line=a.address_line, is_default=a.is_default,
+            province_name=a.province_name, ward_name=a.ward_name, recipientName=a.recipient_name,
+            phone=a.phone, province=a.province_name, ward=a.ward_name, detailAddress=a.address_line,
+            isDefault=a.is_default,
+        )
+        for a in user.shipping_addresses
+    ]
+
+    return UserDetailStatisticsResponseDTO(
+        user_id=str(user.user_id),
+        full_name=user.name or "",
+        email=user.email or "",
+        phone=user.phone,
+        address=address_str,
+        shipping_addresses=shipping_dtos,
+        role="CUSTOMER" if role_code in ("USER", "CUSTOMER") else role_code,
+        status="BLOCKED" if getattr(user, "is_blocked", False) else "ACTIVE",
+        created_at=user.created_at,
+        total_orders=total_orders,
+        total_spent=float(total_spent),
+        orders=UserOrdersPaginatedDTO(
+            items=[
+                UserOrderItemDTO(
+                    order_id=o.order_id,
+                    recipient_name=o.shipping_recipient_name,
+                    recipient_phone=o.shipping_phone,
+                    total_amount=float(o.total),
+                    status=o.status,
+                    created_at=o.order_date,
+                )
+                for o in orders
+            ],
+            total=orders_count,
+            page=page,
+            page_size=page_size,
+            total_pages=math.ceil(orders_count / page_size) if orders_count > 0 else 0,
+        ),
+    )
+
 
 
 def delete_user(db: Session, user_id: str) -> None:
