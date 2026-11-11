@@ -1,15 +1,22 @@
 "use client";
 
 import React from "react";
-import { User, Mail, Phone, MapPin, Shield } from "lucide-react";
-import { UserDetailStatisticsResponse } from "../types";
+import { User, Mail, Phone, MapPin, Shield, Pencil, Eye } from "lucide-react";
+import { getUserRoleLabel, UserDetailStatisticsResponse } from "../types";
 
 interface UserProfileCardProps {
   data: UserDetailStatisticsResponse | null;
   isLoading: boolean;
+  onEditRole?: () => void;
+  onViewAllAddresses?: () => void;
 }
 
-export function UserProfileCard({ data, isLoading }: UserProfileCardProps) {
+export function UserProfileCard({
+  data,
+  isLoading,
+  onEditRole,
+  onViewAllAddresses,
+}: UserProfileCardProps) {
   if (isLoading && !data) {
     return (
       <div className="lg:col-span-2 rounded-2xl border border-surface-border bg-surface-card p-6 shadow-brand-sm">
@@ -18,11 +25,27 @@ export function UserProfileCard({ data, isLoading }: UserProfileCardProps) {
     );
   }
 
+  const addressCount = data?.shipping_addresses?.length ?? 0;
+
   return (
     <div className="lg:col-span-2 rounded-2xl border border-surface-border bg-surface-card p-6 shadow-brand-sm">
-      <h2 className="text-lg font-bold text-text-main mb-4 flex items-center gap-2">
-        <User className="size-5 text-primary" /> Thông tin cá nhân
-      </h2>
+      <div className="flex items-center justify-between gap-3 mb-4">
+        <h2 className="text-lg font-bold text-text-main flex items-center gap-2">
+          <User className="size-5 text-primary" /> Thông tin cá nhân
+        </h2>
+        {onEditRole && (
+          <button
+            type="button"
+            onClick={onEditRole}
+            disabled={!data}
+            className="inline-flex cursor-pointer items-center gap-1.5 rounded-xl border border-primary/20 bg-primary-light/70 px-3 py-1.5 text-xs font-semibold text-primary transition-all duration-200 hover:-translate-y-0.5 hover:bg-primary hover:text-primary-contrast hover:shadow-brand-sm disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            <Pencil className="size-3.5" />
+            <span>Sửa</span>
+          </button>
+        )}
+      </div>
+
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
         <div className="flex items-center gap-3 p-3 rounded-xl bg-surface-bg border border-surface-border/50">
           <User className="size-4 text-text-muted shrink-0" />
@@ -54,7 +77,7 @@ export function UserProfileCard({ data, isLoading }: UserProfileCardProps) {
             <p className="text-xs text-text-muted">Vai trò / Trạng thái</p>
             <div className="flex items-center gap-2 mt-0.5">
               <span className="font-semibold text-xs px-2 py-0.5 rounded bg-primary/10 text-primary">
-                {data?.role}
+                {data ? getUserRoleLabel(data.role) : ""}
               </span>
               <span
                 className={`text-xs px-2 py-0.5 rounded font-medium ${
@@ -69,12 +92,26 @@ export function UserProfileCard({ data, isLoading }: UserProfileCardProps) {
           </div>
         </div>
 
-        <div className="md:col-span-2 flex items-center gap-3 p-3 rounded-xl bg-surface-bg border border-surface-border/50">
-          <MapPin className="size-4 text-text-muted shrink-0" />
-          <div>
-            <p className="text-xs text-text-muted">Địa chỉ mặc định</p>
-            <p className="font-semibold">{data?.address || "Chưa có địa chỉ giao hàng"}</p>
+        <div className="md:col-span-2 flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 rounded-xl bg-surface-bg border border-surface-border/50">
+          <div className="flex items-center gap-3 min-w-0">
+            <MapPin className="size-4 text-text-muted shrink-0" />
+            <div className="min-w-0">
+              <p className="text-xs text-text-muted">Địa chỉ mặc định</p>
+              <p className="font-semibold truncate">{data?.address || "Chưa có địa chỉ giao hàng"}</p>
+            </div>
           </div>
+
+          {onViewAllAddresses && (
+            <button
+              type="button"
+              onClick={onViewAllAddresses}
+              disabled={addressCount === 0}
+              className="inline-flex cursor-pointer items-center gap-1.5 text-xs font-semibold text-primary hover:text-primary-hover hover:underline shrink-0 self-end sm:self-auto disabled:cursor-not-allowed disabled:opacity-40 disabled:no-underline"
+            >
+              <Eye className="size-3.5" />
+              <span>Xem tất cả {addressCount > 0 ? `(${addressCount})` : ""}</span>
+            </button>
+          )}
         </div>
       </div>
     </div>
