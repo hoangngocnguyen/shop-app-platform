@@ -89,8 +89,8 @@ export function MonthlyRanking({
                     topCustomers.map((item, index) => (
                         <Link
                             key={item.user_id}
-                            href={ROUTES.USER.PROFILE}
-                            title={`Xem hồ sơ ${item.name || item.username || item.email || "khách hàng"}`}
+                            href={ROUTES.ADMIN.USERS}
+                            title={`Quản lý người dùng: ${item.name || item.username || item.email || "khách hàng"}`}
                             className="flex items-center gap-2 py-1.5 border-b border-surface-border/60 last:border-0 rounded-md hover:bg-surface-hover transition-colors"
                         >
                             <span className="w-5 h-5 rounded-full bg-accent-light text-text-main text-[10px] font-black flex items-center justify-center">
