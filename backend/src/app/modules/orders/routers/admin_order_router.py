@@ -1,13 +1,16 @@
+from datetime import datetime
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, Path, Query, status
-from sqlalchemy.orm import Session
+from fastapi import APIRouter, BackgroundTasks, Depends, Path, Query, status
+from sqlalchemy.orm import Session, joinedload
 
 from src.app.core.database import get_db
 from src.app.core.deps import get_current_user_id, require_any_role
 from src.app.core.exceptions import AppException
 from src.app.core.pagination import PaginatedResponse
 from src.app.core.response import ApiResponse, success_response
+from src.app.modules.emails.dependencies import get_email_sender
+from src.app.modules.emails.protocol import IEmailSender
 from src.app.modules.orders.catalogs import build_cancellation_reason_catalog
 from src.app.modules.orders.enums.order_enums import (
     AdminCancelReason,
@@ -15,6 +18,7 @@ from src.app.modules.orders.enums.order_enums import (
     PaymentMethod,
     PaymentStatus,
 )
+from src.app.modules.orders.model import Order
 from src.app.modules.orders.repositories.repository import OrderRepository
 from src.app.modules.orders.schemas.order_requests import (
     AdminCancelOrderRequest,
@@ -285,8 +289,11 @@ def confirm_order_single(
 )
 def start_shipping_order_single(
     order_id: str = Path(..., description="ID của đơn hàng cần chuyển giao"),
+    background_tasks: BackgroundTasks = BackgroundTasks(),
     current_admin_id: UUID = Depends(get_current_user_id),
+    db: Session = Depends(get_db),
     service: AdminOrderService = Depends(get_admin_order_service),
+    email_sender: IEmailSender = Depends(get_email_sender),
 ) -> ApiResponse[OrderActionResponse]:
     """Endpoint chuyển vận chuyển đơn lẻ."""
     bulk_res = service.start_shipping_orders(
@@ -296,6 +303,18 @@ def start_shipping_order_single(
     if not bulk_res.results or not bulk_res.results[0].success:
         err_msg = bulk_res.results[0].message if bulk_res.results else "Không thể chuyển giao hàng"
         raise AppException(status_code=409, message=err_msg, error_code="INVALID_ORDER_STATE")
+
+    order = db.query(Order).options(joinedload(Order.user)).filter(Order.order_id == order_id).first()
+    if order and order.user and order.user.email:
+        email_sender.send_order_shipping(
+            to_email=str(order.user.email),
+            customer_name=order.user.name or "Quý khách",
+            order_code=order_id,
+            tracking_code=None,
+            shipping_address=order.shipping_address or "",
+            total_amount=f"{order.total:,.0f}",
+            background_tasks=background_tasks,
+        )
 
     return success_response(
         data=OrderActionResponse(
@@ -316,8 +335,11 @@ def start_shipping_order_single(
 )
 def complete_delivery_order_single(
     order_id: str = Path(..., description="ID của đơn hàng cần xác nhận đã giao"),
+    background_tasks: BackgroundTasks = BackgroundTasks(),
     current_admin_id: UUID = Depends(get_current_user_id),
+    db: Session = Depends(get_db),
     service: AdminOrderService = Depends(get_admin_order_service),
+    email_sender: IEmailSender = Depends(get_email_sender),
 ) -> ApiResponse[OrderActionResponse]:
     """Endpoint xác nhận giao thành công đơn lẻ."""
     bulk_res = service.complete_delivery_orders(
@@ -327,6 +349,18 @@ def complete_delivery_order_single(
     if not bulk_res.results or not bulk_res.results[0].success:
         err_msg = bulk_res.results[0].message if bulk_res.results else "Không thể xác nhận giao hàng"
         raise AppException(status_code=409, message=err_msg, error_code="INVALID_ORDER_STATE")
+
+    order = db.query(Order).options(joinedload(Order.user)).filter(Order.order_id == order_id).first()
+    if order and order.user and order.user.email:
+        delivered_str = datetime.now().strftime("%d/%m/%Y %H:%M")
+        email_sender.send_order_delivered(
+            to_email=str(order.user.email),
+            customer_name=order.user.name or "Quý khách",
+            order_code=order_id,
+            delivered_at=delivered_str,
+            total_amount=f"{order.total:,.0f}",
+            background_tasks=background_tasks,
+        )
 
     return success_response(
         data=OrderActionResponse(
@@ -355,8 +389,11 @@ def complete_delivery_order_single(
 def cancel_order_by_admin(
     payload: AdminCancelOrderRequest,
     order_id: str = Path(..., description="ID của đơn hàng cần hủy"),
+    background_tasks: BackgroundTasks = BackgroundTasks(),
     current_admin_id: UUID = Depends(get_current_user_id),
+    db: Session = Depends(get_db),
     service: AdminOrderService = Depends(get_admin_order_service),
+    email_sender: IEmailSender = Depends(get_email_sender),
 ) -> ApiResponse[OrderActionResponse]:
     """Endpoint quản trị viên hủy đơn hàng."""
     result = service.admin_cancel_order(
@@ -364,6 +401,18 @@ def cancel_order_by_admin(
         order_id=order_id,
         request=payload,
     )
+
+    order = db.query(Order).options(joinedload(Order.user)).filter(Order.order_id == order_id).first()
+    if order and order.user and order.user.email:
+        reason_desc = payload.custom_reason or payload.reason_code.value
+        email_sender.send_order_cancelled(
+            to_email=str(order.user.email),
+            customer_name=order.user.name or "Quý khách",
+            order_code=order_id,
+            cancel_reason=reason_desc,
+            background_tasks=background_tasks,
+        )
+
     return success_response(
         data=result,
         message="Admin hủy đơn hàng thành công",

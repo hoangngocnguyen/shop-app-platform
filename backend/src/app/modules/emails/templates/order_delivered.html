@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="greeting">Xin chào {{ customer_name | default("Quý khách") }},</div>
+
+<p>Đơn hàng <strong style="color: #16a34a;">#{{ order_code }}</strong> của bạn đã được giao thành công vào lúc <strong>{{ delivered_at }}</strong>.</p>
+
+<div class="card-box" style="border-left: 4px solid #16a34a;">
+  <div class="info-row">
+    <span class="info-label">Mã đơn hàng:</span>
+    <span class="info-value">#{{ order_code }}</span>
+  </div>
+  <div class="info-row">
+    <span class="info-label">Trạng thái:</span>
+    <span class="badge badge-success">Giao hàng thành công</span>
+  </div>
+  <div class="info-row">
+    <span class="info-label">Tổng hóa đơn:</span>
+    <span class="info-value">{{ total_amount }} đ</span>
+  </div>
+</div>
+
+<p style="font-size: 14px; color: #475569;">
+  Hy vọng bạn hài lòng với sản phẩm đã nhận! Nếu sản phẩm có bất kỳ lỗi nào từ nhà sản xuất, bạn hoàn toàn có thể yêu cầu đổi trả hoặc hoàn tiền trong vòng <strong>7 ngày</strong> kể từ khi nhận hàng.
+</p>
+
+<p style="font-size: 14px; color: #475569;">Cảm ơn bạn đã luôn tin tưởng và đồng hành cùng <strong>Shop App Platform</strong>.</p>
+{% endblock %}

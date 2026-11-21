@@ -11,13 +11,16 @@ Cung cấp các Endpoint bọc ApiResponse chuẩn hóa toàn dự án:
 
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, Path, Query, status
+from fastapi import APIRouter, BackgroundTasks, Depends, Path, Query, status
 from sqlalchemy.orm import Session
 
+from src.app.core.config import settings
 from src.app.core.database import get_db
 from src.app.core.deps import get_current_user_id
 from src.app.core.pagination import PaginatedResponse
 from src.app.core.response import ApiResponse, success_response
+from src.app.modules.emails.dependencies import get_email_sender
+from src.app.modules.emails.protocol import IEmailSender
 from src.app.modules.orders.catalogs import build_cancellation_reason_catalog
 from src.app.modules.orders.enums.order_enums import CustomerCancelReason, OrderStatus
 from src.app.modules.orders.repositories.repository import OrderRepository
@@ -36,6 +39,7 @@ from src.app.modules.orders.schemas.order_responses import (
 )
 from src.app.modules.orders.services.checkout_service import CheckoutService
 from src.app.modules.orders.services.order_service import OrderService
+from src.app.modules.users.model import User
 
 router = APIRouter(prefix="/orders", tags=["Order Management"])
 
@@ -85,14 +89,45 @@ def get_customer_cancellation_reasons() -> (
 )
 def create_order(
     payload: CreateOrderRequest,
+    background_tasks: BackgroundTasks,
     current_user_id: UUID = Depends(get_current_user_id),
+    db: Session = Depends(get_db),
     service: OrderService = Depends(get_order_service),
+    email_sender: IEmailSender = Depends(get_email_sender),
 ) -> ApiResponse[OrderCreateResponse]:
     """Endpoint tạo đơn hàng mới."""
     result = service.create_order(
         user_id=current_user_id,
         request=payload,
     )
+
+    # Gửi email xác nhận đặt hàng thành công tới khách hàng
+    user = db.query(User).filter(User.user_id == current_user_id).first()
+    if user and user.email:
+        items = [
+            {
+                "product_name": item.product_name,
+                "quantity": item.quantity,
+                "unit_price": float(item.price_at_order),
+                "subtotal": float(item.subtotal),
+            }
+            for item in payload.items
+        ]
+        payment_url = None
+        if result.payment_method == "VNPAY":
+            payment_url = f"{settings.FRONTEND_URL}/payment?orderId={result.order_id}"
+
+        email_sender.send_order_placed(
+            to_email=str(user.email),
+            customer_name=user.name or "Quý khách",
+            order_code=result.order_id,
+            items=items,
+            total_amount=f"{result.total:,.0f}",
+            payment_method=result.payment_method,
+            payment_url=payment_url,
+            background_tasks=background_tasks,
+        )
+
     return success_response(
         data=result,
         message="Tạo đơn hàng thành công",
@@ -232,8 +267,11 @@ def complete_order(
 def cancel_order(
     payload: CancelOrderRequest,
     order_id: str = Path(..., description="ID của đơn hàng cần hủy"),
+    background_tasks: BackgroundTasks = BackgroundTasks(),
     current_user_id: UUID = Depends(get_current_user_id),
+    db: Session = Depends(get_db),
     service: OrderService = Depends(get_order_service),
+    email_sender: IEmailSender = Depends(get_email_sender),
 ) -> ApiResponse[OrderActionResponse]:
     """Endpoint khách hàng hủy đơn hàng."""
     result = service.cancel_order(
@@ -241,6 +279,18 @@ def cancel_order(
         order_id=order_id,
         request=payload,
     )
+
+    user = db.query(User).filter(User.user_id == current_user_id).first()
+    if user and user.email:
+        reason_desc = payload.custom_reason or payload.reason_code.value
+        email_sender.send_order_cancelled(
+            to_email=str(user.email),
+            customer_name=user.name or "Quý khách",
+            order_code=order_id,
+            cancel_reason=reason_desc,
+            background_tasks=background_tasks,
+        )
+
     return success_response(
         data=result,
         message="Hủy đơn hàng thành công",

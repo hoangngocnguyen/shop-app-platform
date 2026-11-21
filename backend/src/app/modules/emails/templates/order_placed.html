@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="greeting">Xin chào {{ customer_name | default("Quý khách") }},</div>
+
+<p>Cảm ơn bạn đã đặt hàng tại <strong>Shop App Platform</strong>! Đơn hàng của bạn đã được tiếp nhận thành công và đang được chuẩn bị để đóng gói.</p>
+
+<div class="card-box">
+  <div class="info-row">
+    <span class="info-label">Mã đơn hàng:</span>
+    <span class="info-value">#{{ order_code }}</span>
+  </div>
+  <div class="info-row">
+    <span class="info-label">Phương thức thanh toán:</span>
+    <span class="info-value">{{ payment_method }}</span>
+  </div>
+  <div class="info-row">
+    <span class="info-label">Tổng thanh toán:</span>
+    <span class="info-value" style="color: #2563eb; font-size: 16px;">{{ total_amount }} đ</span>
+  </div>
+</div>
+
+{% if payment_url %}
+<div style="text-align: center; margin: 24px 0; background-color: #eff6ff; border: 1px dashed #3b82f6; border-radius: 8px; padding: 18px;">
+  <p style="margin: 0 0 12px 0; font-weight: 600; color: #1e40af;">Đơn hàng đang chờ thanh toán trực tuyến</p>
+  <p style="margin: 0 0 16px 0; font-size: 13px; color: #3b82f6;">Vui lòng bấm nút bên dưới để chuyển tiếp tới cổng thanh toán VNPAY:</p>
+  <a href="{{ payment_url }}" class="btn" style="background-color: #0284c7;" target="_blank">Thanh toán VNPAY ngay</a>
+</div>
+{% endif %}
+
+<h3 style="font-size: 16px; margin: 24px 0 12px 0; color: #0f172a;">Chi tiết sản phẩm</h3>
+<table class="table-items">
+  <thead>
+    <tr>
+      <th>Sản phẩm</th>
+      <th style="text-align: center;">SL</th>
+      <th style="text-align: right;">Đơn giá</th>
+      <th style="text-align: right;">Thành tiền</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for item in items %}
+    <tr>
+      <td>
+        <strong>{{ item.product_name }}</strong>
+        {% if item.variant_info %}
+        <div style="font-size: 12px; color: #64748b;">{{ item.variant_info }}</div>
+        {% endif %}
+      </td>
+      <td style="text-align: center;">{{ item.quantity }}</td>
+      <td style="text-align: right;">{{ "{:,.0f}".format(item.unit_price) if item.unit_price is number else item.unit_price }} đ</td>
+      <td style="text-align: right; font-weight: 600;">{{ "{:,.0f}".format(item.subtotal) if item.subtotal is number else item.subtotal }} đ</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+<p style="font-size: 14px; color: #475569;">Chúng tôi sẽ thông báo cho bạn ngay khi kiện hàng được bàn giao cho đối tác vận chuyển.</p>
+{% endblock %}

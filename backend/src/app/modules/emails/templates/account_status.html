@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="greeting">Xin chào {{ customer_name | default("Quý khách") }},</div>
+
+{% if is_locked %}
+<p>Chúng tôi gửi thông báo này để cho bạn biết tài khoản người dùng tại <strong>Shop App Platform</strong> của bạn hiện đã bị <strong style="color: #dc2626;">TẠM KHÓA</strong>.</p>
+
+<div class="card-box" style="border-left: 4px solid #dc2626; background-color: #fef2f2;">
+  <div class="info-row">
+    <span class="info-label">Trạng thái tài khoản:</span>
+    <span class="badge badge-danger">Bị khóa</span>
+  </div>
+  {% if reason %}
+  <div class="info-row">
+    <span class="info-label">Lý do:</span>
+    <span class="info-value" style="color: #b91c1c;">{{ reason }}</span>
+  </div>
+  {% endif %}
+</div>
+
+<p style="font-size: 14px; color: #475569;">
+  Trong thời gian này, bạn sẽ tạm thời không thể đăng nhập hoặc thực hiện các giao dịch trên hệ thống. Nếu bạn cho rằng đây là sự nhầm lẫn, vui lòng liên hệ quản trị viên để được hỗ trợ mở khóa.
+</p>
+
+{% else %}
+<p>Tài khoản người dùng của bạn tại <strong>Shop App Platform</strong> đã được <strong style="color: #16a34a;">KÍCH HOẠT LẠI</strong> thành công.</p>
+
+<div class="card-box" style="border-left: 4px solid #16a34a; background-color: #f0fdf4;">
+  <div class="info-row">
+    <span class="info-label">Trạng thái tài khoản:</span>
+    <span class="badge badge-success">Đang hoạt động</span>
+  </div>
+</div>
+
+<p style="font-size: 14px; color: #475569;">
+  Hiện tại bạn đã có thể đăng nhập bình thường và tiếp tục trải nghiệm mua sắm trên hệ thống của chúng tôi.
+</p>
+{% endif %}
+{% endblock %}

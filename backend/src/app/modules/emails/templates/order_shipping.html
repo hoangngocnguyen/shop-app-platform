@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="greeting">Xin chào {{ customer_name | default("Quý khách") }},</div>
+
+<p>Kiện hàng của đơn hàng <strong style="color: #2563eb;">#{{ order_code }}</strong> đã được xuất kho và đang trên đường giao tới bạn.</p>
+
+<div class="card-box">
+  <div class="info-row">
+    <span class="info-label">Trạng thái:</span>
+    <span class="badge badge-info">Đang vận chuyển</span>
+  </div>
+  {% if tracking_code %}
+  <div class="info-row">
+    <span class="info-label">Mã vận đơn:</span>
+    <span class="info-value" style="font-family: monospace; font-size: 15px;">{{ tracking_code }}</span>
+  </div>
+  {% endif %}
+  <div class="info-row">
+    <span class="info-label">Địa chỉ nhận hàng:</span>
+    <span class="info-value" style="max-width: 340px; text-align: right;">{{ shipping_address }}</span>
+  </div>
+  <div class="info-row">
+    <span class="info-label">Tổng tiền thu (COD/Đã TT):</span>
+    <span class="info-value">{{ total_amount }} đ</span>
+  </div>
+</div>
+
+<p style="font-size: 14px; color: #475569;">
+  Vui lòng chú ý điện thoại để bưu tá liên hệ giao hàng thuận tiện. Bạn có thể kiểm tra ngoại quan kiện hàng trước khi ký nhận.
+</p>
+{% endblock %}
