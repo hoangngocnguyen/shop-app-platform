@@ -15,3 +15,18 @@ export async function getCurrentUser() {
 
   return response.data;
 }
+
+export async function forgotPassword(email: string) {
+  const response = await api.post("/auth/forgot-password", { email });
+
+  return response.data;
+}
+
+export async function resetPassword(token: string, newPassword: string) {
+  const response = await api.post("/auth/reset-password", {
+    token,
+    new_password: newPassword,
+  });
+
+  return response.data;
+}

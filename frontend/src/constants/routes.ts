@@ -4,6 +4,8 @@ export const ROUTES = {
     LOGIN: '/login',
     REGISTER: '/register',
     CALLBACK: '/auth-callback',
+    FORGOT_PASSWORD: '/forgot-password',
+    RESET_PASSWORD: '/reset-password',
   },
   USER: {
     PROFILE: '/user/profile',
