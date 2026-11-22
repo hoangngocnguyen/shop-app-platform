@@ -114,7 +114,7 @@ def format_products_context(products: list[Product]) -> str:
     lines: list[str] = []
     for p in products:
         category_name = p.category.category_name if p.category else "Khác"
-        stock_status = f"Còn {p.quantity} sản phẩm" if p.quantity > 0 else "Tạm hết hàng"
+        stock_status = "Còn hàng" if p.quantity > 0 else "Hết hàng"
         price_str = _format_vnd(p.price)
         sale_str = f" | Giá khuyến mãi: {_format_vnd(p.sale_price)}" if p.sale_price is not None else ""
         brand_str = f" | Thương hiệu: {p.brand}" if p.brand else ""
