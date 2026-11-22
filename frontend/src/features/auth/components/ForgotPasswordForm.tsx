@@ -198,7 +198,7 @@ export function ForgotPasswordForm() {
           Bạn nhớ lại mật khẩu rồi?{' '}
           <Link
             href={ROUTES.AUTH.LOGIN}
-            className="font-semibold text-primary transition-all duration-200 hover:text-primary-hover hover:underline"
+            className="font-semibold transition-all duration-200 hover:text-primary-hover hover:underline"
           >
             Đăng nhập ngay
           </Link>

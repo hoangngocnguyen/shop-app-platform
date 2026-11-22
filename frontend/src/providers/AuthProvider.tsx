@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import type { AuthChangeEvent, Session } from "@supabase/supabase-js";
 import { useAuthStore } from "@/features/auth/stores/useAuthStore";
+import { syncUser } from "@/features/auth/api/auth";
 import { createClient } from "@/lib/supabase/client";
 
 export default function AuthProvider({
@@ -22,7 +23,12 @@ export default function AuthProvider({
       try {
         const { data: { session } } = await supabase.auth.getSession();
         if (session) {
-          // Nếu có session sẵn, gọi fetchUser để lấy thông tin app user đưa vào store
+          // Cập nhật provider cho cả application user đã tồn tại.
+          try {
+            await syncUser(session.access_token);
+          } catch (error) {
+            console.error("Failed to sync auth provider:", error);
+          }
           await fetchUser();
         } else {
           setUser(null);

@@ -1,6 +1,6 @@
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, EmailStr, Field
+from pydantic import BaseModel, ConfigDict, EmailStr, Field, model_validator
 
 from src.app.modules.roles.schema import RoleResponse
 
@@ -20,6 +20,8 @@ class MeResponse(BaseModel):
     name: str | None = None
     username: str | None = None
     avatar_url: str | None = None
+    provider: str | None = None
+    providers: list[str] = Field(default_factory=list)
     role: RoleResponse
 
     model_config = ConfigDict(from_attributes=True)
@@ -71,4 +73,24 @@ class ResetPasswordResponse(BaseModel):
     message: str = Field(
         default="Đặt lại mật khẩu thành công. Vui lòng đăng nhập với mật khẩu mới.",
         description="Thông báo thành công",
+    )
+
+
+class ChangePasswordRequest(BaseModel):
+    """Đổi mật khẩu cho user đang đăng nhập bằng email/password."""
+
+    current_password: str = Field(..., min_length=1, max_length=128)
+    new_password: str = Field(..., min_length=6, max_length=64)
+
+    @model_validator(mode="after")
+    def validate_password_changed(self) -> "ChangePasswordRequest":
+        if self.current_password == self.new_password:
+            raise ValueError("Mật khẩu mới phải khác mật khẩu hiện tại.")
+        return self
+
+
+class ChangePasswordResponse(BaseModel):
+    message: str = Field(
+        default="Đổi mật khẩu thành công. Email thông báo đã được gửi.",
+        description="Kết quả đổi mật khẩu",
     )

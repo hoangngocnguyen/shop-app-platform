@@ -6,6 +6,11 @@ import {
 } from "../types";
 
 export const userApi = {
+    /** Đổi mật khẩu cho tài khoản Supabase email đang đăng nhập. */
+    changePassword: async (data: { current_password: string; new_password: string }): Promise<void> => {
+        await api.post("/auth/change-password", data);
+    },
+
     /**
      * Lấy thông tin profile của người dùng đang đăng nhập dựa trên token.
      * GET /users/me

@@ -37,6 +37,16 @@ class IEmailSender(Protocol):
         """Gửi email chứa liên kết an toàn để đổi mật khẩu mới."""
         ...
 
+    def send_password_changed(
+        self,
+        to_email: str,
+        customer_name: str,
+        changed_at: str,
+        background_tasks: BackgroundTasks | None = None,
+    ) -> bool:
+        """Gửi cảnh báo khi mật khẩu tài khoản đã được thay đổi."""
+        ...
+
     def send_order_placed(
         self,
         to_email: str,

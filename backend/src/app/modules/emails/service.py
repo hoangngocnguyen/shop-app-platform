@@ -172,6 +172,28 @@ class GmailSmtpEmailSender:
             background_tasks=background_tasks,
         )
 
+    def send_password_changed(
+        self,
+        to_email: str,
+        customer_name: str,
+        changed_at: str,
+        background_tasks: BackgroundTasks | None = None,
+    ) -> bool:
+        """Gửi email cảnh báo sau khi mật khẩu đã được thay đổi."""
+        subject = f"[{settings.SMTP_FROM_NAME}] Mật khẩu tài khoản vừa được thay đổi"
+        return self.send_email(
+            to_email=to_email,
+            subject=subject,
+            template_name="password_changed.html",
+            context={
+                "subject": subject,
+                "customer_name": customer_name,
+                "changed_at": changed_at,
+                "account_email": to_email,
+            },
+            background_tasks=background_tasks,
+        )
+
     def send_order_placed(
         self,
         to_email: str,

@@ -151,7 +151,7 @@ export function ResetPasswordForm() {
           <button
             type="button"
             onClick={() => router.push(ROUTES.AUTH.LOGIN)}
-            className="relative flex w-full items-center justify-center rounded-xl bg-primary px-4 py-3.5 text-sm font-semibold text-text-inverse shadow-md shadow-primary/25 transition-all duration-200 hover:-translate-y-0.5 hover:bg-primary-hover hover:shadow-lg hover:shadow-primary/30"
+            className="relative flex w-full items-center justify-center rounded-xl bg-primary px-4 py-3.5 text-sm font-semibold text-text-inverse text-white shadow-md shadow-primary/25 transition-all duration-200 hover:-translate-y-0.5 hover:bg-primary-hover hover:shadow-lg hover:shadow-primary/30"
           >
             Đăng nhập ngay
           </button>
@@ -399,7 +399,7 @@ export function ResetPasswordForm() {
               Nhớ mật khẩu rồi?{' '}
               <Link
                 href={ROUTES.AUTH.LOGIN}
-                className="font-semibold text-primary transition-all duration-200 hover:text-primary-hover hover:underline"
+                className="font-semibold transition-all duration-200 hover:text-primary-hover hover:underline"
               >
                 Đăng nhập ngay
               </Link>

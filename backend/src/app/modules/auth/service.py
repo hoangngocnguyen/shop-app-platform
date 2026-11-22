@@ -1,4 +1,5 @@
 import logging
+from datetime import UTC, datetime
 from uuid import UUID
 
 import httpx
@@ -12,6 +13,7 @@ from src.app.core.exceptions import (
     ResourceNotFoundException,
 )
 from src.app.modules.auth.schema import (
+    ChangePasswordResponse,
     ForgotPasswordResponse,
     MeResponse,
     ResetPasswordResponse,
@@ -28,7 +30,11 @@ class AuthService:
     """Service xử lý nghiệp vụ xác thực và đồng bộ application user."""
 
     @staticmethod
-    def get_me(db: Session, auth_user_id: UUID) -> MeResponse:
+    def get_me(
+        db: Session,
+        auth_user_id: UUID,
+        auth_providers: list[str] | None = None,
+    ) -> MeResponse:
         """
         Lấy application user hiện tại theo auth_user_id.
 
@@ -44,24 +50,41 @@ class AuthService:
         if not user:
             raise ResourceNotFoundException("Không tìm thấy thông tin người dùng")
 
-        return MeResponse.model_validate(user)
+        providers = [
+            provider.strip().upper()
+            for provider in (auth_providers or [])
+            if isinstance(provider, str) and provider.strip()
+        ]
+        return MeResponse.model_validate(user).model_copy(
+            update={"providers": providers}
+        )
 
     @staticmethod
     def sync_user(
         db: Session,
         auth_user_id: UUID,
         email: str | None = None,
-        provider: str | None = "EMAIL",
+        provider: str | None = None,
     ) -> SyncUserResponse:
         """
         Đảm bảo Supabase Auth user đã có application user.
 
-        - User đã tồn tại: trả về User hiện tại.
+        - User đã tồn tại: cập nhật provider gốc nếu claim có giá trị.
         - User chưa tồn tại: tạo User mới với role USER.
         """
+        normalized_provider = (
+            provider.strip().upper() if provider and provider.strip() else None
+        )
         user = db.query(User).filter(User.auth_user_id == auth_user_id).first()
 
         if user:
+            if normalized_provider and user.provider != normalized_provider:
+                user.provider = normalized_provider
+                try:
+                    db.commit()
+                except Exception:
+                    db.rollback()
+                    raise
             return SyncUserResponse(user_id=user.user_id)
 
         # Tìm role mặc định
@@ -75,7 +98,7 @@ class AuthService:
         new_user = User(
             auth_user_id=auth_user_id,
             email=email,
-            provider=provider or "EMAIL",
+            provider=normalized_provider,
             role_id=default_role.id,
         )
 
@@ -200,6 +223,118 @@ class AuthService:
             )
 
         return generic_response
+
+    @staticmethod
+    def change_password(
+        user: User,
+        auth_providers: list[str] | None,
+        current_password: str,
+        new_password: str,
+        email_sender: IEmailSender,
+        background_tasks: BackgroundTasks | None = None,
+    ) -> ChangePasswordResponse:
+        """Change a Supabase email user's password and notify the account email."""
+        providers = {
+            provider.strip().upper()
+            for provider in (auth_providers or [])
+            if isinstance(provider, str) and provider.strip()
+        }
+        if "EMAIL" not in providers:
+            raise BadRequestException(
+                "Chức năng đổi mật khẩu chỉ dành cho tài khoản đăng nhập bằng email."
+            )
+        if not user.email:
+            raise BadRequestException("Tài khoản chưa có địa chỉ email hợp lệ.")
+
+        supabase_url = (settings.SUPABASE_URL or "").strip()
+        api_key = (settings.SUPABASE_SERVICE_ROLE_KEY or "").strip()
+        if not supabase_url or not api_key:
+            raise BadRequestException(
+                "Dịch vụ xác thực chưa được cấu hình hoàn tất trên máy chủ."
+            )
+
+        token_url = f"{supabase_url.rstrip('/')}/auth/v1/token?grant_type=password"
+        update_url = f"{supabase_url.rstrip('/')}/auth/v1/user"
+        headers = {
+            "apikey": api_key,
+            "Content-Type": "application/json",
+        }
+        try:
+            with httpx.Client(timeout=10.0) as client:
+                verification_response = client.post(
+                    token_url,
+                    headers=headers,
+                    json={"email": user.email, "password": current_password},
+                )
+
+                if verification_response.status_code != 200:
+                    logger.info(
+                        "[AUTH] Xác thực mật khẩu hiện tại thất bại cho user %s (%s).",
+                        user.auth_user_id,
+                        verification_response.status_code,
+                    )
+                    raise BadRequestException("Mật khẩu hiện tại không chính xác.")
+
+                verified_session = verification_response.json()
+                verified_user_id = (verified_session.get("user") or {}).get("id")
+                verified_access_token = verified_session.get("access_token")
+                if (
+                    not verified_access_token
+                    or str(verified_user_id) != str(user.auth_user_id)
+                ):
+                    logger.warning(
+                        "[AUTH] Supabase xác thực không khớp user yêu cầu đổi mật khẩu (%s).",
+                        user.auth_user_id,
+                    )
+                    raise BadRequestException(
+                        "Không thể xác minh tài khoản để đổi mật khẩu."
+                    )
+
+                response = client.put(
+                    update_url,
+                    headers={
+                        **headers,
+                        "Authorization": f"Bearer {verified_access_token}",
+                    },
+                    json={"password": new_password},
+                )
+
+            if response.status_code != 200:
+                logger.warning(
+                    "[AUTH] Supabase cập nhật mật khẩu mới thất bại (%s) cho user %s.",
+                    response.status_code,
+                    user.auth_user_id,
+                )
+                raise BadRequestException(
+                    "Không thể cập nhật mật khẩu mới. Vui lòng kiểm tra yêu cầu mật khẩu và thử lại."
+                )
+        except AppException:
+            raise
+        except Exception as exc:
+            logger.error(
+                "[AUTH] Lỗi khi cập nhật mật khẩu cho user %s: %s",
+                user.auth_user_id,
+                exc,
+                exc_info=True,
+            )
+            raise BadRequestException(
+                "Đã xảy ra lỗi khi đổi mật khẩu. Vui lòng thử lại sau."
+            )
+
+        try:
+            email_sender.send_password_changed(
+                to_email=user.email,
+                customer_name=user.name or user.email.split("@")[0],
+                changed_at=datetime.now(UTC).strftime("%d/%m/%Y %H:%M UTC"),
+                background_tasks=background_tasks,
+            )
+        except Exception:
+            logger.exception(
+                "[AUTH] Không thể lập lịch email cảnh báo đổi mật khẩu cho user %s.",
+                user.auth_user_id,
+            )
+
+        return ChangePasswordResponse()
 
     @staticmethod
     def reset_password(
