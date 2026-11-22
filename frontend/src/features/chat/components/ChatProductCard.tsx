@@ -61,7 +61,7 @@ export const ChatProductCard: React.FC<ChatProductCardProps> = ({ product }) => 
             inStock ? "text-emerald-600" : "text-rose-600"
           }`}
         >
-          {inStock ? `Còn ${product.quantity} sản phẩm` : "Tạm hết hàng"}
+          {inStock ? "Còn hàng" : "Hết hàng"}
         </span>
       </div>
 

@@ -92,7 +92,7 @@ export default function ProductInfo({ product }: ProductInfoProps) {
                                 : "bg-status-success-bg text-status-success border border-status-success/30"
                             }`}
                     >
-                        {isOutOfStock ? "Tạm hết hàng" : `Còn hàng (${product.quantity})`}
+                        {isOutOfStock ? "Hết hàng" : "Còn hàng"}
                     </span>
                     {product.brand && (
                         <span className="text-xs text-text-sub font-medium">
@@ -177,9 +177,7 @@ export default function ProductInfo({ product }: ProductInfoProps) {
                             </button>
                         </div>
                         <span className="text-xs text-text-sub">
-                            {product.quantity > 0
-                                ? `${product.quantity} sản phẩm có sẵn`
-                                : "Hết hàng"}
+                            {product.quantity > 0 ? "Còn hàng" : "Hết hàng"}
                         </span>
                     </div>
                 </div>
