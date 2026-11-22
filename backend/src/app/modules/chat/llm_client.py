@@ -1,3 +1,4 @@
+import asyncio
 import logging
 from typing import Any
 
@@ -186,7 +187,10 @@ class GeminiClient:
         message: str,
         history: list[ChatHistoryItem],
     ) -> str:
-        """Gửi prompt và hội thoại sang Gemini API để sinh câu trả lời."""
+        """
+        Gửi prompt và hội thoại sang Gemini API để sinh câu trả lời.
+        Tự động retry 1 lần sau 0.6s nếu gặp lỗi quá tải tạm thời (503/429).
+        """
         url = f"{GEMINI_API_BASE_URL}/models/{self.model}:generateContent"
         request_body = {
             "system_instruction": {
@@ -198,7 +202,19 @@ class GeminiClient:
                 "maxOutputTokens": 1024,
             },
         }
-        payload = await self._post_gemini(url, request_body)
+        try:
+            payload = await self._post_gemini(url, request_body)
+        except AppException as exc:
+            if exc.error_code in ("LLM_UNAVAILABLE", "LLM_RATE_LIMITED"):
+                logger.warning(
+                    "Gemini %s hit %s, retrying once after 0.6s...",
+                    self.model,
+                    exc.error_code,
+                )
+                await asyncio.sleep(0.6)
+                payload = await self._post_gemini(url, request_body)
+            else:
+                raise
         return self._extract_reply_text(payload)
 
     async def embed_text(
