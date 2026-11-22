@@ -13,12 +13,14 @@ from src.app.modules.emails.dependencies import get_email_sender
 from src.app.modules.emails.protocol import IEmailSender
 from src.app.modules.orders.catalogs import build_cancellation_reason_catalog
 from src.app.modules.orders.enums.order_enums import (
+    CANCEL_REASON_TEXT,
     AdminCancelReason,
     OrderStatus,
     PaymentMethod,
     PaymentStatus,
 )
-from src.app.modules.orders.model import Order
+from src.app.modules.orders.model import Order, OrderDetail
+from src.app.modules.orders.order_utils import get_order_address, get_order_email_items
 from src.app.modules.orders.repositories.repository import OrderRepository
 from src.app.modules.orders.schemas.order_requests import (
     AdminCancelOrderRequest,
@@ -103,13 +105,16 @@ def get_admin_orders(
         default=None, description="Lọc theo trạng thái đơn hàng"
     ),
     payment_method: PaymentMethod | None = Query(
-        default=None, description="Lọc theo phương thức thanh toán (BANK_TRANSFER, VNPAY, COD)"
+        default=None,
+        description="Lọc theo phương thức thanh toán (BANK_TRANSFER, VNPAY, COD)",
     ),
     payment_status: PaymentStatus | None = Query(
-        default=None, description="Lọc theo trạng thái thanh toán (PENDING, PAID, FAILED, REFUNDED)"
+        default=None,
+        description="Lọc theo trạng thái thanh toán (PENDING, PAID, FAILED, REFUNDED)",
     ),
     search: str | None = Query(
-        default=None, description="Từ khóa tìm kiếm theo mã đơn, tên khách/người nhận, SĐT hoặc tên sản phẩm"
+        default=None,
+        description="Từ khóa tìm kiếm theo mã đơn, tên khách/người nhận, SĐT hoặc tên sản phẩm",
     ),
     sort_by: str = Query(
         default="order_date_desc",
@@ -267,8 +272,14 @@ def confirm_order_single(
         order_ids=[order_id],
     )
     if not bulk_res.results or not bulk_res.results[0].success:
-        err_msg = bulk_res.results[0].message if bulk_res.results else "Không thể xác nhận đơn hàng"
-        raise AppException(status_code=409, message=err_msg, error_code="INVALID_ORDER_STATE")
+        err_msg = (
+            bulk_res.results[0].message
+            if bulk_res.results
+            else "Không thể xác nhận đơn hàng"
+        )
+        raise AppException(
+            status_code=409, message=err_msg, error_code="INVALID_ORDER_STATE"
+        )
 
     return success_response(
         data=OrderActionResponse(
@@ -301,18 +312,33 @@ def start_shipping_order_single(
         order_ids=[order_id],
     )
     if not bulk_res.results or not bulk_res.results[0].success:
-        err_msg = bulk_res.results[0].message if bulk_res.results else "Không thể chuyển giao hàng"
-        raise AppException(status_code=409, message=err_msg, error_code="INVALID_ORDER_STATE")
+        err_msg = (
+            bulk_res.results[0].message
+            if bulk_res.results
+            else "Không thể chuyển giao hàng"
+        )
+        raise AppException(
+            status_code=409, message=err_msg, error_code="INVALID_ORDER_STATE"
+        )
 
-    order = db.query(Order).options(joinedload(Order.user)).filter(Order.order_id == order_id).first()
+    order = (
+        db.query(Order)
+        .options(
+            joinedload(Order.user),
+            joinedload(Order.order_details).joinedload(OrderDetail.product),
+        )
+        .filter(Order.order_id == order_id)
+        .first()
+    )
     if order and order.user and order.user.email:
         email_sender.send_order_shipping(
             to_email=str(order.user.email),
             customer_name=order.user.name or "Quý khách",
             order_code=order_id,
             tracking_code=None,
-            shipping_address=order.shipping_address or "",
+            shipping_address=get_order_address(order) or "",
             total_amount=f"{order.total:,.0f}",
+            items=get_order_email_items(order),
             background_tasks=background_tasks,
         )
 
@@ -347,10 +373,24 @@ def complete_delivery_order_single(
         order_ids=[order_id],
     )
     if not bulk_res.results or not bulk_res.results[0].success:
-        err_msg = bulk_res.results[0].message if bulk_res.results else "Không thể xác nhận giao hàng"
-        raise AppException(status_code=409, message=err_msg, error_code="INVALID_ORDER_STATE")
+        err_msg = (
+            bulk_res.results[0].message
+            if bulk_res.results
+            else "Không thể xác nhận giao hàng"
+        )
+        raise AppException(
+            status_code=409, message=err_msg, error_code="INVALID_ORDER_STATE"
+        )
 
-    order = db.query(Order).options(joinedload(Order.user)).filter(Order.order_id == order_id).first()
+    order = (
+        db.query(Order)
+        .options(
+            joinedload(Order.user),
+            joinedload(Order.order_details).joinedload(OrderDetail.product),
+        )
+        .filter(Order.order_id == order_id)
+        .first()
+    )
     if order and order.user and order.user.email:
         delivered_str = datetime.now().strftime("%d/%m/%Y %H:%M")
         email_sender.send_order_delivered(
@@ -359,6 +399,7 @@ def complete_delivery_order_single(
             order_code=order_id,
             delivered_at=delivered_str,
             total_amount=f"{order.total:,.0f}",
+            items=get_order_email_items(order),
             background_tasks=background_tasks,
         )
 
@@ -402,14 +443,26 @@ def cancel_order_by_admin(
         request=payload,
     )
 
-    order = db.query(Order).options(joinedload(Order.user)).filter(Order.order_id == order_id).first()
+    order = (
+        db.query(Order)
+        .options(
+            joinedload(Order.user),
+            joinedload(Order.order_details).joinedload(OrderDetail.product),
+        )
+        .filter(Order.order_id == order_id)
+        .first()
+    )
     if order and order.user and order.user.email:
-        reason_desc = payload.custom_reason or payload.reason_code.value
+        reason_desc = (
+            payload.custom_reason or CANCEL_REASON_TEXT[payload.reason_code.value]
+        )
         email_sender.send_order_cancelled(
             to_email=str(order.user.email),
             customer_name=order.user.name or "Quý khách",
             order_code=order_id,
             cancel_reason=reason_desc,
+            total_amount=f"{order.total:,.0f}",
+            items=get_order_email_items(order),
             background_tasks=background_tasks,
         )
 

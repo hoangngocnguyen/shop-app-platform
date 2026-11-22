@@ -16,15 +16,15 @@
   </div>
   <div class="info-row">
     <span class="info-label">Tổng thanh toán:</span>
-    <span class="info-value" style="color: #2563eb; font-size: 16px;">{{ total_amount }} đ</span>
+    <span class="info-value" style="color: #dc2626; font-size: 16px;">{{ total_amount }} đ</span>
   </div>
 </div>
 
 {% if payment_url %}
-<div style="text-align: center; margin: 24px 0; background-color: #eff6ff; border: 1px dashed #3b82f6; border-radius: 8px; padding: 18px;">
-  <p style="margin: 0 0 12px 0; font-weight: 600; color: #1e40af;">Đơn hàng đang chờ thanh toán trực tuyến</p>
-  <p style="margin: 0 0 16px 0; font-size: 13px; color: #3b82f6;">Vui lòng bấm nút bên dưới để chuyển tiếp tới cổng thanh toán VNPAY:</p>
-  <a href="{{ payment_url }}" class="btn" style="background-color: #0284c7;" target="_blank">Thanh toán VNPAY ngay</a>
+<div style="text-align: center; margin: 24px 0; background-color: #ecfdf5; border: 1px dashed #0f766e; border-radius: 8px; padding: 18px;">
+  <p style="margin: 0 0 12px 0; font-weight: 600; color: #115e59;">Đơn hàng đang chờ thanh toán trực tuyến</p>
+  <p style="margin: 0 0 16px 0; font-size: 13px; color: #0f766e;">Vui lòng bấm nút bên dưới để chuyển tiếp tới cổng thanh toán VNPAY:</p>
+  <a href="{{ payment_url }}" class="btn" style="background-color: #0f766e;" target="_blank">Thanh toán VNPAY ngay</a>
 </div>
 {% endif %}
 
@@ -44,7 +44,7 @@
       <td>
         <strong>{{ item.product_name }}</strong>
         {% if item.variant_info %}
-        <div style="font-size: 12px; color: #64748b;">{{ item.variant_info }}</div>
+        <div style="font-size: 12px; color: #475569;">{{ item.variant_info }}</div>
         {% endif %}
       </td>
       <td style="text-align: center;">{{ item.quantity }}</td>

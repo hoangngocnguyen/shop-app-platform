@@ -3,7 +3,7 @@
 {% block content %}
 <div class="greeting">Xin chào {{ customer_name | default("Quý khách") }},</div>
 
-<p>Kiện hàng của đơn hàng <strong style="color: #2563eb;">#{{ order_code }}</strong> đã được xuất kho và đang trên đường giao tới bạn.</p>
+<p>Kiện hàng của đơn hàng <strong style="color: #0f766e;">#{{ order_code }}</strong> đã được xuất kho và đang trên đường giao tới bạn.</p>
 
 <div class="card-box">
   <div class="info-row">
@@ -25,6 +25,14 @@
     <span class="info-value">{{ total_amount }} đ</span>
   </div>
 </div>
+
+<h3 style="font-size: 16px; margin: 24px 0 12px 0; color: #0f172a;">Sản phẩm trong đơn</h3>
+<table class="table-items">
+  <thead><tr><th>Sản phẩm</th><th style="text-align:center;">SL</th><th style="text-align:right;">Đơn giá</th><th style="text-align:right;">Thành tiền</th></tr></thead>
+  <tbody>{% for item in items %}
+    <tr><td><strong>{{ item.product_name }}</strong>{% if item.variant_info %}<div style="font-size:12px;color:#475569;">{{ item.variant_info }}</div>{% endif %}</td><td style="text-align:center;">{{ item.quantity }}</td><td style="text-align:right;">{{ "{:,.0f}".format(item.unit_price) }} đ</td><td style="text-align:right;font-weight:600;color:#dc2626;">{{ "{:,.0f}".format(item.subtotal) }} đ</td></tr>
+  {% endfor %}</tbody>
+</table>
 
 <p style="font-size: 14px; color: #475569;">
   Vui lòng chú ý điện thoại để bưu tá liên hệ giao hàng thuận tiện. Bạn có thể kiểm tra ngoại quan kiện hàng trước khi ký nhận.

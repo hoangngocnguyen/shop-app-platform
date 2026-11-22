@@ -1,5 +1,8 @@
 from typing import Any, Protocol, runtime_checkable
+
 from fastapi import BackgroundTasks
+
+from src.app.modules.emails.schema import EmailItemSummary
 
 
 @runtime_checkable
@@ -39,7 +42,7 @@ class IEmailSender(Protocol):
         to_email: str,
         customer_name: str,
         order_code: str,
-        items: list[dict[str, Any]],
+        items: list[EmailItemSummary],
         total_amount: str,
         payment_method: str,
         payment_url: str | None = None,
@@ -56,6 +59,7 @@ class IEmailSender(Protocol):
         tracking_code: str | None,
         shipping_address: str,
         total_amount: str,
+        items: list[EmailItemSummary],
         background_tasks: BackgroundTasks | None = None,
     ) -> bool:
         """Gửi email thông báo kiện hàng đã được xuất kho và đang trên đường giao."""
@@ -68,6 +72,7 @@ class IEmailSender(Protocol):
         order_code: str,
         delivered_at: str,
         total_amount: str,
+        items: list[EmailItemSummary],
         background_tasks: BackgroundTasks | None = None,
     ) -> bool:
         """Gửi email thông báo đơn hàng đã được giao thành công đến tay người nhận."""
@@ -79,6 +84,8 @@ class IEmailSender(Protocol):
         customer_name: str,
         order_code: str,
         cancel_reason: str,
+        total_amount: str,
+        items: list[EmailItemSummary],
         background_tasks: BackgroundTasks | None = None,
     ) -> bool:
         """Gửi email thông báo hủy đơn hàng kèm lý do chi tiết."""

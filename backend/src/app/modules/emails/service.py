@@ -11,6 +11,7 @@ from fastapi import BackgroundTasks
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 
 from src.app.core.config import settings
+from src.app.modules.emails.schema import EmailItemSummary
 
 logger = logging.getLogger(__name__)
 
@@ -176,7 +177,7 @@ class GmailSmtpEmailSender:
         to_email: str,
         customer_name: str,
         order_code: str,
-        items: list[dict[str, Any]],
+        items: list[EmailItemSummary],
         total_amount: str,
         payment_method: str,
         payment_url: str | None = None,
@@ -209,6 +210,7 @@ class GmailSmtpEmailSender:
         tracking_code: str | None,
         shipping_address: str,
         total_amount: str,
+        items: list[EmailItemSummary],
         background_tasks: BackgroundTasks | None = None,
     ) -> bool:
         """Gửi email thông báo đơn hàng đang được vận chuyển."""
@@ -220,6 +222,7 @@ class GmailSmtpEmailSender:
             "tracking_code": tracking_code,
             "shipping_address": shipping_address,
             "total_amount": total_amount,
+            "items": items,
         }
         return self.send_email(
             to_email=to_email,
@@ -236,6 +239,7 @@ class GmailSmtpEmailSender:
         order_code: str,
         delivered_at: str,
         total_amount: str,
+        items: list[EmailItemSummary],
         background_tasks: BackgroundTasks | None = None,
     ) -> bool:
         """Gửi email thông báo đơn hàng đã giao thành công."""
@@ -246,6 +250,7 @@ class GmailSmtpEmailSender:
             "order_code": order_code,
             "delivered_at": delivered_at,
             "total_amount": total_amount,
+            "items": items,
         }
         return self.send_email(
             to_email=to_email,
@@ -261,6 +266,8 @@ class GmailSmtpEmailSender:
         customer_name: str,
         order_code: str,
         cancel_reason: str,
+        total_amount: str,
+        items: list[EmailItemSummary],
         background_tasks: BackgroundTasks | None = None,
     ) -> bool:
         """Gửi email thông báo hủy đơn hàng kèm lý do."""
@@ -270,6 +277,8 @@ class GmailSmtpEmailSender:
             "customer_name": customer_name,
             "order_code": order_code,
             "cancel_reason": cancel_reason,
+            "total_amount": total_amount,
+            "items": items,
         }
         return self.send_email(
             to_email=to_email,

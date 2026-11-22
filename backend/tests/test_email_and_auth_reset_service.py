@@ -1,3 +1,4 @@
+from decimal import Decimal
 import unittest
 import uuid
 from unittest.mock import MagicMock, patch
@@ -10,6 +11,7 @@ from src.app.modules.auth.schema import (
 )
 from src.app.modules.auth.service import AuthService
 from src.app.modules.emails.protocol import IEmailSender
+from src.app.modules.emails.schema import EmailItemSummary
 from src.app.modules.emails.service import GmailSmtpEmailSender
 from src.app.modules.users.model import User
 
@@ -40,20 +42,20 @@ class TestEmailService(unittest.TestCase):
         self.assertIn("Đặt lại mật khẩu mới", html)
 
     def test_render_order_placed_template(self):
-        """Kiểm tra render template order_placed.html."""
+        """Kiểm tra render template order_placed.html với EmailItemSummary schema."""
         html = self.sender._render_template(
             "order_placed.html",
             {
                 "customer_name": "Trần Thị B",
                 "order_code": "OD999999",
                 "items": [
-                    {
-                        "product_name": "Áo sơ mi nam Oxford",
-                        "variant_info": "Xanh nhạt / Size M",
-                        "quantity": 2,
-                        "unit_price": 250000,
-                        "subtotal": 500000,
-                    }
+                    EmailItemSummary(
+                        product_name="Áo sơ mi nam Oxford",
+                        variant_info="Xanh nhạt / Size M",
+                        quantity=2,
+                        unit_price=Decimal("250000"),
+                        subtotal=Decimal("500000"),
+                    )
                 ],
                 "total_amount": "500,000",
                 "payment_method": "VNPAY",

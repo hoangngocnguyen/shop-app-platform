@@ -9,10 +9,11 @@ Cung cấp các Endpoint bọc ApiResponse chuẩn hóa toàn dự án:
 - POST  /api/v1/orders/{order_id}/reorder  (Khởi tạo snapshot mua lại từ đơn cũ)
 """
 
+from decimal import Decimal
 from uuid import UUID
 
 from fastapi import APIRouter, BackgroundTasks, Depends, Path, Query, status
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 
 from src.app.core.config import settings
 from src.app.core.database import get_db
@@ -21,8 +22,11 @@ from src.app.core.pagination import PaginatedResponse
 from src.app.core.response import ApiResponse, success_response
 from src.app.modules.emails.dependencies import get_email_sender
 from src.app.modules.emails.protocol import IEmailSender
+from src.app.modules.emails.schema import EmailItemSummary
 from src.app.modules.orders.catalogs import build_cancellation_reason_catalog
 from src.app.modules.orders.enums.order_enums import CustomerCancelReason, OrderStatus
+from src.app.modules.orders.model import Order, OrderDetail
+from src.app.modules.orders.order_utils import get_order_email_items
 from src.app.modules.orders.repositories.repository import OrderRepository
 from src.app.modules.orders.schemas.checkout_schema import CheckoutPreviewResponse
 from src.app.modules.orders.schemas.order_requests import (
@@ -104,15 +108,31 @@ def create_order(
     # Gửi email xác nhận đặt hàng thành công tới khách hàng
     user = db.query(User).filter(User.user_id == current_user_id).first()
     if user and user.email:
-        items = [
-            {
-                "product_name": item.product_name,
-                "quantity": item.quantity,
-                "unit_price": float(item.price_at_order),
-                "subtotal": float(item.subtotal),
-            }
-            for item in payload.items
-        ]
+        order = (
+            db.query(Order)
+            .options(joinedload(Order.order_details).joinedload(OrderDetail.product))
+            .filter(Order.order_id == result.order_id)
+            .first()
+        )
+        items: list[EmailItemSummary] = []
+        if order and order.order_details:
+            for detail in order.order_details:
+                p_name = (
+                    detail.product.product_name
+                    if detail.product and detail.product.product_name
+                    else f"Sản phẩm #{detail.product_id}"
+                )
+                unit_price = Decimal(str(detail.price))
+                items.append(
+                    EmailItemSummary(
+                        product_name=p_name,
+                        variant_info=None,
+                        quantity=detail.quantity,
+                        unit_price=unit_price,
+                        subtotal=unit_price * detail.quantity,
+                    )
+                )
+
         payment_url = None
         if result.payment_method == "VNPAY":
             payment_url = f"{settings.FRONTEND_URL}/payment?orderId={result.order_id}"
@@ -282,14 +302,23 @@ def cancel_order(
 
     user = db.query(User).filter(User.user_id == current_user_id).first()
     if user and user.email:
-        reason_desc = payload.custom_reason or payload.reason_code.value
-        email_sender.send_order_cancelled(
-            to_email=str(user.email),
-            customer_name=user.name or "Quý khách",
-            order_code=order_id,
-            cancel_reason=reason_desc,
-            background_tasks=background_tasks,
+        order = (
+            db.query(Order)
+            .options(joinedload(Order.order_details).joinedload(OrderDetail.product))
+            .filter(Order.order_id == order_id)
+            .first()
         )
+        reason_desc = payload.custom_reason or payload.reason_code.value
+        if order:
+            email_sender.send_order_cancelled(
+                to_email=str(user.email),
+                customer_name=user.name or "Quý khách",
+                order_code=order_id,
+                cancel_reason=reason_desc,
+                total_amount=f"{order.total:,.0f}",
+                items=get_order_email_items(order),
+                background_tasks=background_tasks,
+            )
 
     return success_response(
         data=result,

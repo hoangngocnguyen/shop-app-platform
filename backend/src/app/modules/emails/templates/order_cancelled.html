@@ -18,7 +18,19 @@
     <span class="info-label">Lý do hủy đơn:</span>
     <span class="info-value" style="color: #b91c1c;">{{ cancel_reason }}</span>
   </div>
+  <div class="info-row">
+    <span class="info-label">Tổng hóa đơn:</span>
+    <span class="info-value" style="color: #dc2626;">{{ total_amount }} đ</span>
+  </div>
 </div>
+
+<h3 style="font-size: 16px; margin: 24px 0 12px 0; color: #0f172a;">Sản phẩm trong đơn</h3>
+<table class="table-items">
+  <thead><tr><th>Sản phẩm</th><th style="text-align:center;">SL</th><th style="text-align:right;">Đơn giá</th><th style="text-align:right;">Thành tiền</th></tr></thead>
+  <tbody>{% for item in items %}
+    <tr><td><strong>{{ item.product_name }}</strong>{% if item.variant_info %}<div style="font-size:12px;color:#475569;">{{ item.variant_info }}</div>{% endif %}</td><td style="text-align:center;">{{ item.quantity }}</td><td style="text-align:right;">{{ "{:,.0f}".format(item.unit_price) }} đ</td><td style="text-align:right;font-weight:600;color:#dc2626;">{{ "{:,.0f}".format(item.subtotal) }} đ</td></tr>
+  {% endfor %}</tbody>
+</table>
 
 <p style="font-size: 14px; color: #475569;">
   Nếu bạn đã thực hiện thanh toán trực tuyến qua VNPAY, số tiền sẽ được hoàn trả theo chính sách hoàn tiền tương ứng của phương thức thanh toán.
