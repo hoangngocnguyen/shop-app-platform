@@ -388,7 +388,7 @@ export function ResetPasswordForm() {
                   <span>Đang cập nhật mật khẩu...</span>
                 </>
               ) : (
-                <span>Xác nhận đổi mật khẩu</span>
+                <span className='text-white'>Xác nhận đổi mật khẩu</span>
               )}
             </button>
           </form>

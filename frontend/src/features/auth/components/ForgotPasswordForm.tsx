@@ -187,7 +187,7 @@ export function ForgotPasswordForm() {
               <span>Đang gửi liên kết...</span>
             </>
           ) : (
-            <span>Gửi liên kết khôi phục</span>
+            <span className='text-white'>Gửi liên kết khôi phục</span>
           )}
         </button>
       </form>
