@@ -43,10 +43,17 @@ export default function ProductCard({ product }: ProductCardProps) {
 
         setIsAdding(true);
         try {
-            await addToCart({
+            const updatedCart = await addToCart({
                 product_id: product.product_id,
                 quantity: 1,
             });
+
+            if (!updatedCart) {
+                const errorMessage = useCartStore.getState().error;
+                toast.error(errorMessage || "Không thể thêm vào giỏ hàng, vui lòng thử lại!");
+                return;
+            }
+
             toast.success(`Đã thêm "${product.product_name}" vào giỏ hàng!`);
         } catch (err) {
             console.error("Lỗi khi thêm vào giỏ:", err);
@@ -125,7 +132,7 @@ export default function ProductCard({ product }: ProductCardProps) {
             <div className="pt-1">
                 <button
                     onClick={handleAddToCart}
-                    disabled={isAdding || product.quantity <= 0}
+                    disabled={isAdding || !product.in_stock}
                     className="w-full py-2.5 px-3 rounded-xl bg-primary hover:bg-primary-hover text-primary-contrast text-xs font-semibold flex items-center justify-center gap-1.5 transition-all duration-200 shadow-sm hover:shadow-brand-sm active:scale-98 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
                 >
                     {isAdding ? (
@@ -133,7 +140,7 @@ export default function ProductCard({ product }: ProductCardProps) {
                             <Loader2 className="w-3.5 h-3.5 animate-spin" />
                             <span>Đang thêm...</span>
                         </>
-                    ) : product.quantity <= 0 ? (
+                    ) : !product.in_stock ? (
                         <span>Hết hàng</span>
                     ) : (
                         <>

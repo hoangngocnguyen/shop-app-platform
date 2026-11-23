@@ -50,7 +50,7 @@ export default function ProductDescription({ product }: ProductDescriptionProps)
                 <div className="p-3.5 rounded-2xl bg-primary-light/30 border border-primary/15 flex justify-between">
                     <span className="text-text-sub">Kho hàng</span>
                     <span className="font-semibold text-text-main">
-                        {product.quantity > 0 ? "Còn hàng" : "Hết hàng"}
+                        {product.in_stock ? "Còn hàng" : "Hết hàng"}
                     </span>
                 </div>
             </div>

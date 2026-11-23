@@ -20,11 +20,15 @@ interface AdminHeaderProps {
   onOpenMobile: () => void;
 }
 
+const isValidImageUrl = (url: string): boolean =>
+  /^(https?:\/\/|\/|data:image\/|blob:)/i.test(url);
+
 export const AdminHeader: React.FC<AdminHeaderProps> = ({ onOpenMobile }) => {
   const pathname = usePathname();
   const router = useRouter();
   const { user, logout } = useAuthStore();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [failedAvatarUrl, setFailedAvatarUrl] = useState<string | null>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   // Close dropdown on click outside
@@ -116,18 +120,24 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({ onOpenMobile }) => {
             className="flex items-center gap-2.5 p-1.5 pr-2 rounded-2xl hover:bg-surface-hover border border-transparent hover:border-surface-border transition-all duration-200 focus:outline-none"
             aria-expanded={isDropdownOpen}
           >
-            {user?.avatar_url ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={user.avatar_url}
-                alt={displayName}
-                className="w-8 h-8 rounded-xl object-cover ring-2 ring-primary/20"
-              />
-            ) : (
-              <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-primary to-primary-hover text-white font-bold text-xs flex items-center justify-center shadow-xs">
-                {initials || <UserIcon className="w-4 h-4 text-white" />}
-              </div>
-            )}
+            {(() => {
+              const avatarUrl = user?.avatar_url?.trim() || "";
+              const showAvatarImage =
+                isValidImageUrl(avatarUrl) && failedAvatarUrl !== avatarUrl;
+              return showAvatarImage ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={avatarUrl}
+                  alt={displayName}
+                  onError={() => setFailedAvatarUrl(avatarUrl)}
+                  className="w-8 h-8 rounded-xl object-cover ring-2 ring-primary/20"
+                />
+              ) : (
+                <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-primary to-primary-hover text-white font-bold text-xs flex items-center justify-center shadow-xs">
+                  {initials || <UserIcon className="w-4 h-4 text-white" />}
+                </div>
+              );
+            })()}
 
             <div className="hidden md:flex flex-col text-left">
               <span className="text-xs font-bold text-text-main leading-tight truncate max-w-[120px]">

@@ -22,7 +22,7 @@ export const ChatProductCard: React.FC<ChatProductCardProps> = ({ product }) => 
     product.sale_price !== undefined &&
     Number(product.sale_price) < Number(product.price);
   const displayPrice = hasDiscount ? product.sale_price : product.price;
-  const inStock = product.quantity > 0;
+  const inStock = product.in_stock;
 
   return (
     <Link

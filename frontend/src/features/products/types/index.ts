@@ -6,7 +6,7 @@ export interface ProductResponse {
     price: number | string;
     sale_price: number | string | null;
     discount_percent: number | null;
-    quantity: number;
+    in_stock: boolean;
     sold: number;
     rating: number | string | null;
     brand: string | null;

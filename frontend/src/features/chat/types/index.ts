@@ -15,7 +15,7 @@ export interface SuggestedProductItem {
   product_name: string;
   price: number | string;
   sale_price?: number | string | null;
-  quantity: number;
+  in_stock: boolean;
   image_src?: string | null;
   brand?: string | null;
 }
