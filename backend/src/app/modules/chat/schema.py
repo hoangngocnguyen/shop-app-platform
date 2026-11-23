@@ -68,7 +68,7 @@ class SuggestedProductItem(BaseModel):
     product_name: str
     price: Decimal
     sale_price: Decimal | None = None
-    quantity: int
+    in_stock: bool = True
     image_src: str | None = None
     brand: str | None = None
 

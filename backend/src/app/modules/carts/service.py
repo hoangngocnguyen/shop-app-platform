@@ -50,11 +50,17 @@ class CartService:
                 status_code=status.HTTP_404_NOT_FOUND,
             )
 
+        if product.quantity <= 0:
+            raise CustomException(
+                message=f"Sản phẩm '{product.product_name}' hiện đã hết hàng, bạn vui lòng chọn sản phẩm khác nhé!",
+                status_code=status.HTTP_400_BAD_REQUEST,
+            )
+
         if product.quantity < requested_quantity:
             raise CustomException(
                 message=(
-                    f"Sản phẩm '{product.product_name}' chỉ còn "
-                    f"{product.quantity} sản phẩm trong kho"
+                    f"Số lượng bạn chọn cho '{product.product_name}' vượt quá số lượng "
+                    "hiện có trong kho. Vui lòng giảm số lượng nhé!"
                 ),
                 status_code=status.HTTP_400_BAD_REQUEST,
             )

@@ -95,7 +95,7 @@ class ChatService:
                 product_name=p.product_name,
                 price=p.price,
                 sale_price=p.sale_price,
-                quantity=p.quantity,
+                in_stock=p.quantity > 0,
                 image_src=p.image_src,
                 brand=p.brand,
             )
