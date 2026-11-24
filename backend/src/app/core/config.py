@@ -36,6 +36,12 @@ class Settings(BaseSettings):
     VNP_RETURN_URL: str = Field(default="")
     VNP_IPN_URL: str = Field(default="")
 
+    # AI Chat Assistant (Google Gemini API)
+    GEMINI_API_KEY: str = Field(default="")
+    GEMINI_MODEL: str = Field(default="gemini-3.5-flash-lite")
+    GEMINI_EMBEDDING_MODEL: str = Field(default="gemini-embedding-001")
+    GEMINI_TIMEOUT_SECONDS: float = Field(default=30.0)
+
     # Email SMTP (Gmail)
     SMTP_HOST: str = Field(default="smtp.gmail.com")
     SMTP_PORT: int = Field(default=587)

@@ -23,14 +23,13 @@ export default function ProductInfo({ product }: ProductInfoProps) {
     const [isAdding, setIsAdding] = useState(false);
     const [isSuccess, setIsSuccess] = useState(false);
 
-    const isOutOfStock = product.quantity <= 0;
-    const maxQuantity = Math.max(1, product.quantity);
+    const isOutOfStock = !product.in_stock;
 
     const handleQuantityChange = (delta: number) => {
         setQuantity((prev) => {
             const next = prev + delta;
             if (next < 1) return 1;
-            if (next > maxQuantity) return maxQuantity;
+            if (next > 99) return 99;
             return next;
         });
     };
@@ -49,10 +48,16 @@ export default function ProductInfo({ product }: ProductInfoProps) {
 
         try {
             setIsAdding(true);
-            await addToCart({
+            const updatedCart = await addToCart({
                 product_id: product.product_id,
                 quantity: quantity,
             });
+
+            if (!updatedCart) {
+                const errorMessage = useCartStore.getState().error;
+                toast.error(errorMessage || "Không thể thêm vào giỏ hàng, vui lòng thử lại!");
+                return;
+            }
 
             setIsSuccess(true);
             setTimeout(() => setIsSuccess(false), 2000);
@@ -92,7 +97,7 @@ export default function ProductInfo({ product }: ProductInfoProps) {
                                 : "bg-status-success-bg text-status-success border border-status-success/30"
                             }`}
                     >
-                        {isOutOfStock ? "Tạm hết hàng" : `Còn hàng (${product.quantity})`}
+                        {isOutOfStock ? "Hết hàng" : "Còn hàng"}
                     </span>
                     {product.brand && (
                         <span className="text-xs text-text-sub font-medium">
@@ -169,7 +174,7 @@ export default function ProductInfo({ product }: ProductInfoProps) {
                             <button
                                 type="button"
                                 onClick={() => handleQuantityChange(1)}
-                                disabled={quantity >= maxQuantity || isOutOfStock}
+                                disabled={quantity >= 99 || isOutOfStock}
                                 aria-label="Tăng số lượng"
                                 className="p-2 sm:p-2.5 hover:bg-surface-hover text-text-main disabled:opacity-40 disabled:cursor-not-allowed transition-colors cursor-pointer"
                             >
@@ -177,9 +182,7 @@ export default function ProductInfo({ product }: ProductInfoProps) {
                             </button>
                         </div>
                         <span className="text-xs text-text-sub">
-                            {product.quantity > 0
-                                ? `${product.quantity} sản phẩm có sẵn`
-                                : "Hết hàng"}
+                            {product.in_stock ? "Còn hàng" : "Hết hàng"}
                         </span>
                     </div>
                 </div>
