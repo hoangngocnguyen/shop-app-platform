@@ -1,14 +1,15 @@
 from decimal import Decimal
-from pydantic import BaseModel, ConfigDict, Field
+from typing import Any
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from src.app.modules.categories.schema import CategoryResponse
 
 
 # ==============================================================================
-# 1. SCHEMAS CHO PHÂN HỆ CLIENT / PUBLIC PRODUCTS
+# 1. SCHEMAS CHO PHÂN HỆ CLIENT / PUBLIC PRODUCTS & BASE
 # ==============================================================================
-class ProductResponse(BaseModel):
-    """Schema đại diện cho thông tin tóm tắt sản phẩm trả về phía Client."""
+class ProductBase(BaseModel):
+    """Các trường thông tin chung của sản phẩm (không chứa số lượng tồn kho chi tiết)."""
 
     product_id: int = Field(
         ...,
@@ -34,11 +35,6 @@ class ProductResponse(BaseModel):
         default=None,
         description="Giá sau khi giảm giá khuyến mãi (VNĐ)",
         examples=[Decimal("35990000.00")],
-    )
-    quantity: int = Field(
-        default=0,
-        description="Số lượng sản phẩm còn lại trong kho",
-        examples=[50],
     )
     rating: Decimal | None = Field(
         default=Decimal("0.0"),
@@ -84,8 +80,55 @@ class ProductResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
+class PublicProductResponse(ProductBase):
+    """Schema sản phẩm trả về phía Khách hàng (chỉ báo còn hàng hay hết hàng, ẩn quantity)."""
+
+    in_stock: bool = Field(
+        default=False,
+        description="Trạng thái tồn kho: true nếu còn hàng, false nếu hết hàng",
+        examples=[True],
+    )
+
+    @model_validator(mode="before")
+    @classmethod
+    def compute_in_stock(cls, data: Any) -> Any:
+        if isinstance(data, dict):
+            if "in_stock" not in data:
+                data["in_stock"] = (data.get("quantity") or 0) > 0
+            return data
+
+        # ORM object (SQLAlchemy Product): chuyển sang dict để không lộ field quantity
+        qty = getattr(data, "quantity", 0) or 0
+        payload = {
+            field_name: getattr(data, field_name, None)
+            for field_name in cls.model_fields
+            if field_name != "in_stock"
+        }
+        payload["in_stock"] = qty > 0
+        return payload
+
+
+class PublicProductDetailResponse(PublicProductResponse):
+    """Schema chi tiết sản phẩm phía Khách hàng kèm thông tin danh mục cha (ẩn quantity)."""
+
+    category: CategoryResponse | None = Field(
+        default=None,
+        description="Thông tin danh mục mà sản phẩm này thuộc về",
+    )
+
+
+class ProductResponse(ProductBase):
+    """Schema đầy đủ sản phẩm dùng cho Admin (bao gồm số lượng tồn kho quantity)."""
+
+    quantity: int = Field(
+        default=0,
+        description="Số lượng sản phẩm còn lại trong kho",
+        examples=[50],
+    )
+
+
 class ProductDetailResponse(ProductResponse):
-    """Schema chi tiết sản phẩm kèm thông tin danh mục cha."""
+    """Schema chi tiết sản phẩm dùng cho Admin kèm thông tin danh mục cha."""
 
     category: CategoryResponse | None = Field(
         default=None,
