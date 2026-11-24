@@ -4,9 +4,10 @@ from src.app.modules.admin.statistics.router import admin_statistics_router
 from src.app.modules.admin.users.router import router as admin_users_router
 from src.app.modules.auth.router import router as auth_router
 from src.app.modules.carts.router import router as cart_router
-from src.app.modules.chat import chat_router
 from src.app.modules.categories.admin_router import admin_category_router
 from src.app.modules.categories.router import router as categories_router
+from src.app.modules.chat import chat_router
+from src.app.modules.emails.router import router as email_router
 from src.app.modules.locations.router import router as locations_router
 from src.app.modules.media import media_router
 from src.app.modules.orders.routers.admin_order_router import admin_order_router
@@ -41,3 +42,4 @@ api_v1_router.include_router(order_router)
 api_v1_router.include_router(admin_order_router)
 api_v1_router.include_router(payments_router)
 api_v1_router.include_router(chat_router)
+api_v1_router.include_router(email_router)
