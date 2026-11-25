@@ -3,7 +3,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { AlertCircle, ArrowLeft, Loader2, PackageSearch, ShoppingBag } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { toast } from "@/common/stores/useToastStore";
 import { orderApi } from "@/features/orders/api";
 import { OrderHistoryCard } from "@/features/orders/components/OrderHistoryCard";
@@ -18,8 +17,7 @@ import { parseErrorMessage } from "@/lib/axios/parseError";
 import { paymentApi } from "@/features/payment/api";
 
 export default function UserOrdersPage() {
-    const router = useRouter();
-    const { activeStatus, setActiveStatus, orders, totalItems, isLoading, isLoadingMore, hasMore, error, loadMore } = useOrderHistory();
+    const { activeStatus, setActiveStatus, orders, totalItems, statusCounts, isLoading, isLoadingMore, hasMore, error, loadMore, refresh } = useOrderHistory();
     const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
     const [selectedOrder, setSelectedOrder] = useState<OrderDetailResponse | null>(null);
     const [isDetailLoading, setIsDetailLoading] = useState(false);
@@ -94,14 +92,14 @@ export default function UserOrdersPage() {
         try {
             const result = await orderApi.completeOrder(orderId);
             toast.success(result.message || "Xác nhận nhận hàng thành công");
-            setSelectedOrderId((prev) => (prev === orderId ? orderId : prev));
-            router.refresh();
+            setSelectedOrder((prev) => prev?.order_id === orderId ? { ...prev, status: result.status } : prev);
+            refresh();
         } catch (err) {
             toast.error(parseErrorMessage(err, "Không thể xác nhận đã nhận hàng."));
         } finally {
             setIsCompleting(null);
         }
-    }, [router]);
+    }, [refresh]);
 
     // Mở modal chọn lý do hủy
     const handleCancelOrder = useCallback((orderId: string) => {
@@ -122,14 +120,14 @@ export default function UserOrdersPage() {
                 setIsCancelModalOpen(false);
                 setCancelOrderId(null);
                 setSelectedOrderId((prev) => (prev === orderId ? null : prev));
-                router.refresh();
+                refresh();
             } catch (err) {
                 toast.error(parseErrorMessage(err, "Không thể hủy đơn hàng."));
             } finally {
                 setIsCancelling(null);
             }
         },
-        [router]
+        [refresh]
     );
 
     const handleCloseCancelModal = useCallback(() => {
@@ -138,19 +136,11 @@ export default function UserOrdersPage() {
         setCancelOrderId(null);
     }, [isCancelling]);
 
-    const statusOrder: OrderStatus[] = [
-        "PENDING",
-        "PROCESSING",
-        "SHIPPING",
-        "DELIVERED",
-        "COMPLETED",
-        "CANCELLED",
-        "RETURNED",
-    ];
-
-    const tabCounts: Partial<Record<OrderStatus | "ALL", number>> = {
-        ALL: totalItems,
-        ...Object.fromEntries(statusOrder.map((status) => [status, 0])),
+    const emptyMessages: Partial<Record<OrderStatus | "ALL", string>> = {
+        PENDING: "Bạn không có đơn hàng nào đang chờ xử lý.",
+        PROCESSING: "Bạn không có đơn hàng nào đang trong quá trình chuẩn bị.",
+        SHIPPING: "Không có đơn hàng nào đang được giao tới bạn.",
+        DELIVERED: "Chưa có đơn hàng nào đã giao gần đây.",
     };
 
     return (
@@ -182,7 +172,7 @@ export default function UserOrdersPage() {
                 <OrderHistoryTabs
                     activeStatus={activeStatus}
                     onChange={(status) => setActiveStatus(status)}
-                    counts={tabCounts}
+                    counts={statusCounts}
                 />
 
                 {/* Error Banner */}
@@ -206,7 +196,7 @@ export default function UserOrdersPage() {
                         <PackageSearch className="mb-2.5 h-9 w-9 text-text-muted" />
                         <h2 className="text-base font-semibold text-text-main">Chưa có đơn hàng nào</h2>
                         <p className="mt-1 max-w-sm text-xs sm:text-sm text-text-sub">
-                            Các đơn hàng của bạn sẽ xuất hiện ở đây để bạn theo dõi và quản lý.
+                            {emptyMessages[activeStatus] ?? "Các đơn hàng của bạn sẽ xuất hiện ở đây để bạn theo dõi và quản lý."}
                         </p>
                     </div>
                 ) : (
@@ -238,6 +228,10 @@ export default function UserOrdersPage() {
                 loading={isDetailLoading}
                 onPay={handlePayOrder}
                 isPaying={isPaying === selectedOrder?.order_id}
+                onCancel={handleCancelOrder}
+                onComplete={handleCompleteOrder}
+                isCancelling={isCancelling === selectedOrder?.order_id}
+                isCompleting={isCompleting === selectedOrder?.order_id}
             />
 
             {/* Modal chọn lý do hủy đơn */}

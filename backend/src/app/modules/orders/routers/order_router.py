@@ -18,7 +18,6 @@ from sqlalchemy.orm import Session, joinedload
 from src.app.core.config import settings
 from src.app.core.database import get_db
 from src.app.core.deps import get_current_user_id
-from src.app.core.pagination import PaginatedResponse
 from src.app.core.response import ApiResponse, success_response
 from src.app.modules.emails.dependencies import get_email_sender
 from src.app.modules.emails.protocol import IEmailSender
@@ -39,7 +38,6 @@ from src.app.modules.orders.schemas.order_responses import (
     OrderCreateResponse,
     OrderDetailResponse,
     OrderListResponse,
-    OrderSummaryResponse,
 )
 from src.app.modules.orders.services.checkout_service import CheckoutService
 from src.app.modules.orders.services.order_service import OrderService
@@ -161,7 +159,7 @@ def create_order(
 
 @router.get(
     "",
-    response_model=ApiResponse[PaginatedResponse[OrderSummaryResponse]],
+    response_model=ApiResponse[OrderListResponse],
     status_code=status.HTTP_200_OK,
     summary="Lấy danh sách lịch sử đơn hàng của người dùng",
     description=(
@@ -198,7 +196,7 @@ def get_orders(
     ),
     current_user_id: UUID = Depends(get_current_user_id),
     service: OrderService = Depends(get_order_service),
-) -> ApiResponse[PaginatedResponse[OrderSummaryResponse]]:
+) -> ApiResponse[OrderListResponse]:
     """Endpoint lấy danh sách lịch sử đơn hàng."""
     effective_page_size = limit if limit is not None else page_size
     result = service.get_orders(

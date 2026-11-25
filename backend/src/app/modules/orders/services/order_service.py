@@ -14,7 +14,7 @@ from zoneinfo import ZoneInfo
 from pydantic import HttpUrl
 
 from src.app.core.exceptions import AppException, BadRequestException, NotFoundException
-from src.app.core.pagination import PaginatedResponse, paginate_list
+from src.app.core.pagination import paginate_list
 from src.app.modules.orders.enums.order_enums import (
     CANCEL_REASON_TEXT,
     CancelledByType,
@@ -225,7 +225,7 @@ class OrderService:
         search: str | None = None,
         page: int = 1,
         page_size: int = 10,
-    ) -> PaginatedResponse[OrderSummaryResponse]:
+    ) -> OrderListResponse:
         """Lấy danh sách lịch sử đơn hàng của người dùng hiện tại (hỗ trợ phân trang và lọc)."""
         status_val = order_status.value if order_status else None
         orders, total_items, total_pages = self.repository.get_user_orders_paginated(
@@ -308,12 +308,18 @@ class OrderService:
                 )
             )
 
-        return paginate_list(
+        paginated = paginate_list(
             items=summary_items,
             total=total_items,
             page=page,
             page_size=page_size,
         )
+        raw_counts = self.repository.count_orders_by_statuses_for_user(user_id=user_id)
+        status_counts = {
+            "ALL": sum(raw_counts.values()),
+            **{status.value: raw_counts.get(status.value, 0) for status in OrderStatus},
+        }
+        return OrderListResponse(**paginated.model_dump(), status_counts=status_counts)
 
     # ==========================================================================
     # 3. GET ORDER DETAIL (GET /api/v1/orders/{order_id})
@@ -501,11 +507,15 @@ class OrderService:
         )
 
         if request.reason_code == CustomerCancelReason.OTHER:
-            display_reason = f"Lý do khác: {custom_reason}" if custom_reason else "Lý do khác"
+            display_reason = (
+                f"Lý do khác: {custom_reason}" if custom_reason else "Lý do khác"
+            )
             log_reason = f"[{reason_code_str}] Lý do khác: {custom_reason}"
         elif custom_reason:
             display_reason = f"{reason_label} ({custom_reason})"
-            log_reason = f"[{reason_code_str}] {reason_label} (Chi tiết: {custom_reason})"
+            log_reason = (
+                f"[{reason_code_str}] {reason_label} (Chi tiết: {custom_reason})"
+            )
         else:
             display_reason = reason_label
             log_reason = f"[{reason_code_str}] {reason_label}"
@@ -516,7 +526,9 @@ class OrderService:
         # 2. Cập nhật trạng thái và thông tin hủy
         # cancel_reason lưu display_reason sạch cho FE; log_desc đầy đủ cho audit/admin
         cancelled_now = datetime.now(UTC)
-        log_desc = f"Khách hàng hủy đơn hàng. Lý do: {log_reason}. Tồn kho đã được hoàn trả."
+        log_desc = (
+            f"Khách hàng hủy đơn hàng. Lý do: {log_reason}. Tồn kho đã được hoàn trả."
+        )
 
         updated_order = self.repository.cancel_order_record(
             order=order,

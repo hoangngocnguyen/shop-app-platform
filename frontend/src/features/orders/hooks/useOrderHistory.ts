@@ -14,6 +14,7 @@ export function useOrderHistory(pageSize = DEFAULT_PAGE_SIZE) {
     const [page, setPage] = useState(1);
     const [totalItems, setTotalItems] = useState(0);
     const [totalPages, setTotalPages] = useState(0);
+    const [statusCounts, setStatusCounts] = useState<Partial<Record<OrderStatus | "ALL", number>>>({});
     const [isLoading, setIsLoading] = useState(false);
     const [isLoadingMore, setIsLoadingMore] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -37,6 +38,7 @@ export function useOrderHistory(pageSize = DEFAULT_PAGE_SIZE) {
                 const nextOrders = response.items ?? [];
                 setTotalItems(response.total ?? 0);
                 setTotalPages(response.total_pages ?? 0);
+                setStatusCounts(response.status_counts ?? {});
                 setOrders((prev) => (shouldAppend ? [...prev, ...nextOrders] : nextOrders));
                 setPage(nextPage);
             } catch (err) {
@@ -74,6 +76,7 @@ export function useOrderHistory(pageSize = DEFAULT_PAGE_SIZE) {
         page,
         totalItems,
         totalPages,
+        statusCounts,
         isLoading,
         isLoadingMore,
         hasMore,

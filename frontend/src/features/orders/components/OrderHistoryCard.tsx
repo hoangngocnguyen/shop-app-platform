@@ -1,8 +1,10 @@
 "use client";
 
 import Image from "next/image";
-import { ChevronDown, ChevronUp, Package2, CheckCircle2, XCircle, RotateCcw, CreditCard, Loader2 } from "lucide-react";
+import { Copy, Eye, Package2, CheckCircle2, XCircle, RotateCcw, CreditCard, Loader2 } from "lucide-react";
+import type { MouseEvent } from "react";
 import type { OrderSummaryResponse } from "@/features/orders/types";
+import { toast } from "@/common/stores/useToastStore";
 import { OrderStatusBadge, PaymentStatusBadge } from "@/features/orders/components/OrderStatusBadge";
 import { canCancelOrder, canCompleteOrder, canPayOrder, formatDateTime, formatMoney } from "@/features/orders/utils/orderStatus";
 
@@ -36,6 +38,16 @@ export function OrderHistoryCard({
 
     const extraItemsCount = Math.max((order.items?.length ?? 0) - 1, 0);
 
+    const copyOrderId = async (event: MouseEvent<HTMLButtonElement>) => {
+        event.stopPropagation();
+        try {
+            await navigator.clipboard.writeText(order.order_id);
+            toast.success("Đã sao chép mã đơn hàng");
+        } catch {
+            toast.error("Không thể sao chép mã đơn hàng.");
+        }
+    };
+
     return (
         <div className="rounded-xl border border-surface-border bg-surface-card shadow-xs transition-colors hover:border-surface-border/80">
             <div className="p-4 sm:p-5">
@@ -43,7 +55,8 @@ export function OrderHistoryCard({
                     <div className="min-w-0 space-y-2">
                         <div className="flex flex-wrap items-center gap-2">
                             <span className="text-xs font-medium text-text-muted">Đơn hàng</span>
-                            <span className="font-mono text-xs sm:text-sm font-semibold text-text-main">#{order.order_id}</span>
+                            <button type="button" onClick={() => onToggle(order.order_id)} className="font-mono text-xs sm:text-sm font-semibold text-text-main hover:text-primary hover:underline cursor-pointer">#{order.order_id}</button>
+                            <button type="button" onClick={copyOrderId} aria-label="Sao chép mã đơn hàng" className="rounded p-1 text-text-muted hover:bg-surface-hover hover:text-primary"><Copy className="h-3.5 w-3.5" /></button>
                         </div>
 
                         <div className="flex flex-wrap items-center gap-2">
@@ -62,7 +75,7 @@ export function OrderHistoryCard({
                     </div>
                 </div>
 
-                <div className="mt-3.5 rounded-lg border border-surface-border/60 bg-surface-bg/50 p-2.5 sm:p-3">
+                <div onClick={() => onToggle(order.order_id)} className="mt-3.5 w-full cursor-pointer rounded-lg border border-surface-border/60 bg-surface-bg/50 p-2.5 text-left transition-colors hover:border-primary/40 hover:bg-surface-hover/40 sm:p-3">
                     <div className="flex items-center gap-3">
                         <div className="flex h-12 w-12 sm:h-14 sm:w-14 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-surface-border/50 bg-surface-card">
                             {firstItem?.product_image ? (
@@ -92,18 +105,18 @@ export function OrderHistoryCard({
 
                                 <button
                                     type="button"
-                                    onClick={() => onToggle(order.order_id)}
+                                    onClick={(event) => { event.stopPropagation(); onToggle(order.order_id); }}
                                     aria-label={expanded ? "Thu gọn chi tiết" : "Xem chi tiết"}
                                     className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md border border-surface-border bg-surface-card text-text-sub transition-colors hover:bg-surface-hover hover:text-text-main"
                                 >
-                                    {expanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                                    <Eye className="h-4 w-4" />
                                 </button>
                             </div>
 
                             {extraItemsCount > 0 && (
                                 <button
                                     type="button"
-                                    onClick={() => onToggle(order.order_id)}
+                                    onClick={(event) => { event.stopPropagation(); onToggle(order.order_id); }}
                                     className="mt-1.5 inline-flex items-center gap-1 text-xs font-medium text-primary hover:text-primary-hover transition-colors"
                                 >
                                     {expanded ? "Thu gọn" : `+${extraItemsCount} sản phẩm khác`}
@@ -118,7 +131,7 @@ export function OrderHistoryCard({
                         {canUserPay && onPay && (
                             <button
                                 type="button"
-                                onClick={() => onPay(order.order_id)}
+                                onClick={(event) => { event.stopPropagation(); onPay(order.order_id); }}
                                 disabled={isPaying}
                                 className="inline-flex items-center gap-1.5 rounded-lg bg-primary hover:bg-primary-hover px-3 py-1.5 text-xs sm:text-sm font-medium text-primary-contrast shadow-xs transition-colors disabled:opacity-50"
                             >
@@ -134,7 +147,7 @@ export function OrderHistoryCard({
                         {canUserComplete && (
                             <button
                                 type="button"
-                                onClick={() => onComplete(order.order_id)}
+                                onClick={(event) => { event.stopPropagation(); onComplete(order.order_id); }}
                                 disabled={isCompleting}
                                 className="inline-flex items-center gap-1.5 rounded-lg bg-primary hover:bg-primary-hover px-3 py-1.5 text-xs sm:text-sm font-medium text-primary-contrast shadow-xs transition-colors disabled:opacity-50"
                             >
@@ -146,7 +159,7 @@ export function OrderHistoryCard({
                         {canUserCancel && (
                             <button
                                 type="button"
-                                onClick={() => onCancel(order.order_id)}
+                                onClick={(event) => { event.stopPropagation(); onCancel(order.order_id); }}
                                 disabled={isCancelling}
                                 className="inline-flex items-center gap-1.5 rounded-lg border border-status-error/25 bg-status-error-bg hover:bg-status-error-bg/80 px-3 py-1.5 text-xs sm:text-sm font-medium text-status-error transition-colors disabled:opacity-50"
                             >
