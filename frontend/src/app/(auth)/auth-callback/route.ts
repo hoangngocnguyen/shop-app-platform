@@ -51,6 +51,26 @@ export async function GET(request: Request) {
     return NextResponse.redirect(loginUrl.toString());
   }
 
-  return NextResponse.redirect(`${origin}${next}`);
+  // OAuth cũng chọn đích theo role giống đăng nhập email/password.
+  let destination = next;
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+  if (apiUrl) {
+    try {
+      const meResponse = await fetch(`${apiUrl.replace(/\/$/, "")}/auth/me`, {
+        headers: { Authorization: `Bearer ${data.session.access_token}` },
+        cache: "no-store",
+      });
+      if (meResponse.ok) {
+        const payload = await meResponse.json();
+        if (payload?.data?.role?.code?.toUpperCase() === "ADMIN") {
+          destination = ROUTES.ADMIN.DASHBOARD;
+        }
+      }
+    } catch {
+      // Giữ đích OAuth mặc định nếu không đọc được thông tin bổ sung.
+    }
+  }
+
+  return NextResponse.redirect(`${origin}${destination}`);
 }
 
