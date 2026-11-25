@@ -15,6 +15,7 @@ import {
   Shield,
   Sparkles,
   ChartNoAxesCombined,
+  Newspaper,
 } from "lucide-react";
 import { AdminNavItem } from "../types";
 import { ROUTES } from "@/constants/routes";
@@ -44,6 +45,12 @@ const NAV_ITEMS: AdminNavItem[] = [
     label: "Danh mục",
     href: ROUTES.ADMIN.CATEGORIES,
     icon: FolderTree,
+  },
+  {
+    id: "posts",
+    label: "Bài viết",
+    href: ROUTES.ADMIN.POSTS,
+    icon: Newspaper,
   },
   {
     id: "orders",
