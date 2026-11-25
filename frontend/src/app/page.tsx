@@ -10,6 +10,7 @@ import {
   ProductCardSkeleton,
 } from "@/features/products/components";
 import { useProductStore } from "@/features/products/stores";
+import { FeaturedPostsSection } from "@/features/posts/components/FeaturedPostsSection";
 import { EmptyState, Button } from "@/components/ui";
 import { AlertCircle, ChevronDown, CheckCircle2, PackageSearch } from "lucide-react";
 
@@ -132,7 +133,7 @@ export default function HomePage() {
               </div>
 
               {/* KHU VỰC PHÂN TRANG DẠNG CUỘN / TẢI THÊM (LOAD MORE) */}
-              <div className="flex flex-col items-center justify-center pt-8 pb-4 gap-3">
+              <div className="flex flex-col items-center justify-center pt-4 pb-1 gap-2">
                 {page < totalPages ? (
                   <div className="flex flex-col items-center gap-2.5">
                     <Button
@@ -168,6 +169,9 @@ export default function HomePage() {
           )}
 
         </section>
+
+        {/* 4. BÀI VIẾT NỔI BẬT GẦN NHẤT */}
+        <FeaturedPostsSection />
       </main>
 
       {/* CHÂN TRANG FOOTER */}
