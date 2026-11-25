@@ -7,6 +7,7 @@ from alembic import context
 # Import từ app
 from src.app.core.config import settings
 from src.app.core.database import Base
+from src.app.modules.banners.models import Banner  # noqa: F401
 from src.app.modules.carts.model import Cart, CartItem  # noqa: F401
 from src.app.modules.categories.model import Category  # noqa: F401
 from src.app.modules.locations.model import (  # noqa: F401
