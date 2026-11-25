@@ -3,8 +3,8 @@ from decimal import Decimal
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field, HttpUrl
-from src.app.core.pagination import PaginatedResponse
 
+from src.app.core.pagination import PaginatedResponse
 from src.app.modules.orders.enums.order_enums import (
     CancelledByType,
     OrderStatus,
@@ -125,8 +125,10 @@ class OrderSummaryResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
-# Chuẩn hóa phân trang PaginatedResponse toàn dự án
-OrderListResponse = PaginatedResponse[OrderSummaryResponse]
+class OrderListResponse(PaginatedResponse[OrderSummaryResponse]):
+    """Danh sách đơn hàng phân trang kèm số lượng theo từng trạng thái."""
+
+    status_counts: dict[str, int] = Field(default_factory=dict)
 
 
 class OrderLogResponse(BaseModel):
@@ -268,10 +270,16 @@ class OrderActionResponse(BaseModel):
 class OrderStatusCountDTO(BaseModel):
     """Thống kê số lượng đơn hàng theo từng trạng thái phục vụ hiển thị Tab Admin."""
 
-    status: str = Field(..., description="Mã trạng thái đơn hàng (hoặc 'ALL' cho tất cả)")
+    status: str = Field(
+        ..., description="Mã trạng thái đơn hàng (hoặc 'ALL' cho tất cả)"
+    )
     label: str = Field(..., description="Nhãn tiếng Việt của trạng thái")
-    label_vi: str | None = Field(default=None, description="Nhãn tiếng Việt của trạng thái")
-    count: int = Field(default=0, ge=0, description="Số lượng đơn hàng thuộc trạng thái này")
+    label_vi: str | None = Field(
+        default=None, description="Nhãn tiếng Việt của trạng thái"
+    )
+    count: int = Field(
+        default=0, ge=0, description="Số lượng đơn hàng thuộc trạng thái này"
+    )
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -281,7 +289,9 @@ class AdminOrderSummaryResponse(BaseModel):
 
     order_id: str = Field(..., description="Mã định danh đơn hàng")
     user_id: UUID = Field(..., description="ID người mua hàng")
-    customer_name: str | None = Field(default=None, description="Tên tài khoản người mua")
+    customer_name: str | None = Field(
+        default=None, description="Tên tài khoản người mua"
+    )
     customer_email: str | None = Field(default=None, description="Email người mua")
     shipping_recipient_name: str = Field(..., description="Tên người nhận hàng")
     shipping_phone: str = Field(..., description="Số điện thoại người nhận")
@@ -289,13 +299,19 @@ class AdminOrderSummaryResponse(BaseModel):
     status: OrderStatus = Field(..., description="Trạng thái hiện tại của đơn hàng")
     payment_method: PaymentMethod = Field(..., description="Phương thức thanh toán")
     payment_status: PaymentStatus = Field(..., description="Trạng thái thanh toán")
-    payment_date: datetime | None = Field(default=None, description="Thời điểm thanh toán thành công")
+    payment_date: datetime | None = Field(
+        default=None, description="Thời điểm thanh toán thành công"
+    )
     total: Decimal | None = Field(default=None, ge=0, description="Tổng tiền đơn hàng")
     total_amount: Decimal = Field(..., ge=0, description="Tổng tiền đơn hàng")
     total_items: int = Field(..., ge=1, description="Tổng số lượng sản phẩm")
-    order_date: datetime | None = Field(default=None, description="Thời gian tạo đơn hàng")
+    order_date: datetime | None = Field(
+        default=None, description="Thời gian tạo đơn hàng"
+    )
     created_at: datetime = Field(..., description="Thời gian tạo đơn hàng")
-    delivered_at: datetime | None = Field(default=None, description="Thời gian giao hàng thành công")
+    delivered_at: datetime | None = Field(
+        default=None, description="Thời gian giao hàng thành công"
+    )
     cancel_reason: str | None = Field(default=None, description="Lý do hủy đơn nếu có")
     cancelled_by_type: CancelledByType | str | None = Field(
         default=None,
@@ -314,8 +330,12 @@ class BulkOrderActionResultItem(BaseModel):
 
     order_id: str = Field(..., description="Mã đơn hàng")
     success: bool = Field(..., description="Thành công hay thất bại")
-    previous_status: OrderStatus | str | None = Field(default=None, description="Trạng thái trước khi cập nhật")
-    current_status: OrderStatus | str | None = Field(default=None, description="Trạng thái sau khi cập nhật")
+    previous_status: OrderStatus | str | None = Field(
+        default=None, description="Trạng thái trước khi cập nhật"
+    )
+    current_status: OrderStatus | str | None = Field(
+        default=None, description="Trạng thái sau khi cập nhật"
+    )
     message: str = Field(..., description="Thông báo chi tiết kết quả xử lý đơn này")
 
 

@@ -7,8 +7,8 @@ from src.app.core.pagination import PaginatedResponse, PaginationParams
 from src.app.core.response import ApiResponse, success_response
 from src.app.modules.products.schema import (
     PriceOptionDTO,
-    ProductDetailResponse,
-    ProductResponse,
+    PublicProductDetailResponse,
+    PublicProductResponse,
 )
 from src.app.modules.products.service import ProductService
 
@@ -39,7 +39,7 @@ def get_price_options() -> ApiResponse[list[PriceOptionDTO]]:
 
 @router.get(
     "",
-    response_model=ApiResponse[PaginatedResponse[ProductResponse]],
+    response_model=ApiResponse[PaginatedResponse[PublicProductResponse]],
     status_code=status.HTTP_200_OK,
     summary="Lọc và tìm kiếm danh sách sản phẩm (Client)",
     description="API chính cho trang chủ và trang danh mục sản phẩm của khách hàng. Hỗ trợ lọc theo danh mục, dải giá, từ khóa và sắp xếp.",
@@ -70,7 +70,7 @@ def get_products(
         description="Tiêu chí sắp xếp: newest (Mới nhất), price_asc (Giá tăng dần), price_desc (Giá giảm dần), best_seller (Bán chạy nhất)",
     ),
     db: Session = Depends(get_db),
-) -> ApiResponse[PaginatedResponse[ProductResponse]]:
+) -> ApiResponse[PaginatedResponse[PublicProductResponse]]:
     """
     Endpoint tìm kiếm & lọc sản phẩm nâng cao:
     - **search**: Nếu có truyền từ khóa search, hệ thống ưu tiên reset về page = 1.
@@ -97,15 +97,15 @@ def get_products(
 
 @router.get(
     "/{id}",
-    response_model=ApiResponse[ProductDetailResponse],
+    response_model=ApiResponse[PublicProductDetailResponse],
     status_code=status.HTTP_200_OK,
     summary="Lấy chi tiết một sản phẩm theo ID (Client)",
-    description="Lấy đầy đủ thông tin chi tiết của sản phẩm (Tên, giá gốc, giá sale, tồn kho, rating, thương hiệu, danh mục cha).",
+    description="Lấy đầy đủ thông tin chi tiết của sản phẩm (Tên, giá gốc, giá sale, trạng thái còn hàng, rating, thương hiệu, danh mục cha).",
 )
 def get_product_detail(
     id: int = Path(..., description="Mã định danh duy nhất của sản phẩm"),
     db: Session = Depends(get_db),
-) -> ApiResponse[ProductDetailResponse]:
+) -> ApiResponse[PublicProductDetailResponse]:
     """
     Endpoint lấy chi tiết sản phẩm:
     """
@@ -118,7 +118,7 @@ def get_product_detail(
 
 @router.get(
     "/{id}/related",
-    response_model=ApiResponse[list[ProductResponse]],
+    response_model=ApiResponse[list[PublicProductResponse]],
     status_code=status.HTTP_200_OK,
     summary="Lấy danh sách sản phẩm liên quan (Client)",
     description="Lấy các sản phẩm có cùng danh mục với sản phẩm hiện tại, tự động loại trừ chính sản phẩm đang xem.",
@@ -127,7 +127,7 @@ def get_related_products(
     id: int = Path(..., description="ID sản phẩm đang xem"),
     limit: int = Query(default=4, ge=1, le=20, description="Số lượng sản phẩm liên quan cần lấy"),
     db: Session = Depends(get_db),
-) -> ApiResponse[list[ProductResponse]]:
+) -> ApiResponse[list[PublicProductResponse]]:
     """
     Endpoint lấy sản phẩm liên quan:
     """

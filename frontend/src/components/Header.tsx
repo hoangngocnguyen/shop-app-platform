@@ -3,11 +3,23 @@
 import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Search, ShoppingCart, ShoppingBag, User as UserIcon, LogOut, MapPin, ChevronDown } from "lucide-react";
+import {
+    Search,
+    ShoppingCart,
+    ShoppingBag,
+    User as UserIcon,
+    LogOut,
+    MapPin,
+    ChevronDown,
+    ShieldCheck,
+} from "lucide-react";
 import { ROUTES } from "@/constants/routes";
 import { useAuthStore } from "@/features/auth/stores/useAuthStore";
 import { useCartStore } from "@/features/cart/stores";
 import { useProductStore } from "@/features/products/stores";
+
+const isValidImageUrl = (url: string): boolean =>
+    /^(https?:\/\/|\/|data:image\/|blob:)/i.test(url);
 
 export default function Header() {
     const router = useRouter();
@@ -16,7 +28,13 @@ export default function Header() {
     const { setFilter, filterParams } = useProductStore();
 
     const [searchInput, setSearchInput] = useState(filterParams.search || "");
+    const [prevFilterSearch, setPrevFilterSearch] = useState(filterParams.search);
+    if (filterParams.search !== prevFilterSearch) {
+        setPrevFilterSearch(filterParams.search);
+        setSearchInput(filterParams.search || "");
+    }
     const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+    const [failedAvatarUrl, setFailedAvatarUrl] = useState<string | null>(null);
     const userMenuRef = useRef<HTMLDivElement>(null);
 
     // Lấy giỏ hàng khi người dùng đã đăng nhập
@@ -26,21 +44,29 @@ export default function Header() {
         }
     }, [isAuthenticated, fetchCart]);
 
-    // Bắt sự kiện click ra ngoài để đóng user dropdown
+    // Bắt sự kiện click ra ngoài hoặc phím Escape để đóng user dropdown
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
             if (userMenuRef.current && !userMenuRef.current.contains(event.target as Node)) {
                 setIsUserMenuOpen(false);
             }
         };
+        const handleKeyDown = (event: KeyboardEvent) => {
+            if (event.key === "Escape") {
+                setIsUserMenuOpen(false);
+            }
+        };
         document.addEventListener("mousedown", handleClickOutside);
-        return () => document.removeEventListener("mousedown", handleClickOutside);
+        document.addEventListener("keydown", handleKeyDown);
+        return () => {
+            document.removeEventListener("mousedown", handleClickOutside);
+            document.removeEventListener("keydown", handleKeyDown);
+        };
     }, []);
 
     const handleSearchSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        setFilter({ search: searchInput.trim() });
-        // Nếu không ở trang chủ, chuyển hướng về trang chủ
+        setFilter({ search: searchInput.trim() || undefined });
         if (window.location.pathname !== "/") {
             router.push("/");
         }
@@ -53,6 +79,12 @@ export default function Header() {
     };
 
     const cartCount = cart?.items?.reduce((sum, item) => sum + item.quantity, 0) || 0;
+    const displayName = user?.name || user?.username || "Tài khoản của tôi";
+    const avatarInitial = displayName.trim().charAt(0).toUpperCase();
+    const avatarUrl = user?.avatar_url?.trim() || "";
+    const showAvatarImage =
+        isValidImageUrl(avatarUrl) && failedAvatarUrl !== avatarUrl;
+    const isAdmin = user?.role?.code?.toUpperCase() === "ADMIN";
 
     return (
         <header className="border-b border-surface-border bg-surface-card sticky top-0 z-50 shadow-xs">
@@ -86,7 +118,7 @@ export default function Header() {
                 {/* SEARCH BAR */}
                 <form
                     onSubmit={handleSearchSubmit}
-                    className="flex-1 max-w-2xl flex items-center border border-surface-border rounded-xl sm:rounded-2xl overflow-hidden bg-surface-bg focus-within:border-[#002b49] focus-within:ring-2 focus-within:ring-[#002b49]/10 transition-all duration-200"
+                    className="flex-1 max-w-2xl flex items-center border border-surface-border rounded-xl sm:rounded-2xl overflow-hidden bg-surface-bg focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/15 transition-all duration-200"
                 >
                     <input
                         type="text"
@@ -98,9 +130,9 @@ export default function Header() {
                     <button
                         type="submit"
                         aria-label="Tìm kiếm sản phẩm"
-                        className="px-3.5 sm:px-5 py-2.5 sm:py-3 bg-[#002b49] hover:bg-[#001c30] text-white transition-colors cursor-pointer flex items-center justify-center shrink-0"
+                        className="px-3.5 sm:px-5 py-2.5 sm:py-3 bg-primary hover:bg-primary-hover text-primary-contrast transition-colors cursor-pointer flex items-center justify-center shrink-0"
                     >
-                        <Search className="w-4 h-4 sm:w-4 sm:h-4" />
+                        <Search className="w-4 h-4" />
                     </button>
                 </form>
 
@@ -130,11 +162,26 @@ export default function Header() {
                     {isAuthenticated() ? (
                         <div className="relative" ref={userMenuRef}>
                             <button
+                                type="button"
                                 onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
-                                className="flex items-center gap-1.5 p-1.5 sm:px-3 sm:py-2 rounded-xl hover:bg-surface-hover border border-surface-border text-text-main transition-all cursor-pointer"
+                                aria-expanded={isUserMenuOpen}
+                                aria-haspopup="menu"
+                                className="flex items-center gap-2 p-1.5 sm:px-3 sm:py-1.5 rounded-xl hover:bg-surface-hover border border-surface-border text-text-main transition-all cursor-pointer"
                             >
-                                <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-[#002b49] text-white font-bold flex items-center justify-center text-xs sm:text-sm shadow-xs">
-                                    {(user?.name || user?.username) ? (user.name || user.username).charAt(0).toUpperCase() : "T"}
+                                <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full overflow-hidden bg-primary text-primary-contrast font-bold flex items-center justify-center text-xs sm:text-sm shadow-xs shrink-0">
+                                    {showAvatarImage ? (
+                                        // eslint-disable-next-line @next/next/no-img-element
+                                        <img
+                                            src={avatarUrl}
+                                            alt={displayName}
+                                            onError={() => setFailedAvatarUrl(avatarUrl)}
+                                            className="w-full h-full object-cover"
+                                        />
+                                    ) : avatarInitial ? (
+                                        <span>{avatarInitial}</span>
+                                    ) : (
+                                        <UserIcon className="w-4 h-4" />
+                                    )}
                                 </div>
                                 <span className="text-xs sm:text-sm font-semibold hidden sm:inline">
                                     Của tôi
@@ -144,12 +191,32 @@ export default function Header() {
 
                             {/* DROPDOWN MENU */}
                             {isUserMenuOpen && (
-                                <div className="absolute right-0 mt-2 w-48 bg-surface-card rounded-2xl border border-surface-border shadow-brand-md py-1.5 z-50 animate-in fade-in duration-200">
+                                <div
+                                    role="menu"
+                                    className="absolute right-0 mt-2 w-52 bg-surface-card rounded-2xl border border-surface-border shadow-brand-md py-1.5 z-50 animate-in fade-in duration-200"
+                                >
                                     <div className="px-4 py-2 border-b border-surface-border">
                                         <p className="text-xs font-semibold text-text-main truncate">
-                                            {user?.name || user?.username || "Tài khoản của tôi"}
+                                            {displayName}
                                         </p>
+                                        {isAdmin && (
+                                            <span className="mt-1 inline-block rounded-md bg-primary-light px-1.5 py-0.5 text-[10px] font-bold text-primary">
+                                                Quản trị viên
+                                            </span>
+                                        )}
                                     </div>
+
+                                    {isAdmin && (
+                                        <Link
+                                            href={ROUTES.ADMIN.DASHBOARD}
+                                            onClick={() => setIsUserMenuOpen(false)}
+                                            className="flex items-center gap-2.5 px-4 py-2.5 text-xs font-semibold text-primary hover:bg-primary-light/60 transition-colors border-b border-surface-border"
+                                        >
+                                            <ShieldCheck className="w-4 h-4 text-primary" />
+                                            <span>Trang quản trị</span>
+                                        </Link>
+                                    )}
+
                                     <Link
                                         href={ROUTES.USER.PROFILE}
                                         onClick={() => setIsUserMenuOpen(false)}
@@ -175,6 +242,7 @@ export default function Header() {
                                         <span>Đơn hàng của bạn</span>
                                     </Link>
                                     <button
+                                        type="button"
                                         onClick={handleLogout}
                                         className="w-full flex items-center gap-2.5 px-4 py-2.5 text-xs text-status-error hover:bg-status-error-bg transition-colors border-t border-surface-border mt-1 cursor-pointer"
                                     >
@@ -194,7 +262,7 @@ export default function Header() {
                             </Link>
                             <Link
                                 href={ROUTES.AUTH.REGISTER}
-                                className="px-3.5 py-2 text-xs sm:text-sm font-semibold rounded-xl bg-[#002b49] hover:bg-[#001c30] text-white transition-colors shadow-brand-sm"
+                                className="px-3.5 py-2 text-xs sm:text-sm font-semibold rounded-xl bg-primary hover:bg-primary-hover text-primary-contrast transition-colors shadow-brand-sm"
                             >
                                 Đăng ký
                             </Link>

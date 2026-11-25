@@ -71,7 +71,7 @@ export default function CartFormModal({
         if (data.quantity > item.stock_quantity) {
             setError("quantity", {
                 type: "manual",
-                message: `Chỉ còn ${item.stock_quantity} sản phẩm trong kho`,
+                message: "Số lượng vượt quá hàng hiện có trong kho",
             });
             return;
         }
@@ -104,7 +104,10 @@ export default function CartFormModal({
                             {item.product_name}
                         </p>
                         <label className="block text-xs text-text-sub mb-3">
-                            Số lượng tồn kho: <span className="font-semibold text-text-main">{item.stock_quantity}</span>
+                            Tình trạng:{" "}
+                            <span className="font-semibold text-text-main">
+                                {item.stock_quantity > 0 ? "Còn hàng" : "Hết hàng"}
+                            </span>
                         </label>
 
                         {/* Bộ điều khiển tăng/giảm số lượng */}

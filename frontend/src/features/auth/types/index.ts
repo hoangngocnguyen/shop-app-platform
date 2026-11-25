@@ -3,6 +3,8 @@ export interface User {
   name: string;
   username: string;
   avatar_url: string;
+  provider?: string | null;
+  providers?: string[];
   role: RoleResponse;
 }
 

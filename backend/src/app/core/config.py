@@ -36,6 +36,27 @@ class Settings(BaseSettings):
     VNP_RETURN_URL: str = Field(default="")
     VNP_IPN_URL: str = Field(default="")
 
+    # AI Chat Assistant (Google Gemini API)
+    GEMINI_API_KEY: str = Field(default="")
+    GEMINI_MODEL: str = Field(default="gemini-3.5-flash-lite")
+    GEMINI_EMBEDDING_MODEL: str = Field(default="gemini-embedding-001")
+    GEMINI_TIMEOUT_SECONDS: float = Field(default=30.0)
+
+    # Email SMTP (Gmail)
+    SMTP_HOST: str = Field(default="smtp.gmail.com")
+    SMTP_PORT: int = Field(default=587)
+    SMTP_USER: str = Field(default="")
+    SMTP_PASSWORD: str = Field(default="")
+    SMTP_FROM_NAME: str = Field(default="Shop App Platform")
+    SMTP_FROM_EMAIL: str = Field(default="")
+    SMTP_TLS: bool = Field(default=True)
+
+    # Frontend Application
+    FRONTEND_URL: str = Field(default="http://localhost:3000")
+
+    # Supabase Admin API
+    SUPABASE_SERVICE_ROLE_KEY: str = Field(default="")
+
     @property
     def JWKS_URL(self) -> str:
         return f"{self.SUPABASE_URL}/auth/v1/.well-known/jwks.json"

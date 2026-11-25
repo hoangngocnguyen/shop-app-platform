@@ -11,7 +11,6 @@ from src.app.modules.carts.model import Cart, CartItem
 from src.app.modules.orders.model import Order, OrderDetail, OrderLog
 from src.app.modules.products.model import Product
 from src.app.modules.shipping_addresses.model import ShippingAddress
-from src.app.modules.users.model import User
 
 
 class OrderRepository:
@@ -254,22 +253,23 @@ class OrderRepository:
         Lấy danh sách tất cả đơn hàng cho Admin, hỗ trợ lọc đa tiêu chí
         (trạng thái đơn, PTTT, trạng thái TT) và tìm kiếm (mã đơn, tên/sđt người nhận, tên sản phẩm).
         """
-        base_query = (
-            select(Order)
-            .options(
-                selectinload(Order.order_details).joinedload(OrderDetail.product),
-                joinedload(Order.user),
-            )
+        base_query = select(Order).options(
+            selectinload(Order.order_details).joinedload(OrderDetail.product),
+            joinedload(Order.user),
         )
 
         if status and status.upper() != "ALL":
             base_query = base_query.where(Order.status == status.upper())
 
         if payment_method:
-            base_query = base_query.where(Order.payment_method == payment_method.upper())
+            base_query = base_query.where(
+                Order.payment_method == payment_method.upper()
+            )
 
         if payment_status:
-            base_query = base_query.where(Order.payment_status == payment_status.upper())
+            base_query = base_query.where(
+                Order.payment_status == payment_status.upper()
+            )
 
         if search and search.strip():
             search_pattern = f"%{search.strip()}%"
@@ -312,6 +312,16 @@ class OrderRepository:
     def count_orders_by_statuses(self) -> dict[str, int]:
         """Đếm số lượng đơn hàng theo từng trạng thái phục vụ hiển thị Tab Admin."""
         stmt = select(Order.status, func.count(Order.order_id)).group_by(Order.status)
+        rows = self.db.execute(stmt).all()
+        return {str(row[0]): int(row[1]) for row in rows}
+
+    def count_orders_by_statuses_for_user(self, user_id: UUID) -> dict[str, int]:
+        """Đếm đơn hàng theo trạng thái của một người dùng."""
+        stmt = (
+            select(Order.status, func.count(Order.order_id))
+            .where(Order.user_id == user_id)
+            .group_by(Order.status)
+        )
         rows = self.db.execute(stmt).all()
         return {str(row[0]): int(row[1]) for row in rows}
 

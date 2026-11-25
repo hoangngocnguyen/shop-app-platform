@@ -5,6 +5,7 @@ import { Be_Vietnam_Pro } from 'next/font/google';
 import { getThemeStyles } from '@/lib/theme-injector';
 import ToastContainer from '@/common/components/ToastContainer';
 import ConfirmModal from '@/common/components/ConfirmContainer';
+import { ChatWidget } from '@/features/chat';
 
 const beVietnam = Be_Vietnam_Pro({
   subsets: ['latin', 'vietnamese'],
@@ -29,6 +30,7 @@ export default function RootLayout({
           {children}
           <ToastContainer />
           <ConfirmModal />
+          <ChatWidget />
         </AuthProvider>
       </body>
     </html>

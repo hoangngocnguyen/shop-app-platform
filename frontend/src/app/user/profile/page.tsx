@@ -17,12 +17,15 @@ import {
   MapPin,
   ChevronRight,
   UserCheck,
+  KeyRound,
+  ShieldAlert,
 } from "lucide-react";
 import Link from "next/link";
 import { ROUTES } from "@/constants/routes";
 import { useProfileStore } from "@/features/profile/stores";
 import EditProfileModal from "@/features/profile/components/EditProfileModal";
 import UpdateAvatarModal from "@/features/profile/components/UpdateAvatarModal";
+import ChangePasswordModal from "@/features/profile/components/ChangePasswordModal";
 import { useAuthStore } from "@/features/auth";
 import { confirm } from "@/common/stores/useConfirmStore";
 import { toast } from "@/common/stores/useToastStore";
@@ -35,10 +38,15 @@ export default function UserProfilePage() {
 
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isAvatarModalOpen, setIsAvatarModalOpen] = useState(false);
+  const [isChangePasswordModalOpen, setIsChangePasswordModalOpen] = useState(false);
   const [isDeletingAvatar, setIsDeletingAvatar] = useState(false);
   const router = useRouter();
 
-  const { logout } = useAuthStore();
+  const { logout, user: authUser } = useAuthStore();
+  const authProviders = [...(authUser?.providers ?? []), authUser?.provider ?? ""];
+  const canChangePassword = authProviders.some(
+    (provider) => provider.toUpperCase() === "EMAIL",
+  );
 
   const handleLogout = async () => {
     const isConfirmed = await confirm({
@@ -330,6 +338,40 @@ export default function UserProfilePage() {
             </div>
           </div>
 
+        <section className="lg:col-span-3 rounded-3xl border border-surface-border bg-surface-card p-6 shadow-brand-md sm:p-8">
+          <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-start gap-4">
+              <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-primary-light text-primary">
+                {canChangePassword ? (
+                  <KeyRound aria-hidden="true" className="h-5 w-5" />
+                ) : (
+                  <ShieldAlert aria-hidden="true" className="h-5 w-5" />
+                )}
+              </span>
+              <div>
+                <h2 className="text-lg font-bold text-text-main">Bảo mật tài khoản</h2>
+                <p className="mt-1 max-w-2xl text-sm leading-relaxed text-text-sub">
+                  {canChangePassword
+                    ? "Đổi mật khẩu bằng cách xác nhận mật khẩu hiện tại."
+                    : authProviders.some(Boolean)
+                      ? "Mật khẩu của tài khoản đăng nhập bằng Google hoặc nhà cung cấp khác được quản lý tại dịch vụ đó."
+                      : "Không xác định được phương thức đăng nhập. Hãy đăng nhập lại để đồng bộ thông tin tài khoản."}
+                </p>
+              </div>
+            </div>
+            {canChangePassword && (
+              <button
+                type="button"
+                onClick={() => setIsChangePasswordModalOpen(true)}
+                className="inline-flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-2xl bg-primary px-5 py-3 text-sm font-semibold text-primary-contrast shadow-brand-sm transition hover:bg-primary-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+              >
+                <KeyRound aria-hidden="true" className="h-4 w-4" />
+                Đổi mật khẩu
+              </button>
+            )}
+          </div>
+        </section>
+
         </div>
       </div>
 
@@ -342,6 +384,11 @@ export default function UserProfilePage() {
       <UpdateAvatarModal
         isOpen={isAvatarModalOpen}
         onClose={() => setIsAvatarModalOpen(false)}
+      />
+
+      <ChangePasswordModal
+        isOpen={isChangePasswordModalOpen}
+        onClose={() => setIsChangePasswordModalOpen(false)}
       />
 
     </div>
