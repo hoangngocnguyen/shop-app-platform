@@ -136,7 +136,9 @@ export interface PaginatedOrders {
     page_size: number;
     total_pages: number;
 }
-export type OrderListResponse = PaginatedOrders;
+export interface OrderListResponse extends PaginatedOrders {
+    status_counts?: Partial<Record<OrderStatus | "ALL", number>>;
+}
 export interface OrderLogResponse { status: OrderStatus | string; note: string | null; timestamp: string }
 export interface OrderDetailResponse {
     order_id: string;
