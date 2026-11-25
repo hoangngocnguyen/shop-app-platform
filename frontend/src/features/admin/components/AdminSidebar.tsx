@@ -9,6 +9,7 @@ import {
   FolderTree,
   ShoppingCart,
   Users,
+  Image,
   Store,
   ChevronLeft,
   ChevronRight,
@@ -43,6 +44,12 @@ const NAV_ITEMS: AdminNavItem[] = [
     label: "Danh mục",
     href: ROUTES.ADMIN.CATEGORIES,
     icon: FolderTree,
+  },
+  {
+    id: "banners",
+    label: "Banner",
+    href: ROUTES.ADMIN.BANNERS,
+    icon: Image,
   },
   {
     id: "orders",

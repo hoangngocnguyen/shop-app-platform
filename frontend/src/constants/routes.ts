@@ -31,6 +31,7 @@ export const ROUTES = {
     DASHBOARD: '/admin',
     PRODUCTS: '/admin/product',
     CATEGORIES: '/admin/category',
+    BANNERS: '/admin/banners',
     ORDERS: '/admin/orders',
     USERS: '/admin/users',
   },
