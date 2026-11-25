@@ -68,6 +68,7 @@ class CheckoutService:
         Trả về Snapshot cho Client mà không lưu session vào DB hay Redis.
         """
         checkout_items: list[CheckoutItemResponse] = []
+        verified_cart_item_ids: list[int] = []
 
         if request.checkout_type == CheckoutType.BUY_NOW:
             item_req = request.buy_now_item
@@ -104,6 +105,10 @@ class CheckoutService:
             if missing_ids:
                 raise NotFoundException("Sản phẩm trong giỏ hàng", missing_ids[0])
 
+            verified_cart_item_ids = [
+                item_id for item_id in cart_ids if item_id in cart_item_lookup
+            ]
+
             for cart_item in cart_items:
                 product = cart_item.product
                 if not product:
@@ -128,6 +133,8 @@ class CheckoutService:
         subtotal = sum((item.total_price for item in checkout_items), Decimal("0.00"))
 
         return CheckoutPreviewResponse(
+            checkout_type=request.checkout_type,
+            cart_item_ids=verified_cart_item_ids,
             items=checkout_items,
             subtotal=subtotal,
         )

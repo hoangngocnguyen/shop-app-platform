@@ -4,7 +4,7 @@ from datetime import UTC, datetime
 from typing import Any
 from uuid import UUID
 
-from sqlalchemy import desc, func, or_, select
+from sqlalchemy import delete, desc, func, or_, select
 from sqlalchemy.orm import Session, joinedload, selectinload
 
 from src.app.modules.carts.model import Cart, CartItem
@@ -59,7 +59,10 @@ class OrderRepository:
         return list(self.db.scalars(stmt).all())
 
     def get_cart_items_for_user(
-        self, user_id: UUID, cart_item_ids: Sequence[int]
+        self,
+        user_id: UUID,
+        cart_item_ids: Sequence[int],
+        for_update: bool = False,
     ) -> list[CartItem]:
         """Lấy các mục giỏ hàng theo cart_item_id, nhưng chỉ từ giỏ hàng của user hiện tại."""
         if not cart_item_ids:
@@ -76,7 +79,24 @@ class OrderRepository:
             .options(selectinload(CartItem.product))
             .where(Cart.user_id == user_id, CartItem.cart_item_id.in_(unique_ids))
         )
+        if for_update:
+            stmt = stmt.with_for_update(of=CartItem)
         return list(self.db.scalars(stmt).all())
+
+    def delete_cart_items_for_user(
+        self, user_id: UUID, cart_item_ids: Sequence[int]
+    ) -> int:
+        """Xóa các dòng cart đã chọn, chỉ khi chúng thuộc cart của user."""
+        unique_ids = list(dict.fromkeys(int(item_id) for item_id in cart_item_ids))
+        if not unique_ids:
+            return 0
+
+        stmt = delete(CartItem).where(
+            CartItem.cart_item_id.in_(unique_ids),
+            CartItem.cart_id.in_(select(Cart.cart_id).where(Cart.user_id == user_id)),
+        )
+        result = self.db.execute(stmt)
+        return int(result.rowcount or 0)
 
     def get_shipping_address(
         self, address_id: int, user_id: UUID
@@ -130,8 +150,6 @@ class OrderRepository:
         )
         self.db.add(initial_log)
 
-        self.db.commit()
-        self.db.refresh(order)
         return order
 
     def add_order_log(

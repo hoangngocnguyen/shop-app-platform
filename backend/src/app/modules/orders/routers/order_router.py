@@ -86,7 +86,8 @@ def get_customer_cancellation_reasons() -> (
     description=(
         "Tạo đơn hàng chính thức từ snapshot checkout, địa chỉ nhận hàng và PTTT. "
         "Server kiểm tra chéo lại tồn kho và giá hiện tại trong Database một lần nữa "
-        "để ngăn chặn thay đổi giá (409) hoặc hết hàng (409). Trừ kho và ghi nhận DB."
+        "để ngăn chặn thay đổi giá (409) hoặc hết hàng (409). Với checkout CART, "
+        "server xóa các dòng cart đã chọn trong cùng transaction tạo đơn và trừ kho."
     ),
 )
 def create_order(
