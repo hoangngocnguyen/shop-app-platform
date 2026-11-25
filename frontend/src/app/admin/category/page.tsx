@@ -143,7 +143,7 @@ export default function AdminCategoryPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-[var(--color-surface-bg,#f8fafc)] via-white to-[var(--color-surface-bg,#f8fafc)] text-[var(--color-text-main,#0f172a)] antialiased selection:bg-[var(--color-primary,#0f766e)] selection:text-white">
-      <main className="max-w-[1240px] mx-auto px-4 pt-2 pb-8 md:pt-3 md:pb-10 space-y-6">
+      <main className="mx-auto px-4 pt-2 pb-8 md:pt-3 md:pb-10 space-y-6">
         
         {/* Header danh sách danh mục */}
         <div className="group flex flex-col gap-4 rounded-2xl border border-[var(--color-surface-border,#e2e8f0)] bg-white px-4 py-3.5 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:border-primary/20 hover:shadow-md sm:flex-row sm:items-center sm:justify-between">
