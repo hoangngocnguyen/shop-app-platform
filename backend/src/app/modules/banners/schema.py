@@ -49,7 +49,7 @@ def _check_range(start: datetime | None, end: datetime | None) -> None:
 class BannerCreate(BaseModel):
     title: str = Field(min_length=1, max_length=255)
     image_url: str
-    image_public_id: str | None = Field(default=None, max_length=255)
+    image_public_id: str = Field(min_length=1, max_length=255)
     mobile_image_url: str | None = None
     mobile_image_public_id: str | None = Field(default=None, max_length=255)
     alt_text: str | None = Field(default=None, max_length=255)
@@ -74,6 +74,14 @@ class BannerCreate(BaseModel):
         v = _clean_image(v)
         if v is None:
             raise ValueError("image_url không được rỗng")
+        return v
+
+    @field_validator("image_public_id")
+    @classmethod
+    def _image_public_id(cls, v: str) -> str:
+        v = v.strip()
+        if not v:
+            raise ValueError("image_public_id không được rỗng")
         return v
 
     _mobile = field_validator("mobile_image_url")(lambda cls, v: _clean_image(v))
@@ -125,6 +133,11 @@ class BannerUpdate(BaseModel):
     @model_validator(mode="after")
     def _range(self):
         _check_range(self.start_time, self.end_time)
+        image_fields = {"image_url", "image_public_id"} & self.model_fields_set
+        if image_fields and image_fields != {"image_url", "image_public_id"}:
+            raise ValueError("image_url và image_public_id phải được gửi cùng nhau")
+        if image_fields and (self.image_url is None or self.image_public_id is None):
+            raise ValueError("Ảnh banner mới cần URL và public ID hợp lệ")
         return self
 
 
