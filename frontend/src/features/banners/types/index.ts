@@ -39,7 +39,18 @@ export interface AdminBanner {
   updated_at: string;
 }
 
-export type BannerFormData = Omit<AdminBanner, "id" | "created_at" | "updated_at">;
+export type BannerFormData = Omit<
+  AdminBanner,
+  "id" | "created_at" | "updated_at" | "image_public_id"
+> & {
+  image_public_id: string;
+};
+
+export type BannerUpdateData = Omit<
+  BannerFormData,
+  "image_url" | "image_public_id"
+> &
+  Partial<Pick<BannerFormData, "image_url" | "image_public_id">>;
 
 export interface BannerListResponse {
   items: AdminBanner[];
