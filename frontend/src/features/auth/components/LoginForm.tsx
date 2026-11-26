@@ -70,7 +70,9 @@ export function LoginForm() {
       }
 
       toast.success('Đăng nhập thành công.', 'Thành công');
-      router.replace(ROUTES.USER.PROFILE);
+      router.replace(user.role?.code?.toUpperCase() === 'ADMIN'
+        ? ROUTES.ADMIN.DASHBOARD
+        : ROUTES.HOME);
     } catch (submitError) {
       setErrorMsg(
         submitError instanceof Error

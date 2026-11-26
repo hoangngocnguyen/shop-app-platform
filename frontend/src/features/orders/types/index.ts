@@ -87,12 +87,19 @@ export interface CheckoutItemResponse {
     quantity: number;
     total_price: Money;
 }
-export interface CheckoutPreviewResponse { items: CheckoutItemResponse[]; subtotal: Money }
+export interface CheckoutPreviewResponse {
+    checkout_type: CheckoutType | null;
+    cart_item_ids: number[];
+    items: CheckoutItemResponse[];
+    subtotal: Money;
+}
 
 export interface OrderItemPreviewRequest { product_id: number; quantity: number; price: Money }
 export interface CreateOrderRequest {
     items: OrderItemPreviewRequest[];
     expected_subtotal: Money;
+    checkout_type?: CheckoutType;
+    cart_item_ids?: number[] | null;
     address_id: number;
     payment_method: PaymentMethod;
     note?: string | null;

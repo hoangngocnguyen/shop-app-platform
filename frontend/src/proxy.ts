@@ -74,6 +74,37 @@ export async function proxy(request: NextRequest) {
     return redirectResponse;
   }
 
+  // Supabase xác thực danh tính; quyền ứng dụng nằm trong backend nên kiểm tra /auth/me.
+  if (user && pathname.startsWith('/admin')) {
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+    let roleCode = '';
+
+    if (apiUrl) {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        const meResponse = await fetch(`${apiUrl.replace(/\/$/, '')}/auth/me`, {
+          headers: { Authorization: `Bearer ${session?.access_token ?? ''}` },
+          cache: 'no-store',
+        });
+        if (meResponse.ok) {
+          const payload = await meResponse.json();
+          roleCode = payload?.data?.role?.code?.toUpperCase() ?? '';
+        }
+      } catch {
+        // Không xác minh được role thì đóng quyền truy cập admin.
+      }
+    }
+
+    if (roleCode !== 'ADMIN') {
+      const url = request.nextUrl.clone();
+      url.pathname = ROUTES.HOME;
+      url.search = '';
+      const redirectResponse = NextResponse.redirect(url);
+      response.cookies.getAll().forEach((c) => redirectResponse.cookies.set(c.name, c.value));
+      return redirectResponse;
+    }
+  }
+
   // Đã đăng nhập mà cố tình vào /login hoặc /register -> redirect /
   if (user && isAuthRoute) {
     const url = request.nextUrl.clone();

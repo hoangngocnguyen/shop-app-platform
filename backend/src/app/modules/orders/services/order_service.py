@@ -18,6 +18,7 @@ from src.app.core.pagination import paginate_list
 from src.app.modules.orders.enums.order_enums import (
     CANCEL_REASON_TEXT,
     CancelledByType,
+    CheckoutType,
     CustomerCancelReason,
     OrderStatus,
     PaymentMethod,
@@ -83,7 +84,8 @@ class OrderService:
         Tạo đơn hàng chính thức từ snapshot checkout:
         - Kiểm tra địa chỉ giao hàng hợp lệ thuộc user.
         - Kiểm tra chéo tồn kho và đơn giá hiện tại trong Database.
-        - Trừ tồn kho và ghi nhận DB trong cùng một transaction.
+        - Với checkout CART, xác minh và xóa các dòng cart đã chọn cùng transaction.
+        - Trừ tồn kho và ghi nhận đơn hàng trong cùng một transaction.
         """
         self.repository.begin()
         try:
@@ -102,6 +104,41 @@ class OrderService:
                         f"Không được lặp product_id {item.product_id} trong danh sách items."
                     )
                 requested[item.product_id] = (item.quantity, item.price)
+
+            selected_cart_items = []
+            if request.checkout_type == CheckoutType.CART:
+                cart_item_ids = request.cart_item_ids or []
+                selected_cart_items = self.repository.get_cart_items_for_user(
+                    user_id=user_id,
+                    cart_item_ids=cart_item_ids,
+                    for_update=True,
+                )
+                found_ids = {item.cart_item_id for item in selected_cart_items}
+                missing_ids = [
+                    item_id for item_id in cart_item_ids if item_id not in found_ids
+                ]
+                if missing_ids:
+                    raise NotFoundException("Sản phẩm trong giỏ hàng", missing_ids[0])
+
+                cart_quantities: dict[int, int] = {}
+                for cart_item in selected_cart_items:
+                    cart_quantities[cart_item.product_id] = (
+                        cart_quantities.get(cart_item.product_id, 0)
+                        + cart_item.quantity
+                    )
+                requested_quantities = {
+                    product_id: quantity
+                    for product_id, (quantity, _) in requested.items()
+                }
+                if cart_quantities != requested_quantities:
+                    raise AppException(
+                        status_code=409,
+                        message=(
+                            "Sản phẩm hoặc số lượng trong giỏ hàng đã thay đổi. "
+                            "Vui lòng tải lại checkout."
+                        ),
+                        error_code="CART_CHANGED",
+                    )
 
             # 3. Kiểm tra chéo tồn kho và đơn giá hiện tại trong DB
             order_details: list[OrderDetail] = []
@@ -204,12 +241,29 @@ class OrderService:
                 log_description=initial_note,
             )
 
-            return OrderCreateResponse(
+            if request.checkout_type == CheckoutType.CART:
+                deleted_count = self.repository.delete_cart_items_for_user(
+                    user_id=user_id,
+                    cart_item_ids=request.cart_item_ids or [],
+                )
+                if deleted_count != len(request.cart_item_ids or []):
+                    raise AppException(
+                        status_code=409,
+                        message=(
+                            "Giỏ hàng đã thay đổi trong lúc tạo đơn. "
+                            "Vui lòng thử lại."
+                        ),
+                        error_code="CART_CHANGED",
+                    )
+
+            response = OrderCreateResponse(
                 order_id=created_order.order_id,
                 payment_method=created_order.payment_method,
                 total=Decimal(str(created_order.total)),
                 status=OrderStatus(created_order.status),
             )
+            self.repository.commit()
+            return response
         except Exception:
             self.repository.rollback()
             raise
