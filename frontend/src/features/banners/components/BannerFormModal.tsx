@@ -6,6 +6,7 @@ import {
   AdminBanner,
   BannerFormData,
   BannerPosition,
+  BannerUpdateData,
   POSITION_LABELS,
 } from "@/features/banners/types";
 import {
@@ -41,6 +42,7 @@ export function BannerFormModal({ editingBanner, onClose, onSaved }: Props) {
   const [imagePublicId, setImagePublicId] = useState<string | null>(
     editingBanner?.image_public_id ?? null
   );
+  const [hasNewImage, setHasNewImage] = useState(false);
   const [altText, setAltText] = useState(editingBanner?.alt_text ?? "");
   const [linkUrl, setLinkUrl] = useState(editingBanner?.link_url ?? "");
   const [position, setPosition] = useState<BannerPosition>(
@@ -66,6 +68,7 @@ export function BannerFormModal({ editingBanner, onClose, onSaved }: Props) {
       const res = await uploadBannerFile(file);
       setImageUrl(res.url);
       setImagePublicId(res.public_id);
+      setHasNewImage(true);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Lỗi tải ảnh");
     } finally {
@@ -83,7 +86,9 @@ export function BannerFormModal({ editingBanner, onClose, onSaved }: Props) {
     const parsedEndTime = endTime ? new Date(endTime) : null;
 
     if (!cleanTitle) return setError("Tiêu đề không được để trống");
-    if (!cleanImageUrl) return setError("Vui lòng chọn ảnh Desktop");
+    if (!cleanImageUrl || (!editingBanner && !imagePublicId)) {
+      return setError("Vui lòng chọn ảnh banner từ thiết bị");
+    }
     const isInternalLink =
       cleanLink.startsWith("/") && !cleanLink.startsWith("//") && !cleanLink.startsWith("/\\");
     if (cleanLink && !isInternalLink && !cleanLink.startsWith("https://")) {
@@ -109,10 +114,8 @@ export function BannerFormModal({ editingBanner, onClose, onSaved }: Props) {
       return;
     }
 
-    const payload: BannerFormData = {
+    const payload = {
       title: cleanTitle,
-      image_url: cleanImageUrl,
-      image_public_id: imagePublicId,
       mobile_image_url: editingBanner?.mobile_image_url ?? null,
       mobile_image_public_id: editingBanner?.mobile_image_public_id ?? null,
       alt_text: cleanAltText || cleanTitle,
@@ -128,9 +131,27 @@ export function BannerFormModal({ editingBanner, onClose, onSaved }: Props) {
     setError("");
     try {
       if (editingBanner) {
-        await updateBanner(editingBanner.id, payload);
+        const updatePayload: BannerUpdateData = {
+          ...payload,
+          ...(hasNewImage && imagePublicId
+            ? {
+                image_url: cleanImageUrl,
+                image_public_id: imagePublicId,
+              }
+            : {}),
+        };
+        await updateBanner(editingBanner.id, updatePayload);
       } else {
-        await createBanner(payload);
+        if (!imagePublicId) {
+          setError("Vui lòng chọn ảnh banner từ thiết bị");
+          return;
+        }
+        const createPayload: BannerFormData = {
+          ...payload,
+          image_url: cleanImageUrl,
+          image_public_id: imagePublicId,
+        };
+        await createBanner(createPayload);
       }
       onSaved();
       onClose();
@@ -238,13 +259,6 @@ export function BannerFormModal({ editingBanner, onClose, onSaved }: Props) {
                       }}
                     />
                   </label>
-                  <input
-                    aria-label="URL ảnh banner"
-                    value={imageUrl}
-                    onChange={(e) => setImageUrl(e.target.value)}
-                    placeholder="Dán URL ảnh banner"
-                    className="h-10 w-full rounded-lg border border-surface-border bg-white px-3 text-xs text-text-main outline-none transition placeholder:text-text-muted focus:border-primary focus:ring-4 focus:ring-primary/10"
-                  />
                   <div className="relative aspect-[16/7] overflow-hidden rounded-xl border border-surface-border bg-gradient-to-br from-slate-100 to-slate-200">
                     {imageUrl ? (
                       <Image
