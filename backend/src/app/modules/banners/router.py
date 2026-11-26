@@ -1,8 +1,10 @@
-from fastapi import APIRouter, Depends, Query, Response, status
+from fastapi import APIRouter, Depends, File, Query, Response, UploadFile, status
 from sqlalchemy.orm import Session
 
 from src.app.core.database import get_db
 from src.app.core.deps import require_role
+from src.app.modules.media.cloudinary_folders import BANNER
+from src.app.modules.media.service import MediaService
 
 from . import service
 from .models import BannerPosition
@@ -35,6 +37,12 @@ def get_public_banners(
 
 
 # ---------- admin ----------
+@admin_router.post("/upload")
+async def admin_upload_banner(file: UploadFile = File(...)):
+    result = await MediaService.upload_image(file=file, folder=BANNER)
+    return {"success": True, "data": result}
+
+
 @admin_router.get("", response_model=BannerListOut)
 def admin_list_banners(
     page: int = Query(1, ge=1),
