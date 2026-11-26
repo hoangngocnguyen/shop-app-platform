@@ -3,6 +3,7 @@ import {
   BannerFormData,
   BannerListResponse,
   BannerPosition,
+  BannerUpdateData,
   PublicBanner,
 } from "../types";
 import { createClient } from "@/lib/supabase/client";
@@ -39,7 +40,7 @@ export async function uploadBannerFile(
   const formData = new FormData();
   formData.append("file", file);
 
-  const res = await fetch(`${BASE_URL}/media/upload`, {
+  const res = await fetch(`${BASE_URL}/admin/banners/upload`, {
     method: "POST",
     headers: await getAuthHeader(),
     credentials: "include",
@@ -126,7 +127,7 @@ export async function createBanner(data: BannerFormData): Promise<AdminBanner> {
 // 5. Cập nhật banner
 export async function updateBanner(
   id: number,
-  data: BannerFormData
+  data: BannerUpdateData
 ): Promise<AdminBanner> {
   const res = await fetch(`${BASE_URL}/admin/banners/${id}`, {
     method: "PUT",
