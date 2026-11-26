@@ -45,13 +45,7 @@ class Post(Base):
             "status IN ('DRAFT', 'PENDING', 'PUBLISHED', 'ARCHIVED')",
             name="ck_posts_status",
         ),
-        CheckConstraint("views >= 0", name="ck_posts_views_nonnegative"),
-        CheckConstraint("likes_count >= 0", name="ck_posts_likes_count_nonnegative"),
-        CheckConstraint(
-            "comments_count >= 0",
-            name="ck_posts_comments_count_nonnegative",
-        ),
-        CheckConstraint("shares_count >= 0", name="ck_posts_shares_count_nonnegative"),
+
     )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
@@ -75,10 +69,6 @@ class Post(Base):
         String(20), nullable=False, default="DRAFT", server_default="DRAFT", index=True
     )
     archived_from_status: Mapped[str | None] = mapped_column(String(20), nullable=True)
-    views: Mapped[int] = mapped_column(Integer, nullable=False, default=0, server_default="0")
-    likes_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0, server_default="0")
-    comments_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0, server_default="0")
-    shares_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0, server_default="0")
     published_at: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True), nullable=True, index=True
     )

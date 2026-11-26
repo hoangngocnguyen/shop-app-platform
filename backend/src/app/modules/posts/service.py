@@ -488,11 +488,6 @@ class PublicPostService:
                 message=f"Bài viết không thuộc chủ đề '{topic_slug}'",
             )
 
-        # Tăng lượt xem
-        post.views = (post.views or 0) + 1
-        db.commit()
-        db.refresh(post)
-
         # Lấy bài viết liên quan cùng chủ đề
         related_stmt = (
             select(Post)
@@ -578,10 +573,6 @@ class PublicPostService:
                     topic_id=t.id if t else None,
                     author_id=user.user_id,
                     status=PostStatus.PUBLISHED.value,
-                    views=89,
-                    likes_count=18,
-                    comments_count=4,
-                    shares_count=2,
                     published_at=datetime.now(UTC),
                 )
                 db.add(p)

@@ -71,10 +71,6 @@ export interface AdminPostListItemResponse {
   author_id: string;
   author_name: string | null;
   status: PostStatus;
-  views: number;
-  likes_count: number;
-  comments_count: number;
-  shares_count: number;
   published_at: string | null;
   created_at: string;
   updated_at: string;

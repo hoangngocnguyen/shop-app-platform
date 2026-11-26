@@ -15,10 +15,6 @@ export interface PublicPostListItem {
   topic_name: string | null;
   topic_slug: string | null;
   author_name: string | null;
-  views: number;
-  likes_count: number;
-  comments_count: number;
-  shares_count: number;
   published_at: string | null;
   created_at: string;
 }

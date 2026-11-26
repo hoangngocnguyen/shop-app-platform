@@ -8,7 +8,6 @@ import {
   ChevronRight,
   Home,
   ArrowLeft,
-  Eye,
 } from "lucide-react";
 import { publicPostApi } from "@/features/posts/api";
 import { PublicPostDetail } from "@/features/posts/types";
@@ -109,9 +108,6 @@ export default function PostDetailPage() {
             {error || "Bài viết bạn đang tìm không tồn tại hoặc đã bị thay đổi đường dẫn."}
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
-            <Link href={ROUTES.POSTS.TOPIC(topicSlug)} className="w-full sm:w-auto px-4 py-2 border border-surface-border bg-surface-card hover:bg-surface-hover text-text-main text-xs font-semibold rounded-xl transition-colors">
-              Chuyên mục bài viết
-            </Link>
             <Link href={ROUTES.POSTS.ROOT} className="w-full sm:w-auto px-4 py-2 bg-[#002b49] text-white text-xs font-semibold rounded-xl hover:opacity-90 transition-opacity">
               Tất cả bài viết
             </Link>
@@ -166,12 +162,7 @@ export default function PostDetailPage() {
                     <Calendar className="w-3.5 h-3.5" />
                     {formattedDate}
                   </span>
-                  {post.views > 0 && (
-                    <span className="text-xs text-text-muted flex items-center gap-1">
-                      <Eye className="w-3.5 h-3.5" />
-                      {post.views.toLocaleString("vi-VN")}
-                    </span>
-                  )}
+
                 </div>
 
                 {/* Tiêu đề */}
@@ -188,7 +179,6 @@ export default function PostDetailPage() {
                     <p className="text-xs sm:text-sm font-bold text-text-main leading-none mb-0.5">
                       {post.author_name || "Ban Biên Tập ShopApp"}
                     </p>
-                    <p className="text-[11px] text-text-muted">Chuyên viên nội dung &amp; công nghệ</p>
                   </div>
                 </div>
               </div>

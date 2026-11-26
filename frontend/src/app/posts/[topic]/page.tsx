@@ -7,7 +7,6 @@ import {
   Search,
   ChevronLeft,
   ChevronRight,
-  FolderOpen,
   Home,
   ChevronRight as BreadcrumbChevron,
 } from "lucide-react";
@@ -105,20 +104,10 @@ export default function TopicPostsPage() {
         {/* HEADER BAR */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-6 mb-8 border-b border-surface-border">
           <div>
-            <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[#002b49]/10 text-[#002b49] text-xs font-semibold mb-2">
-              <FolderOpen className="w-3.5 h-3.5" />
-              <span>Chuyên mục</span>
-            </div>
             <h1 className="text-2xl sm:text-3xl font-extrabold text-text-main capitalize">
               {displayName}
             </h1>
-            <p className="text-xs sm:text-sm text-text-sub mt-1">
-              {total > 0
-                ? `Có ${total} bài viết thuộc chuyên mục này`
-                : "Chuyên mục chưa có bài viết"}
-            </p>
           </div>
-
           {/* SEARCH IN TOPIC */}
           <form onSubmit={handleSearchSubmit} className="flex items-center gap-2 max-w-sm w-full">
             <div className="relative flex-1">
