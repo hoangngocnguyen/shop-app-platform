@@ -13,7 +13,6 @@ from src.app.modules.categories.schema import (
     CategoryUpdate,
 )
 from src.app.modules.categories.service import CategoryService
-from src.app.modules.chat.vector_store import safe_sync_category_product_embeddings
 
 # Khởi tạo Router cho phân hệ Admin Categories - Toàn bộ API yêu cầu quyền ADMIN
 admin_category_router = APIRouter(
@@ -93,6 +92,8 @@ async def admin_update_category(
     payload: CategoryUpdate = ...,
     db: Session = Depends(get_db),
 ) -> ApiResponse[CategoryResponse]:
+    from src.app.modules.chat.vector_store import safe_sync_category_product_embeddings
+
     """
     Endpoint cập nhật danh mục:
     """

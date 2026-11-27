@@ -15,7 +15,6 @@ from src.app.modules.categories.schema import (
     CategoryStatsDTO,
     CategoryUpdate,
 )
-from src.app.modules.products.model import Product
 
 
 class CategoryService:
@@ -83,6 +82,8 @@ class CategoryService:
         """
         Lấy danh sách danh mục có phân trang, tìm kiếm và tính kèm số lượng sản phẩm.
         """
+        from src.app.modules.products.model import Product
+
         # Bước 1: Tạo câu truy vấn cơ sở Join Product để đếm product_count
         base_query = (
             select(
