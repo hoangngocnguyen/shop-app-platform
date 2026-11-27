@@ -36,6 +36,18 @@ const NAV_ITEMS: AdminNavItem[] = [
     exact: true,
   },
   {
+    id: "statistics",
+    label: "Thống kê",
+    href: ROUTES.ADMIN.STATISTICS,
+    icon: ChartNoAxesCombined,
+  },
+  {
+    id: "orders",
+    label: "Đơn hàng",
+    href: ROUTES.ADMIN.ORDERS,
+    icon: ShoppingCart,
+  },
+  {
     id: "products",
     label: "Sản phẩm",
     href: ROUTES.ADMIN.PRODUCTS,
@@ -48,6 +60,12 @@ const NAV_ITEMS: AdminNavItem[] = [
     icon: FolderTree,
   },
   {
+    id: "users",
+    label: "Người dùng",
+    href: ROUTES.ADMIN.USERS,
+    icon: Users,
+  },
+  {
     id: "banners",
     label: "Banner",
     href: ROUTES.ADMIN.BANNERS,
@@ -58,24 +76,6 @@ const NAV_ITEMS: AdminNavItem[] = [
     label: "Bài viết",
     href: ROUTES.ADMIN.POSTS,
     icon: Newspaper,
-  },
-  {
-    id: "orders",
-    label: "Đơn hàng",
-    href: ROUTES.ADMIN.ORDERS,
-    icon: ShoppingCart,
-  },
-  {
-    id: "statistics",
-    label: "Thống kê",
-    href: ROUTES.ADMIN.STATISTICS,
-    icon: ChartNoAxesCombined,
-  },
-  {
-    id: "users",
-    label: "Người dùng",
-    href: ROUTES.ADMIN.USERS,
-    icon: Users,
   },
 ];
 
