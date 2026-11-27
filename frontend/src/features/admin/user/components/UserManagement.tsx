@@ -158,8 +158,9 @@ export const UserManagement: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-surface-bg text-text-main antialiased selection:bg-primary selection:text-white">
-      <main className="max-w-[1240px] mx-auto px-4 py-6 md:py-10 space-y-8">
+    <div className="min-h-screen bg-surface-bg text-text-main antialiased selection:bg-primary selection:text-primary-contrast">
+      <main className="mx-auto px-4 pt-2 pb-8 md:pt-3 md:pb-10 space-y-6">
+        
         <UserHeaderBar />
 
         {/* Banner thống kê */}

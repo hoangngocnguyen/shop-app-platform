@@ -10,26 +10,18 @@ const api = axios.create({
   },
 });
 
-// Cache access token trong memory để tránh gọi supabase.auth.getSession() lặp đi lặp lại
-let cachedAccessToken: string | null = null;
-let tokenExpiresAt = 0; // Epoch timestamp tính theo giây
-
+/**
+ * Hàm clearTokenCache giữ lại để đảm bảo tương thích ngược với các module khác.
+ * Supabase Browser Client SDK (@supabase/ssr) đã tự động quản lý session in-memory atomic
+ * trong singleton client, đảm bảo luôn đọc đúng token của tài khoản hiện tại ngay khi đổi tài khoản.
+ */
 export function clearTokenCache() {
-  cachedAccessToken = null;
-  tokenExpiresAt = 0;
+  // no-op
 }
 
 api.interceptors.request.use(async (config) => {
   // Nếu đã chủ động truyền Authorization header (ví dụ gọi từ Server Route Handler kèm access_token)
   if (config.headers.Authorization) {
-    return config;
-  }
-
-  const now = Math.floor(Date.now() / 1000);
-
-  // Nếu token còn hạn ít nhất 30 giây nữa, tái sử dụng token ngay lập tức (0ms overhead)
-  if (cachedAccessToken && tokenExpiresAt > now + 30) {
-    config.headers.Authorization = `Bearer ${cachedAccessToken}`;
     return config;
   }
 
@@ -40,17 +32,11 @@ api.interceptors.request.use(async (config) => {
     } = await supabase.auth.getSession();
 
     if (session?.access_token) {
-      cachedAccessToken = session.access_token;
-      tokenExpiresAt = session.expires_at ?? (now + 3600);
-      config.headers.Authorization = `Bearer ${cachedAccessToken}`;
+      config.headers.Authorization = `Bearer ${session.access_token}`;
     } else {
-      cachedAccessToken = null;
-      tokenExpiresAt = 0;
       delete config.headers.Authorization;
     }
   } catch {
-    cachedAccessToken = null;
-    tokenExpiresAt = 0;
     delete config.headers.Authorization;
   }
 

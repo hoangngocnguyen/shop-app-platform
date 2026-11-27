@@ -70,7 +70,9 @@ export function LoginForm() {
       }
 
       toast.success('Đăng nhập thành công.', 'Thành công');
-      router.replace(ROUTES.USER.PROFILE);
+      router.replace(user.role?.code?.toUpperCase() === 'ADMIN'
+        ? ROUTES.ADMIN.DASHBOARD
+        : ROUTES.HOME);
     } catch (submitError) {
       setErrorMsg(
         submitError instanceof Error
@@ -200,12 +202,12 @@ export function LoginForm() {
             >
               Mật khẩu
             </label>
-            <a
-              href="#forgot-password"
+            <Link
+              href={ROUTES.AUTH.FORGOT_PASSWORD}
               className="text-xs font-medium text-accent transition-all duration-200 hover:-translate-y-0.5 hover:text-accent-hover hover:underline"
             >
               Quên mật khẩu?
-            </a>
+            </Link>
           </div>
           <div className="relative">
             <input

@@ -5,6 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from src.app.api.v1.router import api_v1_router
 from src.app.core.exceptions import register_exception_handlers
+from src.app.modules.chat.llm_client import close_shared_http_client
 from src.app.modules.media.config import setup_cloudinary
 
 
@@ -18,7 +19,8 @@ async def lifespan(app: FastAPI):
     yield  # Ứng dụng bắt đầu nhận request từ Client tại đây
 
     # --- SHUTDOWN LOGIC ---
-    # Dọn dẹp tài nguyên (kết nối DB, Redis...) nếu cần khi app tắt
+    # Dọn dẹp tài nguyên (kết nối DB, HTTP pool...) khi app tắt
+    await close_shared_http_client()
     print("🛑 Application shutdown")
 
 

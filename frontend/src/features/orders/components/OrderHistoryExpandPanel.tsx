@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { CalendarClock, MapPin, Package2, Truck, XCircle } from "lucide-react";
+import { CalendarClock, MapPin, Package2, Truck, XCircle, Check } from "lucide-react";
 import { ORDER_STATUS, type OrderDetailResponse } from "@/features/orders/types";
 import { formatDateTime, formatMoney, getPaymentStatusClass, getPaymentStatusLabel, getStatusLabel } from "@/features/orders/utils/orderStatus";
 
@@ -11,18 +11,34 @@ interface OrderHistoryExpandPanelProps {
 }
 
 export function OrderHistoryExpandPanel({ order, loading = false }: OrderHistoryExpandPanelProps) {
+    if (loading) {
+        return <div className="space-y-4 animate-pulse" aria-label="Đang tải chi tiết đơn hàng">
+            <div className="h-20 rounded-xl bg-surface-hover" />
+            <div className="grid gap-3 sm:grid-cols-2"><div className="h-36 rounded-xl bg-surface-hover" /><div className="h-36 rounded-xl bg-surface-hover" /></div>
+            <div className="h-48 rounded-xl bg-surface-hover" />
+        </div>;
+    }
     if (!order) return null;
 
     const isCancelled = order.status === "CANCELLED";
 
     return (
         <div className="bg-surface-card">
-            {loading ? (
-                <div className="rounded-xl border border-dashed border-surface-border bg-surface-bg/50 p-6 text-center text-xs sm:text-sm text-text-sub">
-                    Đang tải chi tiết đơn hàng...
-                </div>
-            ) : (
+            {!loading && (
                 <div className="space-y-4">
+                    {(() => {
+                        const steps = ["PENDING", "PROCESSING", "SHIPPING", "DELIVERED", "COMPLETED"] as const;
+                        const currentStep = steps.indexOf(order.status as typeof steps[number]);
+                        return <div className="rounded-xl border border-surface-border bg-surface-bg/40 p-3.5 sm:p-4">
+                            <div className="mb-3 text-xs font-semibold uppercase tracking-wider text-text-sub">Tiến độ đơn hàng</div>
+                            <div className="grid grid-cols-5 gap-1">
+                                {steps.map((step, index) => <div key={step} className="text-center">
+                                    <div className={`mx-auto mb-1 flex h-7 w-7 items-center justify-center rounded-full text-xs ${index <= currentStep ? "bg-primary text-primary-contrast" : "bg-surface-hover text-text-muted"}`}>{index < currentStep ? <Check className="h-4 w-4" /> : index + 1}</div>
+                                    <span className="text-[10px] leading-tight text-text-sub">{["Chờ xử lý", "Đang xử lý", "Đang giao hàng", "Đã giao hàng", "Hoàn thành"][index]}</span>
+                                </div>)}
+                            </div>
+                        </div>;
+                    })()}
                     <div className="grid gap-3.5 sm:grid-cols-2">
                         {/* Địa chỉ nhận hàng */}
                         <div className="rounded-xl border border-surface-border bg-surface-bg/40 p-3.5 sm:p-4">

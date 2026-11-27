@@ -20,11 +20,15 @@ interface AdminHeaderProps {
   onOpenMobile: () => void;
 }
 
+const isValidImageUrl = (url: string): boolean =>
+  /^(https?:\/\/|\/|data:image\/|blob:)/i.test(url);
+
 export const AdminHeader: React.FC<AdminHeaderProps> = ({ onOpenMobile }) => {
   const pathname = usePathname();
   const router = useRouter();
   const { user, logout } = useAuthStore();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [failedAvatarUrl, setFailedAvatarUrl] = useState<string | null>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   // Close dropdown on click outside
@@ -46,6 +50,7 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({ onOpenMobile }) => {
     if (pathname.startsWith(ROUTES.ADMIN.PRODUCTS)) return "Quản lý sản phẩm";
     if (pathname.startsWith(ROUTES.ADMIN.CATEGORIES)) return "Quản lý danh mục";
     if (pathname.startsWith(ROUTES.ADMIN.ORDERS)) return "Quản lý đơn hàng";
+    if (pathname.startsWith(ROUTES.ADMIN.STATISTICS)) return "Thống kê";
     if (pathname.startsWith(ROUTES.ADMIN.USERS)) return "Quản lý người dùng";
     return "Trung tâm Quản trị";
   };
@@ -60,7 +65,8 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({ onOpenMobile }) => {
     }
   };
 
-  const displayName = user?.name || user?.username || "Quản trị viên";
+  const displayName = user?.name || user?.username || "Tài khoản";
+  const roleLabel = user?.role?.name || user?.role?.code || "Đang tải...";
   const initials = displayName
     .split(" ")
     .map((w) => w[0])
@@ -83,7 +89,7 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({ onOpenMobile }) => {
 
         <div className="flex flex-col">
           <div className="flex items-center gap-1.5 text-[11px] font-medium text-text-muted">
-            <span>Admin</span>
+            <span>Quản trị</span>
             <span>/</span>
             <span className="text-primary font-semibold">{getPageTitle()}</span>
           </div>
@@ -115,18 +121,24 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({ onOpenMobile }) => {
             className="flex items-center gap-2.5 p-1.5 pr-2 rounded-2xl hover:bg-surface-hover border border-transparent hover:border-surface-border transition-all duration-200 focus:outline-none"
             aria-expanded={isDropdownOpen}
           >
-            {user?.avatar_url ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={user.avatar_url}
-                alt={displayName}
-                className="w-8 h-8 rounded-xl object-cover ring-2 ring-primary/20"
-              />
-            ) : (
-              <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-primary to-primary-hover text-white font-bold text-xs flex items-center justify-center shadow-xs">
-                {initials || <UserIcon className="w-4 h-4 text-white" />}
-              </div>
-            )}
+            {(() => {
+              const avatarUrl = user?.avatar_url?.trim() || "";
+              const showAvatarImage =
+                isValidImageUrl(avatarUrl) && failedAvatarUrl !== avatarUrl;
+              return showAvatarImage ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={avatarUrl}
+                  alt={displayName}
+                  onError={() => setFailedAvatarUrl(avatarUrl)}
+                  className="w-8 h-8 rounded-xl object-cover ring-2 ring-primary/20"
+                />
+              ) : (
+                <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-primary to-primary-hover text-white font-bold text-xs flex items-center justify-center shadow-xs">
+                  {initials || <UserIcon className="w-4 h-4 text-white" />}
+                </div>
+              );
+            })()}
 
             <div className="hidden md:flex flex-col text-left">
               <span className="text-xs font-bold text-text-main leading-tight truncate max-w-[120px]">
@@ -134,7 +146,7 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({ onOpenMobile }) => {
               </span>
               <span className="text-[10px] font-semibold text-primary flex items-center gap-0.5">
                 <ShieldCheck className="w-3 h-3 text-primary" />
-                ADMIN
+                {roleLabel}
               </span>
             </div>
 
@@ -153,7 +165,7 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({ onOpenMobile }) => {
                   {displayName}
                 </p>
                 <p className="text-[11px] text-text-muted truncate">
-                  {user?.username ? `@${user.username}` : "Tài khoản Quản trị"}
+                  {user?.username ? `@${user.username}` : roleLabel}
                 </p>
               </div>
 

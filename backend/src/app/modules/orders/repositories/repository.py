@@ -4,14 +4,13 @@ from datetime import UTC, datetime
 from typing import Any
 from uuid import UUID
 
-from sqlalchemy import desc, func, or_, select
+from sqlalchemy import delete, desc, func, or_, select
 from sqlalchemy.orm import Session, joinedload, selectinload
 
 from src.app.modules.carts.model import Cart, CartItem
 from src.app.modules.orders.model import Order, OrderDetail, OrderLog
 from src.app.modules.products.model import Product
 from src.app.modules.shipping_addresses.model import ShippingAddress
-from src.app.modules.users.model import User
 
 
 class OrderRepository:
@@ -60,7 +59,10 @@ class OrderRepository:
         return list(self.db.scalars(stmt).all())
 
     def get_cart_items_for_user(
-        self, user_id: UUID, cart_item_ids: Sequence[int]
+        self,
+        user_id: UUID,
+        cart_item_ids: Sequence[int],
+        for_update: bool = False,
     ) -> list[CartItem]:
         """Lấy các mục giỏ hàng theo cart_item_id, nhưng chỉ từ giỏ hàng của user hiện tại."""
         if not cart_item_ids:
@@ -77,7 +79,24 @@ class OrderRepository:
             .options(selectinload(CartItem.product))
             .where(Cart.user_id == user_id, CartItem.cart_item_id.in_(unique_ids))
         )
+        if for_update:
+            stmt = stmt.with_for_update(of=CartItem)
         return list(self.db.scalars(stmt).all())
+
+    def delete_cart_items_for_user(
+        self, user_id: UUID, cart_item_ids: Sequence[int]
+    ) -> int:
+        """Xóa các dòng cart đã chọn, chỉ khi chúng thuộc cart của user."""
+        unique_ids = list(dict.fromkeys(int(item_id) for item_id in cart_item_ids))
+        if not unique_ids:
+            return 0
+
+        stmt = delete(CartItem).where(
+            CartItem.cart_item_id.in_(unique_ids),
+            CartItem.cart_id.in_(select(Cart.cart_id).where(Cart.user_id == user_id)),
+        )
+        result = self.db.execute(stmt)
+        return int(result.rowcount or 0)
 
     def get_shipping_address(
         self, address_id: int, user_id: UUID
@@ -131,8 +150,6 @@ class OrderRepository:
         )
         self.db.add(initial_log)
 
-        self.db.commit()
-        self.db.refresh(order)
         return order
 
     def add_order_log(
@@ -254,22 +271,23 @@ class OrderRepository:
         Lấy danh sách tất cả đơn hàng cho Admin, hỗ trợ lọc đa tiêu chí
         (trạng thái đơn, PTTT, trạng thái TT) và tìm kiếm (mã đơn, tên/sđt người nhận, tên sản phẩm).
         """
-        base_query = (
-            select(Order)
-            .options(
-                selectinload(Order.order_details).joinedload(OrderDetail.product),
-                joinedload(Order.user),
-            )
+        base_query = select(Order).options(
+            selectinload(Order.order_details).joinedload(OrderDetail.product),
+            joinedload(Order.user),
         )
 
         if status and status.upper() != "ALL":
             base_query = base_query.where(Order.status == status.upper())
 
         if payment_method:
-            base_query = base_query.where(Order.payment_method == payment_method.upper())
+            base_query = base_query.where(
+                Order.payment_method == payment_method.upper()
+            )
 
         if payment_status:
-            base_query = base_query.where(Order.payment_status == payment_status.upper())
+            base_query = base_query.where(
+                Order.payment_status == payment_status.upper()
+            )
 
         if search and search.strip():
             search_pattern = f"%{search.strip()}%"
@@ -312,6 +330,16 @@ class OrderRepository:
     def count_orders_by_statuses(self) -> dict[str, int]:
         """Đếm số lượng đơn hàng theo từng trạng thái phục vụ hiển thị Tab Admin."""
         stmt = select(Order.status, func.count(Order.order_id)).group_by(Order.status)
+        rows = self.db.execute(stmt).all()
+        return {str(row[0]): int(row[1]) for row in rows}
+
+    def count_orders_by_statuses_for_user(self, user_id: UUID) -> dict[str, int]:
+        """Đếm đơn hàng theo trạng thái của một người dùng."""
+        stmt = (
+            select(Order.status, func.count(Order.order_id))
+            .where(Order.user_id == user_id)
+            .group_by(Order.status)
+        )
         rows = self.db.execute(stmt).all()
         return {str(row[0]): int(row[1]) for row in rows}
 

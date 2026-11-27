@@ -52,7 +52,6 @@ async def get_jwt_payload(
         return payload
 
     except jwt.PyJWTError:
-        # [REFACTOR: Ném UnauthorizedException chuẩn thay vì HTTPException thô]
         raise UnauthorizedException(
             message="Token xác thực không hợp lệ hoặc đã hết hạn",
             error_code="INVALID_TOKEN",

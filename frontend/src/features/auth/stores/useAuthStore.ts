@@ -1,6 +1,8 @@
 import { create } from "zustand";
 import { syncUser, getCurrentUser } from "@/features/auth/api/auth";
 import { createClient } from "@/lib/supabase/client";
+import { useProfileStore } from "@/features/profile/stores";
+import { useCartStore } from "@/features/cart/stores";
 import { User } from "../types";
 
 interface AuthState {
@@ -64,7 +66,11 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     } catch (error) {
       console.error("Error signing out from Supabase:", error);
     } finally {
+      syncPromise = null;
       set({ user: null, isLoading: false });
+      // Reset triệt để profile và cart của tài khoản vừa đăng xuất
+      useProfileStore.getState().reset();
+      useCartStore.getState().reset();
     }
   },
 }));

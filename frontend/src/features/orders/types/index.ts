@@ -87,12 +87,19 @@ export interface CheckoutItemResponse {
     quantity: number;
     total_price: Money;
 }
-export interface CheckoutPreviewResponse { items: CheckoutItemResponse[]; subtotal: Money }
+export interface CheckoutPreviewResponse {
+    checkout_type: CheckoutType | null;
+    cart_item_ids: number[];
+    items: CheckoutItemResponse[];
+    subtotal: Money;
+}
 
 export interface OrderItemPreviewRequest { product_id: number; quantity: number; price: Money }
 export interface CreateOrderRequest {
     items: OrderItemPreviewRequest[];
     expected_subtotal: Money;
+    checkout_type?: CheckoutType;
+    cart_item_ids?: number[] | null;
     address_id: number;
     payment_method: PaymentMethod;
     note?: string | null;
@@ -136,7 +143,9 @@ export interface PaginatedOrders {
     page_size: number;
     total_pages: number;
 }
-export type OrderListResponse = PaginatedOrders;
+export interface OrderListResponse extends PaginatedOrders {
+    status_counts?: Partial<Record<OrderStatus | "ALL", number>>;
+}
 export interface OrderLogResponse { status: OrderStatus | string; note: string | null; timestamp: string }
 export interface OrderDetailResponse {
     order_id: string;

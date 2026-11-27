@@ -200,23 +200,23 @@ export default function ProductManagementPage() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-[var(--color-surface-bg,#f8fafc)] via-white to-[var(--color-surface-bg,#f8fafc)] text-text-main antialiased pb-24">
       <main className="mx-auto px-4 pt-2 pb-8 md:pt-3 md:pb-10 space-y-6">
-        {/* Action Header Bar */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white/90 backdrop-blur-md p-4 sm:p-5 rounded-2xl border border-[var(--color-surface-border,#e2e8f0)] shadow-md">
-          <div className="group/iconbox flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-emerald-50 text-[var(--color-primary,#0f766e)] flex items-center justify-center shadow-inner transition-all duration-300 group-hover/iconbox:-translate-y-1 group-hover/iconbox:scale-105 group-hover/iconbox:bg-primary group-hover/iconbox:text-white group-hover/iconbox:shadow-md">
-              <Package className="w-5 h-5 transition-transform duration-300 group-hover/iconbox:rotate-6" />
+        {/* Header danh sách sản phẩm */}
+        <div className="group flex flex-col gap-4 rounded-2xl border border-[var(--color-surface-border,#e2e8f0)] bg-white px-4 py-3.5 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:border-primary/20 hover:shadow-md sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex min-w-0 items-center gap-4">
+            <div className="flex size-11 shrink-0 items-center justify-center rounded-xl border border-primary/15 bg-emerald-50 text-primary shadow-sm transition-all duration-300 group-hover:-translate-y-1 group-hover:scale-105 group-hover:border-primary group-hover:bg-primary group-hover:text-white group-hover:shadow-md">
+              <Package className="size-5 transition-transform duration-300 group-hover:rotate-6" aria-hidden="true" />
             </div>
-            <div>
-              <h2 className="font-extrabold text-base text-[var(--color-text-main,#0f172a)] transition-colors group-hover/iconbox:text-primary">
+            <div className="min-w-0">
+              <h1 className="text-lg font-extrabold leading-tight tracking-tight text-[var(--color-text-main,#0f172a)] transition-colors duration-300 group-hover:text-primary">
                 Danh sách sản phẩm
-              </h2>
-              <p className="text-xs text-[var(--color-text-muted,#94a3b8)]">
+              </h1>
+              <p className="mt-0.5 text-xs text-[var(--color-text-muted,#94a3b8)]">
                 Tìm kiếm, cập nhật thông tin và quản lý tồn kho
               </p>
             </div>
           </div>
 
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5">
+          <div className="flex flex-col items-stretch gap-2.5 sm:flex-row sm:items-center">
             <button
               type="button"
               onClick={() => loadProducts()}

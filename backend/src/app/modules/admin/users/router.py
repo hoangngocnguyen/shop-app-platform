@@ -1,6 +1,6 @@
 from typing import Optional
 
-from fastapi import APIRouter, Depends, Query, status
+from fastapi import APIRouter, BackgroundTasks, Depends, Query, status
 from sqlalchemy.orm import Session
 
 from src.app.core.database import get_db
@@ -18,6 +18,8 @@ from src.app.modules.admin.users.schema import (
     UserStatsResponse,
     UserStatus,
 )
+from src.app.modules.emails.dependencies import get_email_sender
+from src.app.modules.emails.protocol import IEmailSender
 
 router = APIRouter(
     prefix="/admin/users",
@@ -125,9 +127,19 @@ def get_user_statistics(
 def block_user(
     userId: str,
     form: UserBlockForm,
+    background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
+    email_sender: IEmailSender = Depends(get_email_sender),
 ):
     updated_user = service.block_user(db=db, user_id=userId, form=form)
+    if updated_user and updated_user.email:
+        email_sender.send_account_status_changed(
+            to_email=str(updated_user.email),
+            customer_name=updated_user.fullName or "Quý khách",
+            is_locked=form.isBlocked,
+            reason=form.reason,
+            background_tasks=background_tasks,
+        )
     action_text = "Khóa" if form.isBlocked else "Mở khóa"
     return success_response(data=updated_user, message=f"{action_text} tài khoản thành công")
 
