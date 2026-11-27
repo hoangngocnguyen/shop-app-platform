@@ -21,7 +21,7 @@ export function HeroBanner({ banners }: { banners: PublicBanner[] }) {
   // Chỉ có 1 banner thì không dựng slider
   if (banners.length === 1) {
     return (
-      <section className="relative isolate">
+      <section className="relative isolate mb-6">
         <div className="pointer-events-none absolute -inset-x-5 -inset-y-4 -z-10 rounded-[2rem] bg-gradient-to-r from-primary/10 via-accent/10 to-primary/10 blur-2xl sm:-inset-x-8" />
         <div className="mb-3 flex items-center justify-between gap-3 px-1 sm:mb-4">
           <div className="flex items-center gap-3">
@@ -62,7 +62,7 @@ export function HeroBanner({ banners }: { banners: PublicBanner[] }) {
   };
 
   return (
-    <section className="relative isolate">
+    <section className="relative isolate mb-6">
       <div className="pointer-events-none absolute -inset-x-5 -inset-y-4 -z-10 rounded-[2rem] bg-gradient-to-r from-primary/10 via-accent/10 to-primary/10 blur-2xl sm:-inset-x-8" />
       <div className="mb-3 flex items-center justify-between gap-3 px-1 sm:mb-4">
         <div className="flex items-center gap-3">
