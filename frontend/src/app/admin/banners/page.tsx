@@ -156,7 +156,7 @@ export default function AdminBannersPage() {
   };
 
   return (
-    <main className="mx-auto flex w-full max-w-7xl flex-col gap-5 p-4 sm:p-6">
+    <main className="mx-auto px-4 pt-2 pb-8 md:pt-3 md:pb-10 space-y-6">
       <AdminBannerHeader
         total={total}
         running={running}
