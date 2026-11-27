@@ -145,7 +145,7 @@ export default function AdminPostsPage() {
   const archivedCount = posts.filter((post) => post.status === PostStatus.ARCHIVED).length;
 
   return (
-    <div className="mx-auto max-w-6xl space-y-4 px-4 pt-2 pb-8">
+    <div className="mx-auto px-4 pt-2 pb-8 md:pt-3 md:pb-10 space-y-6">
       <PostsToolbar
         total={total}
         topics={topics}

@@ -1,3 +1,3 @@
-from src.app.modules.chat.router import chat_router
+# Intentionally empty — avoid circular imports when importing chat.model directly.
+# Routers are registered in the app factory, not via package __init__.
 
-__all__ = ["chat_router"]

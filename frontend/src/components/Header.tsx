@@ -153,9 +153,6 @@ export default function Header() {
                                 </span>
                             )}
                         </div>
-                        <span className="text-xs sm:text-sm font-semibold hidden md:inline">
-                            Giỏ hàng của tôi
-                        </span>
                     </Link>
 
                     {/* USER MENU */}

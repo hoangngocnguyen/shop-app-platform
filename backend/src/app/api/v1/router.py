@@ -8,7 +8,7 @@ from src.app.modules.banners.router import public_router as banners_router
 from src.app.modules.carts.router import router as cart_router
 from src.app.modules.categories.admin_router import admin_category_router
 from src.app.modules.categories.router import router as categories_router
-from src.app.modules.chat import chat_router
+from src.app.modules.chat.router import chat_router
 from src.app.modules.emails.router import router as email_router
 from src.app.modules.locations.router import router as locations_router
 from src.app.modules.media import media_router

@@ -36,6 +36,18 @@ const NAV_ITEMS: AdminNavItem[] = [
     exact: true,
   },
   {
+    id: "statistics",
+    label: "Thống kê",
+    href: ROUTES.ADMIN.STATISTICS,
+    icon: ChartNoAxesCombined,
+  },
+  {
+    id: "orders",
+    label: "Đơn hàng",
+    href: ROUTES.ADMIN.ORDERS,
+    icon: ShoppingCart,
+  },
+  {
     id: "products",
     label: "Sản phẩm",
     href: ROUTES.ADMIN.PRODUCTS,
@@ -48,6 +60,12 @@ const NAV_ITEMS: AdminNavItem[] = [
     icon: FolderTree,
   },
   {
+    id: "users",
+    label: "Người dùng",
+    href: ROUTES.ADMIN.USERS,
+    icon: Users,
+  },
+  {
     id: "banners",
     label: "Banner",
     href: ROUTES.ADMIN.BANNERS,
@@ -58,24 +76,6 @@ const NAV_ITEMS: AdminNavItem[] = [
     label: "Bài viết",
     href: ROUTES.ADMIN.POSTS,
     icon: Newspaper,
-  },
-  {
-    id: "orders",
-    label: "Đơn hàng",
-    href: ROUTES.ADMIN.ORDERS,
-    icon: ShoppingCart,
-  },
-  {
-    id: "statistics",
-    label: "Thống kê",
-    href: ROUTES.ADMIN.STATISTICS,
-    icon: ChartNoAxesCombined,
-  },
-  {
-    id: "users",
-    label: "Người dùng",
-    href: ROUTES.ADMIN.USERS,
-    icon: Users,
   },
 ];
 
@@ -114,7 +114,6 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
             <div className="flex flex-col truncate">
               <span className="text-base font-black tracking-tight text-text-main flex items-center gap-1">
                 HOANGSHOP
-                <Sparkles className="w-3.5 h-3.5 text-accent animate-pulse" />
               </span>
               <span className="text-[11px] font-semibold text-primary uppercase tracking-wider">
                 Quản trị hệ thống
