@@ -10,6 +10,10 @@ from src.app.core.exceptions import (
 )
 from src.app.core.pagination import PaginatedResponse, PaginationParams, paginate_query
 from src.app.modules.categories.model import Category
+from src.app.modules.chat.vector_store import (
+    delete_product_embeddings,
+    safe_sync_product_embeddings,
+)
 from src.app.modules.media.cloudinary_folders import PRODUCT
 from src.app.modules.media.service import MediaService
 from src.app.modules.orders.model import OrderDetail
@@ -263,6 +267,7 @@ class ProductService:
         db.commit()
         db.refresh(new_product)
 
+        await safe_sync_product_embeddings(db=db, product_ids=[new_product.product_id])
         return new_product
 
     @staticmethod
@@ -355,6 +360,8 @@ class ProductService:
 
         db.commit()
         db.refresh(product)
+
+        await safe_sync_product_embeddings(db=db, product_ids=[product.product_id])
         return product
 
     @staticmethod
@@ -382,7 +389,8 @@ class ProductService:
                 error_code="PRODUCT_IN_ORDERS",
             )
 
-        # Bước 3: Xóa sản phẩm khỏi database
+        # Bước 3: Xóa embedding liên quan và xóa sản phẩm khỏi database
+        delete_product_embeddings(db=db, product_ids=[product_id])
         db.delete(product)
         db.commit()
 
@@ -437,11 +445,13 @@ class ProductService:
             p.image_public_id for p in products if p.image_public_id
         ]
 
-        # Bước 4: Thực thi xóa hàng loạt trong database
+        # Bước 4: Thực thi xóa embedding liên quan và xóa hàng loạt sản phẩm trong database
+        target_ids = [p.product_id for p in products]
         deleted_count = len(products)
+        delete_product_embeddings(db=db, product_ids=target_ids)
         db.execute(
             delete(Product).where(
-                Product.product_id.in_([p.product_id for p in products])
+                Product.product_id.in_(target_ids)
             )
         )
         db.commit()

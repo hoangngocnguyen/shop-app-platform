@@ -502,3 +502,174 @@ def test_13_chat_rate_limiter():
         blocked_res = client.post("/api/v1/chat", json={"message": "Hi"})
         assert blocked_res.status_code == 429
         assert blocked_res.json()["error_code"] == "CHAT_RATE_LIMITED"
+
+
+@pytest.mark.anyio
+async def test_14_auto_sync_embedding_on_product_insert_update_delete(
+    chat_db_session,
+    monkeypatch,
+):
+    """Kiểm tra tự động sync embedding khi Admin thêm/sửa/xóa sản phẩm (chỉ sync sản phẩm thay đổi)."""
+    from src.app.modules.chat import vector_store
+    from src.app.modules.products.schema import ProductCreate, ProductUpdate
+    from src.app.modules.products.service import ProductService
+
+    embed_calls: list[str] = []
+
+    class TrackingEmbedClient(GeminiClient):
+        def __init__(self):
+            super().__init__(api_key="fake-key")
+
+        async def embed_text(self, text: str, *, task_type: str = "RETRIEVAL_DOCUMENT"):
+            embed_calls.append(text)
+            return [0.25, 0.75]
+
+    monkeypatch.setattr(vector_store, "GeminiClient", TrackingEmbedClient)
+
+    # 1. Admin thêm mới sản phẩm -> chỉ embed đúng sản phẩm mới
+    created = await ProductService.create_product(
+        db=chat_db_session,
+        payload=ProductCreate(
+            category_id=1,
+            product_name="Tai nghe Sony WH-1000XM5",
+            price=Decimal("7990000.00"),
+            quantity=12,
+            brand="Sony",
+            description="Tai nghe chống ồn chủ động",
+        ),
+    )
+    assert len(embed_calls) == 1
+    assert "Tai nghe Sony WH-1000XM5" in embed_calls[0]
+    emb_row = (
+        chat_db_session.query(ProductEmbedding)
+        .filter(ProductEmbedding.product_id == created.product_id)
+        .first()
+    )
+    assert emb_row is not None
+    assert emb_row.embedding == [0.25, 0.75]
+
+    # 2. Admin chỉ cập nhật quantity (không ảnh hưởng content_text) -> bỏ qua gọi Gemini API
+    embed_calls.clear()
+    await ProductService.update_product(
+        db=chat_db_session,
+        product_id=created.product_id,
+        payload=ProductUpdate(quantity=5),
+    )
+    assert len(embed_calls) == 0
+
+    # 3. Admin cập nhật tên sản phẩm -> chỉ re-embed đúng sản phẩm đó
+    await ProductService.update_product(
+        db=chat_db_session,
+        product_id=created.product_id,
+        payload=ProductUpdate(product_name="Tai nghe Sony WH-1000XM5 Pro"),
+    )
+    assert len(embed_calls) == 1
+    assert "Tai nghe Sony WH-1000XM5 Pro" in embed_calls[0]
+    chat_db_session.refresh(emb_row)
+    assert "Tai nghe Sony WH-1000XM5 Pro" in emb_row.content_text
+
+    # 4. Admin xóa sản phẩm -> xóa luôn embedding tương ứng
+    await ProductService.delete_product(
+        db=chat_db_session,
+        product_id=created.product_id,
+    )
+    assert (
+        chat_db_session.query(ProductEmbedding)
+        .filter(ProductEmbedding.product_id == created.product_id)
+        .first()
+        is None
+    )
+
+
+@pytest.mark.anyio
+async def test_15_auto_sync_embedding_on_bulk_delete_products(chat_db_session):
+    """Kiểm tra bulk_delete_products xóa luôn các bản ghi ProductEmbedding liên quan."""
+    from src.app.modules.products.service import ProductService
+
+    chat_db_session.add_all(
+        [
+            ProductEmbedding(product_id=1, content_text="sp1", embedding=[1.0, 0.0]),
+            ProductEmbedding(product_id=2, content_text="sp2", embedding=[0.0, 1.0]),
+        ]
+    )
+    chat_db_session.commit()
+
+    deleted = await ProductService.bulk_delete_products(
+        db=chat_db_session,
+        product_ids=[1, 2],
+    )
+    assert deleted == 2
+    assert chat_db_session.query(ProductEmbedding).count() == 0
+
+
+def test_16_auto_sync_embedding_on_category_rename(chat_db_session, monkeypatch):
+    """Kiểm tra khi Admin đổi tên danh mục -> chỉ sync embedding các sản phẩm thuộc danh mục đó."""
+    from src.app.modules.chat import vector_store
+
+    # Thêm 1 danh mục khác (id=2) và sản phẩm thuộc danh mục đó để đảm bảo không bị sync nhầm
+    other_cat = Category(category_id=2, category_name="Màn hình", slug="man-hinh")
+    other_product = Product(
+        product_id=3,
+        category_id=2,
+        product_name="Màn hình Dell 27 inch",
+        price=Decimal("5500000.00"),
+        quantity=4,
+    )
+    chat_db_session.add_all([other_cat, other_product])
+    chat_db_session.commit()
+
+    embed_calls: list[str] = []
+
+    class CategoryEmbedClient(GeminiClient):
+        def __init__(self):
+            super().__init__(api_key="fake-key")
+
+        async def embed_text(self, text: str, *, task_type: str = "RETRIEVAL_DOCUMENT"):
+            embed_calls.append(text)
+            return [0.5, 0.5]
+
+    monkeypatch.setattr(vector_store, "GeminiClient", CategoryEmbedClient)
+
+    admin_user = chat_db_session.query(User).filter(User.username == "chat_admin").first()
+    app.dependency_overrides[get_db] = lambda: chat_db_session
+    app.dependency_overrides[get_current_user] = lambda: admin_user
+
+    with TestClient(app) as client:
+        res = client.put(
+            "/api/v1/admin/categories/1",
+            json={"category_name": "Gaming Gear"},
+        )
+    assert res.status_code == 200
+    # Chỉ có 2 sản phẩm thuộc category_id=1 được sync, sản phẩm id=3 ở category_id=2 không bị động tới
+    assert len(embed_calls) == 2
+    assert all("Danh mục: Gaming Gear" in text for text in embed_calls)
+    assert (
+        chat_db_session.query(ProductEmbedding)
+        .filter(ProductEmbedding.product_id == 3)
+        .first()
+        is None
+    )
+
+
+@pytest.mark.anyio
+async def test_17_auto_sync_failure_does_not_break_admin_crud(chat_db_session, monkeypatch):
+    """Kiểm tra nếu Gemini Embedding API lỗi, thao tác cập nhật sản phẩm của Admin vẫn thành công."""
+    from src.app.modules.chat import vector_store
+    from src.app.modules.products.schema import ProductUpdate
+    from src.app.modules.products.service import ProductService
+
+    class FailingEmbedClient(GeminiClient):
+        def __init__(self):
+            super().__init__(api_key="fake-key")
+
+        async def embed_text(self, text: str, *, task_type: str = "RETRIEVAL_DOCUMENT"):
+            raise RuntimeError("Gemini temporary outage")
+
+    monkeypatch.setattr(vector_store, "GeminiClient", FailingEmbedClient)
+
+    updated = await ProductService.update_product(
+        db=chat_db_session,
+        product_id=1,
+        payload=ProductUpdate(product_name="Chuột công thái học Logitech V2"),
+    )
+    assert updated.product_name == "Chuột công thái học Logitech V2"

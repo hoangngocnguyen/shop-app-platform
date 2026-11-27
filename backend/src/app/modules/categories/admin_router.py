@@ -13,6 +13,7 @@ from src.app.modules.categories.schema import (
     CategoryUpdate,
 )
 from src.app.modules.categories.service import CategoryService
+from src.app.modules.chat.vector_store import safe_sync_category_product_embeddings
 
 # Khởi tạo Router cho phân hệ Admin Categories - Toàn bộ API yêu cầu quyền ADMIN
 admin_category_router = APIRouter(
@@ -87,7 +88,7 @@ def admin_create_category(
     summary="Cập nhật danh mục sản phẩm (Admin)",
     description="Chỉnh sửa thông tin danh mục, tự động cập nhật lại slug và kiểm tra trùng lặp với danh mục khác.",
 )
-def admin_update_category(
+async def admin_update_category(
     category_id: int = Path(..., description="ID danh mục cần cập nhật"),
     payload: CategoryUpdate = ...,
     db: Session = Depends(get_db),
@@ -98,6 +99,8 @@ def admin_update_category(
     category = CategoryService.update_category(
         db=db, category_id=category_id, payload=payload
     )
+    if payload.category_name is not None:
+        await safe_sync_category_product_embeddings(db=db, category_id=category_id)
     return success_response(
         data=category,
         message="Cập nhật thông tin danh mục thành công",
