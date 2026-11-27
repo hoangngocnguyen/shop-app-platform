@@ -21,6 +21,11 @@ export const ROUTES = {
   PRODUCTS: {
     DETAIL: (id: number | string) => `/products/${id}`,
   },
+  POSTS: {
+    ROOT: '/posts',
+    TOPIC: (topic: string) => `/posts/${topic}`,
+    DETAIL: (topic: string, slug: string) => `/posts/${topic}/${slug}`,
+  },
   CART: '/user/cart',
   CHECKOUT: '/checkout',
   CHECKOUT_TEST: '/checkout/test',
@@ -34,6 +39,7 @@ export const ROUTES = {
     PRODUCTS: '/admin/product',
     CATEGORIES: '/admin/category',
     BANNERS: '/admin/banners',
+    POSTS: '/admin/posts',
     ORDERS: '/admin/orders',
     STATISTICS: '/admin/statistics',
     USERS: '/admin/users',

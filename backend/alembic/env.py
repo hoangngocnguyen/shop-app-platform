@@ -11,6 +11,7 @@ from src.app.modules.banners.models import Banner  # noqa: F401
 from src.app.modules.carts.model import Cart, CartItem  # noqa: F401
 from src.app.modules.chat.model import ProductEmbedding  # noqa: F401
 from src.app.modules.categories.model import Category  # noqa: F401
+from src.app.modules.posts.model import Post, Topic  # noqa: F401
 from src.app.modules.locations.model import (  # noqa: F401
     AdministrativeRegion,
     AdministrativeUnit,

@@ -91,12 +91,29 @@ export default function Header() {
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 sm:h-20 flex items-center justify-between gap-3 sm:gap-6">
 
                 {/* BRAND LOGO */}
-                <Link
-                    href={ROUTES.HOME}
-                    className="text-xl sm:text-2xl font-black tracking-tight text-primary hover:opacity-90 transition-opacity shrink-0 flex items-center gap-1.5"
-                >
-                    <span>HOANGSHOP</span>
-                </Link>
+                <div className="flex items-center gap-4 lg:gap-6 shrink-0">
+                    <Link
+                        href={ROUTES.HOME}
+                        className="text-xl sm:text-2xl font-black tracking-tight text-[#002b49] hover:opacity-90 transition-opacity shrink-0 flex items-center gap-1.5"
+                    >
+                        <span>HOANGSHOP</span>
+                    </Link>
+
+                    <nav className="hidden lg:flex items-center gap-1 shrink-0">
+                        <Link
+                            href={ROUTES.HOME}
+                            className="px-2.5 py-1.5 text-xs sm:text-sm font-semibold text-text-sub hover:text-text-main hover:bg-surface-hover rounded-lg transition-colors"
+                        >
+                            Trang chủ
+                        </Link>
+                        <Link
+                            href={ROUTES.POSTS.ROOT}
+                            className="px-2.5 py-1.5 text-xs sm:text-sm font-semibold text-text-sub hover:text-text-main hover:bg-surface-hover rounded-lg transition-colors"
+                        >
+                            Bài viết
+                        </Link>
+                    </nav>
+                </div>
 
                 {/* SEARCH BAR */}
                 <form
@@ -257,3 +274,4 @@ export default function Header() {
         </header>
     );
 }
+

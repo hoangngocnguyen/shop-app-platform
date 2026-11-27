@@ -16,6 +16,9 @@ from src.app.modules.orders.routers.admin_order_router import admin_order_router
 from src.app.modules.orders.routers.checkout_router import router as checkout_router
 from src.app.modules.orders.routers.order_router import router as order_router
 from src.app.modules.payments.router import router as payments_router
+from src.app.modules.posts.router import router as admin_posts_router
+from src.app.modules.posts.topic_router import router as admin_topics_router
+from src.app.modules.posts.user_posts_router import router as client_posts_router
 from src.app.modules.products.admin_router import admin_product_router
 from src.app.modules.products.router import router as products_router
 from src.app.modules.shipping_addresses.router import (
@@ -31,6 +34,9 @@ api_v1_router.include_router(media_router)
 api_v1_router.include_router(admin_statistics_router)
 api_v1_router.include_router(banners_router)
 api_v1_router.include_router(admin_banners_router)
+api_v1_router.include_router(admin_posts_router)
+api_v1_router.include_router(admin_topics_router)
+api_v1_router.include_router(client_posts_router)
 api_v1_router.include_router(products_router)
 api_v1_router.include_router(admin_product_router)
 api_v1_router.include_router(categories_router)
