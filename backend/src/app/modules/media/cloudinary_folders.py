@@ -2,5 +2,6 @@ BASE_FOLDER = "shop-app-platform/"
 
 PRODUCT = f"{BASE_FOLDER}products"
 CATEGORY = f"{BASE_FOLDER}categories"
+BANNER = f"{BASE_FOLDER}banners"
 USER = f"{BASE_FOLDER}users"
 USER_AVATAR = f"{USER}/avatars"
