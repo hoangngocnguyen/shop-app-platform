@@ -4,6 +4,7 @@ from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from src.app.modules.orders.enums.order_enums import (
     AdminCancelReason,
+    CheckoutType,
     CustomerCancelReason,
     PaymentMethod,
     SystemCancelReason,
@@ -119,6 +120,14 @@ class CreateOrderRequest(BaseModel):
         min_length=1,
         description="Danh sách sản phẩm và snapshot giá từ bước preview",
     )
+    checkout_type: CheckoutType = Field(
+        default=CheckoutType.BUY_NOW,
+        description="Nguồn checkout. Mặc định BUY_NOW để tương thích client cũ.",
+    )
+    cart_item_ids: list[int] | None = Field(
+        default=None,
+        description="ID dòng cart đã được checkout preview trả về; bắt buộc với CART.",
+    )
     expected_subtotal: Decimal = Field(
         ...,
         ge=0,
@@ -139,6 +148,21 @@ class CreateOrderRequest(BaseModel):
         description="Ghi chú đơn hàng, tối đa 500 ký tự",
     )
 
+    @model_validator(mode="after")
+    def validate_cart_checkout(self) -> "CreateOrderRequest":
+        if self.checkout_type == CheckoutType.CART:
+            if not self.cart_item_ids:
+                raise ValueError(
+                    "cart_item_ids bắt buộc và không được rỗng khi checkout_type là CART."
+                )
+            if any(item_id <= 0 for item_id in self.cart_item_ids):
+                raise ValueError("Tất cả cart_item_ids phải là số nguyên dương.")
+            if len(set(self.cart_item_ids)) != len(self.cart_item_ids):
+                raise ValueError("cart_item_ids không được chứa ID trùng lặp.")
+        elif self.cart_item_ids:
+            raise ValueError("cart_item_ids chỉ được gửi khi checkout_type là CART.")
+        return self
+
     model_config = ConfigDict(
         json_schema_extra={
             "example": {
@@ -150,6 +174,7 @@ class CreateOrderRequest(BaseModel):
             }
         }
     )
+
 
 class BulkOrderActionRequest(BaseModel):
     """Request Body dành cho Admin cập nhật trạng thái một hoặc nhiều đơn hàng."""

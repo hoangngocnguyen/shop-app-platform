@@ -38,6 +38,7 @@ export const ROUTES = {
     DASHBOARD: '/admin',
     PRODUCTS: '/admin/product',
     CATEGORIES: '/admin/category',
+    BANNERS: '/admin/banners',
     POSTS: '/admin/posts',
     ORDERS: '/admin/orders',
     STATISTICS: '/admin/statistics',

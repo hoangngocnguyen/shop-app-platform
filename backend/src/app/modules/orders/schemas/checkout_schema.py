@@ -60,6 +60,8 @@ class CheckoutPreviewRequest(BaseModel):
                 raise ValueError(
                     "Tất cả ID trong cart_item_ids phải là số nguyên dương (> 0)."
                 )
+            if len(set(self.cart_item_ids)) != len(self.cart_item_ids):
+                raise ValueError("cart_item_ids không được chứa ID trùng lặp.")
         return self
 
     model_config = ConfigDict(
@@ -112,6 +114,14 @@ class CheckoutPreviewResponse(BaseModel):
     Snapshot hoàn toàn Stateless do server tính toán và trả về cho Client.
     """
 
+    checkout_type: CheckoutType | None = Field(
+        default=None,
+        description="Nguồn checkout đã được backend xử lý; null với preview từ reorder.",
+    )
+    cart_item_ids: list[int] = Field(
+        default_factory=list,
+        description="ID các dòng cart đã được xác thực; rỗng với BUY_NOW và REORDER.",
+    )
     items: list[CheckoutItemResponse] = Field(
         ..., description="Danh sách sản phẩm trong snapshot checkout"
     )

@@ -13,6 +13,7 @@ import { useProductStore } from "@/features/products/stores";
 import { FeaturedPostsSection } from "@/features/posts/components/FeaturedPostsSection";
 import { EmptyState, Button } from "@/components/ui";
 import { AlertCircle, ChevronDown, CheckCircle2, PackageSearch } from "lucide-react";
+import { StorefrontBanners } from "@/features/banners/components/StorefrontBanners";
 
 export default function HomePage() {
   const {
@@ -66,6 +67,7 @@ export default function HomePage() {
 
       {/* NỘI DUNG CHÍNH */}
       <main className="flex-1 max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+        <StorefrontBanners />
 
         {/* 1. THANH TAB DANH MỤC */}
         <CategoryTabs />

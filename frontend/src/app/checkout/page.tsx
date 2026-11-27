@@ -36,6 +36,8 @@ const buildPreviewFromProduct = (productId: number, quantity: number, product: {
     const totalPrice = price * quantity;
 
     return {
+        checkout_type: "BUY_NOW",
+        cart_item_ids: [],
         items: [
             {
                 product_id: productId,
@@ -242,6 +244,13 @@ function CheckoutPageContent() {
             return;
         }
 
+        const checkoutType = previewData.checkout_type;
+        const cartItemIds = previewData.cart_item_ids;
+        if (!checkoutType || (checkoutType === "CART" && cartItemIds.length === 0)) {
+            toast.error("Không xác định được nguồn checkout. Vui lòng tải lại trang.");
+            return;
+        }
+
         submitRequestLockRef.current = true;
         setIsSubmittingOrder(true);
 
@@ -253,6 +262,8 @@ function CheckoutPageContent() {
                     price: item.price,
                 })),
                 expected_subtotal: previewData.subtotal,
+                checkout_type: checkoutType,
+                cart_item_ids: checkoutType === "CART" ? cartItemIds : undefined,
                 address_id: currentSelectedAddress.id,
                 payment_method: paymentMethod,
                 note: note.trim() || null,

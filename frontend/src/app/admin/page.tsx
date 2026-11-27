@@ -5,6 +5,7 @@ import Link from "next/link";
 import {
   Package,
   FolderTree,
+  Image as ImageIcon,
   ShoppingCart,
   Users,
   ArrowRight,
@@ -38,6 +39,15 @@ export default function AdminDashboardPage() {
       actionText: "Quản lý danh mục",
       colorClass: "bg-status-info-bg text-status-info border-status-info/20",
       iconBg: "bg-status-info text-white",
+    },
+    {
+      title: "Quản lý Banner",
+      description: "Tạo và sắp xếp banner quảng bá tại các vị trí trên cửa hàng.",
+      href: ROUTES.ADMIN.BANNERS,
+      icon: ImageIcon,
+      actionText: "Quản lý Banner",
+      colorClass: "bg-accent-light text-accent-hover border-accent/20",
+      iconBg: "bg-accent text-white",
     },
     {
       title: "Đơn hàng & Vận chuyển",

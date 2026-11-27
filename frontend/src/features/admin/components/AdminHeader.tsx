@@ -66,7 +66,8 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({ onOpenMobile }) => {
     }
   };
 
-  const displayName = user?.name || user?.username || "Quản trị viên";
+  const displayName = user?.name || user?.username || "Tài khoản";
+  const roleLabel = user?.role?.name || user?.role?.code || "Đang tải...";
   const initials = displayName
     .split(" ")
     .map((w) => w[0])
@@ -89,7 +90,7 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({ onOpenMobile }) => {
 
         <div className="flex flex-col">
           <div className="flex items-center gap-1.5 text-[11px] font-medium text-text-muted">
-            <span>Admin</span>
+            <span>Quản trị</span>
             <span>/</span>
             <span className="text-primary font-semibold">{getPageTitle()}</span>
           </div>
@@ -146,7 +147,7 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({ onOpenMobile }) => {
               </span>
               <span className="text-[10px] font-semibold text-primary flex items-center gap-0.5">
                 <ShieldCheck className="w-3 h-3 text-primary" />
-                ADMIN
+                {roleLabel}
               </span>
             </div>
 
@@ -165,7 +166,7 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({ onOpenMobile }) => {
                   {displayName}
                 </p>
                 <p className="text-[11px] text-text-muted truncate">
-                  {user?.username ? `@${user.username}` : "Tài khoản Quản trị"}
+                  {user?.username ? `@${user.username}` : roleLabel}
                 </p>
               </div>
 
