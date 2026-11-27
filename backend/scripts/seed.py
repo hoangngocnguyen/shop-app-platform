@@ -1,3 +1,4 @@
+from scripts.seed_banners import seed_banners
 from scripts.seed_carts import seed_carts
 from scripts.seed_categories import seed_categories
 from scripts.seed_locations import seed_locations
@@ -6,6 +7,7 @@ from scripts.seed_products import seed_products
 from scripts.seed_roles import seed_roles
 from scripts.seed_shippers import seed_shippers
 from scripts.seed_shipping_addresses import seed_shipping_addresses
+from scripts.seed_topics_and_posts import seed_topics_and_posts
 from scripts.seed_users import seed_users
 from src.app.core.database import SessionLocal
 
@@ -29,10 +31,16 @@ def main():
         seed_categories(db)
         seed_products(db)
 
-        # 3. Nhom Gio hang
+        # 3. Nhom Bai viet & Chủ đề
+        seed_topics_and_posts(db)
+
+        # 4. Nhom Banner quảng cáo
+        seed_banners(db)
+
+        # 5. Nhom Gio hang
         seed_carts(db)
 
-        # 4. Nhom Van chuyen & Don hang
+        # 6. Nhom Van chuyen & Don hang
         seed_shippers(db)
         seed_orders(db)
 
@@ -50,3 +58,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+

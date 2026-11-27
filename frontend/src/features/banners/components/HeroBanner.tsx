@@ -69,7 +69,6 @@ export function HeroBanner({ banners }: { banners: PublicBanner[] }) {
           <span className="h-8 w-1 rounded-full bg-gradient-to-b from-primary to-accent" />
           <div>
             <p className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.2em] text-primary">
-              <Sparkles className="h-3 w-3 text-accent" />
               HoangShop chọn lọc
             </p>
             <h2 className="text-lg font-extrabold tracking-tight text-text-main sm:text-xl">

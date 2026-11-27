@@ -7,7 +7,7 @@ export function BannerGrid({ banners }: { banners: PublicBanner[] }) {
   const isSingleBanner = banners.length === 1;
 
   return (
-    <section aria-label="Ưu đãi nổi bật" className="mx-auto mt-5 w-full max-w-7xl sm:mt-6">
+    <section aria-label="Ưu đãi nổi bật" className="mx-auto my-5 w-full max-w-7xl sm:my-6">
       <div className={`grid gap-3 sm:gap-4 ${isSingleBanner ? "grid-cols-1" : "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3"}`}>
         {banners.map((banner) => (
           <div

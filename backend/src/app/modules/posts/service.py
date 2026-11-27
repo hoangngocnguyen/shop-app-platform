@@ -320,17 +320,6 @@ class TopicService:
         if topic_type:
             query = query.where(Topic.type == topic_type)
         topics = list(db.scalars(query).all())
-        if not topics:
-            default_topics = [
-                Topic(name="Tin công nghệ", slug="tin-cong-nghe", type="CATEGORY"),
-                Topic(name="Đánh giá sản phẩm", slug="danh-gia-san-pham", type="CATEGORY"),
-                Topic(name="Hướng dẫn sử dụng", slug="huong-dan-su-dung", type="CATEGORY"),
-                Topic(name="Mẹo & Thủ thuật", slug="meo-va-thu-thuat", type="CATEGORY"),
-                Topic(name="Khuyến mãi & Tin tức", slug="khuyen-mai-tin-tuc", type="CATEGORY"),
-            ]
-            db.add_all(default_topics)
-            db.commit()
-            topics = list(db.scalars(query).all())
         return topics
 
     @staticmethod
@@ -399,7 +388,6 @@ class PublicPostService:
     def get_public_topics(db: Session) -> list[dict]:
         """Lấy danh sách các chủ đề kèm số lượng bài viết đã xuất bản."""
         # Đảm bảo có dữ liệu mẫu trước
-        PublicPostService.seed_default_posts(db)
 
         stmt = (
             select(
@@ -432,7 +420,6 @@ class PublicPostService:
         search: str | None = None,
     ) -> PaginatedResponse[Post]:
         """Lấy danh sách bài viết đã xuất bản, hỗ trợ lọc theo topic_slug và tìm kiếm."""
-        PublicPostService.seed_default_posts(db)
 
         query = (
             select(Post)
@@ -463,7 +450,6 @@ class PublicPostService:
     @staticmethod
     def get_public_post_detail(db: Session, topic_slug: str, post_slug: str) -> Post:
         """Lấy chi tiết bài viết theo topic_slug và post_slug, tăng lượt xem và lấy bài liên quan."""
-        PublicPostService.seed_default_posts(db)
 
         post = db.scalar(
             select(Post)
@@ -505,76 +491,4 @@ class PublicPostService:
 
         return post
 
-    @staticmethod
-    def seed_default_posts(db: Session) -> None:
-        """Khởi tạo bài viết mẫu và chủ đề mẫu chỉ khi database bài viết đang trống."""
-        if db.scalar(select(Post.id).limit(1)) is not None:
-            return
-
-        from src.app.modules.users.model import User
-
-        # Tìm hoặc tạo user tác giả
-        user = db.scalar(select(User).limit(1))
-        if not user:
-            user = User(
-                username="admin",
-                name="Ban Biên Tập ShopApp",
-            )
-            db.add(user)
-            db.commit()
-            db.refresh(user)
-
-        # Đảm bảo các chủ đề mẫu
-        topics_data = [
-            ("Hướng dẫn", "huong-dan", "CATEGORY"),
-            ("Tin công nghệ", "tin-cong-nghe", "CATEGORY"),
-            ("Đánh giá sản phẩm", "danh-gia-san-pham", "CATEGORY"),
-            ("Mẹo & Thủ thuật", "meo-va-thu-thuat", "CATEGORY"),
-            ("Khuyến mãi & Tin tức", "khuyen-mai-tin-tuc", "CATEGORY"),
-        ]
-        topic_map: dict[str, Topic] = {}
-        for name, slug, t_type in topics_data:
-            topic = db.scalar(select(Topic).where(Topic.slug == slug))
-            if not topic:
-                topic = Topic(name=name, slug=slug, type=t_type)
-                db.add(topic)
-                db.commit()
-                db.refresh(topic)
-            topic_map[slug] = topic
-
-        # Seed các bài viết mẫu khi DB trống
-        extra_posts = [
-            (
-                "Top 5 bàn phím cơ gõ sướng nhất dành cho lập trình viên 2026",
-                "top-5-ban-phim-co-go-suong-nhat-2026",
-                "Đánh giá chi tiết top 5 bàn phím cơ có switch êm ái, hành trình sâu và layout tối ưu cho anh em coder.",
-                "danh-gia-san-pham",
-                "<p>Bàn phím cơ không chỉ là công cụ nhập liệu mà còn là người bạn đồng hành truyền cảm hứng mỗi ngày cho các lập trình viên...</p><h3>Keychron Q1 Pro</h3><p>Thiết kế nhôm nguyên khối, mạch xuôi, hỗ trợ custom switch linh hoạt.</p>",
-                "https://images.unsplash.com/photo-1587829741301-dc798b83add3?w=800&auto=format&fit=crop&q=60",
-            ),
-            (
-                "Hướng dẫn vệ sinh màn hình laptop đúng cách không lo xước",
-                "huong-dan-ve-sinh-man-hinh-laptop-dung-cach",
-                "Quy trình lau chùi màn hình máy tính an toàn bằng dung dịch chuyên dụng, tránh gây ố và bong tróc lớp phủ chống chói.",
-                "huong-dan",
-                "<p>Màn hình là bộ phận nhạy cảm nhất trên laptop. Dùng khăn thô ráp hay dung dịch cồn mạnh sẽ làm hỏng lớp chống lóa...</p>",
-                "https://images.unsplash.com/photo-1593642632823-8f785ba67e45?w=800&auto=format&fit=crop&q=60",
-            ),
-        ]
-        for p_title, p_slug, p_summary, p_topic_slug, p_content, p_thumb in extra_posts:
-            if not db.scalar(select(Post.id).where(Post.slug == p_slug)):
-                t = topic_map.get(p_topic_slug)
-                p = Post(
-                    title=p_title,
-                    slug=p_slug,
-                    summary=p_summary,
-                    content=p_content,
-                    thumbnail_url=p_thumb,
-                    topic_id=t.id if t else None,
-                    author_id=user.user_id,
-                    status=PostStatus.PUBLISHED.value,
-                    published_at=datetime.now(UTC),
-                )
-                db.add(p)
-
-        db.commit()
+    

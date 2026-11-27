@@ -114,7 +114,6 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
             <div className="flex flex-col truncate">
               <span className="text-base font-black tracking-tight text-text-main flex items-center gap-1">
                 HOANGSHOP
-                <Sparkles className="w-3.5 h-3.5 text-accent animate-pulse" />
               </span>
               <span className="text-[11px] font-semibold text-primary uppercase tracking-wider">
                 Quản trị hệ thống
